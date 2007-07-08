@@ -1,3 +1,27 @@
+util-linux 2.12r
+
+* no changes
+
+util-linux 2.12r-pre1
+
+* cfdisk: fix a segfault with ReiserFS partitions
+* umount: disallow -r option for non-root users
+
+util-linux 2.12q
+
+* updated translation: nl
+
+util-linux 2.12q-pre2
+
+* sfdisk: document -G option in --help output
+* updated translations: ca, et, fr
+
+util-linux 2.12q-pre1
+
+* new maintainer
+* sfdisk: add -G option (Andries Brouwer)
+* updated translations: de, es, ru, sv, tr
+
 util-linux 2.12p
 
 * cfdisk: fix number of new partition when partitions not in disk order
