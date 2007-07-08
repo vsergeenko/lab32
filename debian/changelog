@@ -1,3 +1,39 @@
+util-linux (2.12r-1) unstable; urgency=low
+
+  * New upstream verison and maintainer.
+    - cfdisk: fix a segfault with ReiserFS partitions
+    - umount: disallow -r option for non-root users (CAN-2005-2876)
+    - sfdisk: document -G option in --help output
+    - updated translations: ca, et, fr
+    - sfdisk: add -G option (Andries Brouwer)
+    - updated translations: de, es, ru, sv, tr, nl
+  * split cfdisk into its own udeb.  Closes: #243094, #314368
+  * Really move hwclockfirst.sh back to S18 where it belongs.
+    Put hwclock.sh at S22.  See #50572.
+  * Missing line break in hwclock.sh.  Closes: #337955
+  * Include swap-suspend patch from Ubuntu.
+  * Fix variable name typo in hwclock.sh.  Closes: #340232
+  * Add CPU=$(arch) to make call for building on amd64/i386 mixed systems.
+    Closes: #305907
+  * Cleanup lsb_init function usage.
+
+ -- LaMont Jones <lamont@debian.org>  Wed,  7 Dec 2005 08:52:21 -0700
+
+util-linux (2.12p-8) unstable; urgency=high
+
+  * if /etc/adjtime is a dangling symlink, don't use it in hwclock*.sh
+  * Applited patch by Max Vozeler to fix a local privilege escalation
+    vulnerability in umount -r [debian/patches/51security_CAN-2005-2876.dpatch]
+    Closes: #328141, #329063
+
+ -- LaMont Jones <lamont@debian.org>  Wed, 21 Sep 2005 08:36:17 -0600
+
+util-linux (2.12p-7) unstable; urgency=low
+
+  * Fix non-posix typo in hwclock.sh.  Closes: #323872
+
+ -- LaMont Jones <lamont@debian.org>  Thu, 18 Aug 2005 19:27:51 -0600
+
 util-linux (2.12p-6) unstable; urgency=low
 
   * Use helper program in mount for guessed FS types too.  Thanks to Manish

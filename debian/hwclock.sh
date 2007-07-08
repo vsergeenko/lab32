@@ -25,13 +25,8 @@ HWCLOCKPARS=
 [ ! -x /sbin/hwclock ] && exit 0
 . /etc/default/rcS
 
-log_begin_msg () { echo -n "$@"; }
-log_success_msg () { echo "$@"; }
-log_failure_msg () { echo "$@"; }
-log_warning_msg () { echo "$@"; }
-log_end_msg () { if [ "$1" == 0 ]; then echo "."; fi; }
-log_verbose_success_msg() { if [ "$VERBOSE" != no ]; then echo; echo $@; fi; }
-log_verbose_warning_msg() { if [ "$VERBOSE" != no ]; then echo; echo $@; fi; }
+. /lib/lsb/init-functions
+verbose_log_action_msg() { [ "$VERBOSE" = no ] || log_action_msg $@; }
 
 [ "$GMT" = "-u" ] && UTC="yes"
 case "$UTC" in
@@ -39,7 +34,7 @@ case "$UTC" in
 		UTC=""
 		if [ "X$FIRST" = "Xyes" ] && [ ! -r /etc/localtime ]; then
 		    if [ -z "$TZ" ]; then
-			log_warning_msg "System clock was not updated at this time."
+			log_action_msg "System clock was not updated at this time"
 			exit 1
 		    fi
 		fi
@@ -47,18 +42,18 @@ case "$UTC" in
        yes)	GMT="--utc"
 		UTC="--utc"
 		;;
-       *)	log_failure_msg "Unknown UTC setting: \"$UTC\""; exit 1 ;;
+       *)	log_action_msg "Unknown UTC setting: \"$UTC\""; exit 1 ;;
 esac
 
 case "$BADYEAR" in
        no|"")	BADYEAR="" ;;
        yes)	BADYEAR="--badyear" ;;
-       *)	log_failure_msg "unknown BADYEAR setting: \"$BADYEAR\""; exit 1 ;;
+       *)	log_action_msg "unknown BADYEAR setting: \"$BADYEAR\""; exit 1 ;;
 esac
 
 case "$1" in
 	start)
-		if [ ! -f /etc/adjtime ]; then
+		if [ ! -f /etc/adjtime ] && [ ! -e /etc/adjtime ]; then
 		    echo "0.0 0 0.0" > /etc/adjtime
 		fi
 
@@ -88,12 +83,12 @@ case "$1" in
 		fi
 
 		if [ "$HWCLOCKACCESS" != no ]; then
-		    log_begin_msg "Setting the System Clock using the Hardware Clock as reference"
+		    log_daemon_msg "Setting the system clock"
 
 		    # Copies Hardware Clock time to System Clock using the correct
 		    # timezone for hardware clocks in local time, and sets kernel
 		    # timezone. DO NOT REMOVE.
-		    /sbin/hwclock --hctosys $GMT $HWCLOCPARS $BADYEAR
+		    /sbin/hwclock --hctosys $GMT $HWCLOCKPARS $BADYEAR
 
 		    if [ "$FIRST" = yes ]; then
 			# Copies Hardware Clock time to System Clock using the correct
@@ -113,9 +108,9 @@ case "$1" in
 		    fi
 
 		    #	Announce the local time.
-		    log_verbose_success_msg "System Clock set. Local time: `date $UTC`"
+		    verbose_log_action_msg "System Clock set. Local time: `date $UTC`"
 		else
-		    log_verbose_warning_msg "Not setting System Clock"
+		    verbose_log_action_msg "Not setting System Clock"
 		fi
 		log_end_msg 0
 		;;
@@ -128,19 +123,20 @@ case "$1" in
 		#          clock will not be carried across reboots.
 		#
 		if [ "$HWCLOCKACCESS" != no ]; then
-		    log_begin_msg "Saving the System Clock time to the Hardware Clock"
+		    log_daemon_msg "Saving the system clock"
 		    if [ "$GMT" = "-u" ]; then
 			GMT="--utc"
 		    fi
-		    /sbin/hwclock --systohc $GMT $HWCLOCPARS $BADYEAR
-		    log_verbose_success_msg "Hardware Clock updated to `date`."
+		    /sbin/hwclock --systohc $GMT $HWCLOCKPARS $BADYEAR
+		    verbose_log_action_msg "Hardware Clock updated to `date`"
 		else
-		    log_verbose_warning_msg "Not saving System Clock"
+		    verbose_log_action_msg "Not saving System Clock"
 		fi
+		log_end_msg 0
 		;;
 	show)
 		if [ "$HWCLOCKACCESS" != no ]; then
-			/sbin/hwclock --show $GMT $HWCLOCPARS $BADYEAR
+			/sbin/hwclock --show $GMT $HWCLOCKPARS $BADYEAR
 		fi
 		;;
 	*)

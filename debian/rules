@@ -48,7 +48,7 @@ CFDISK_POT=$(CFDISK_PO_DIR)/cfdisk.pot
 build: patch
 	$(checkdir)
 	./configure
-	$(MAKE) all arch=$(arch) SUBDIRS="${SUBDIRS}"
+	$(MAKE) all CPU=$(arch) arch=$(arch) SUBDIRS="${SUBDIRS}"
 	# $(MAKE) disk-utils/raw - this is done above if linux/raw.h exists
 	touch build
 
@@ -249,12 +249,12 @@ endif
 
 ifeq ($(arch),$(fdisk_arch))
 # Do the udeb
-	install -d debian/tmp-fdisk-udeb/usr/sbin
-	install -d debian/tmp-fdisk-udeb/DEBIAN
-	install -m 755 fdisk/cfdisk fdisk/fdisk fdisk/sfdisk \
-			debian/tmp-fdisk-udeb/usr/sbin
+	install -d debian/tmp-{c,}fdisk-udeb/usr/sbin
+	install -d debian/tmp-{c,}fdisk-udeb/DEBIAN
+	install -m 755 fdisk/cfdisk debian/tmp-cfdisk-udeb/usr/sbin
+	install -m 755 fdisk/fdisk fdisk/sfdisk debian/tmp-fdisk-udeb/usr/sbin
 	strip --remove-section=.comment --remove-section=.note \
-			debian/tmp-fdisk-udeb/usr/sbin/*
+			debian/tmp-{c,}fdisk-udeb/usr/sbin/*
 
 	# Generate a po translations needed for cfdisk
 	mkdir $(CFDISK_PO_DIR)
@@ -263,14 +263,19 @@ ifeq ($(arch),$(fdisk_arch))
 		LANG=`basename $$po | cut -f1 -d.` ; \
 		msgmerge $$po $(CFDISK_POT)  > $(CFDISK_PO_DIR)/$$LANG.po ; \
 		msgfmt $(CFDISK_PO_DIR)/$$LANG.po -o $(CFDISK_PO_DIR)/$$LANG.gmo ; \
-		mkdir -p debian/tmp-fdisk-udeb/usr/share/locale/$$LANG/LC_MESSAGES ; \
-		cp $(CFDISK_PO_DIR)/$$LANG.gmo debian/tmp-fdisk-udeb/usr/share/locale/$$LANG/LC_MESSAGES/util-linux.mo ; \
+		mkdir -p debian/tmp-cfdisk-udeb/usr/share/locale/$$LANG/LC_MESSAGES ; \
+		cp $(CFDISK_PO_DIR)/$$LANG.gmo debian/tmp-cfdisk-udeb/usr/share/locale/$$LANG/LC_MESSAGES/util-linux.mo ; \
 	done
 
 	ls debian/tmp-fdisk-udeb/usr/sbin/* | xargs dpkg-shlibdeps -pfdisk-udeb
 	dpkg-gencontrol -isp -pfdisk-udeb -Pdebian/tmp-fdisk-udeb -fdebian/files~
 	dpkg-distaddfile fdisk-udeb_$(shell dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2)_$(arch).udeb debian-installer extra
 	dpkg --build debian/tmp-fdisk-udeb ../fdisk-udeb_$(shell dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2)_$(arch).udeb
+
+	ls debian/tmp-cfdisk-udeb/usr/sbin/* | xargs dpkg-shlibdeps -pcfdisk-udeb
+	dpkg-gencontrol -isp -pcfdisk-udeb -Pdebian/tmp-cfdisk-udeb -fdebian/files~
+	dpkg-distaddfile cfdisk-udeb_$(shell dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2)_$(arch).udeb debian-installer extra
+	dpkg --build debian/tmp-cfdisk-udeb ../cfdisk-udeb_$(shell dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2)_$(arch).udeb
 endif
 ifeq ($(arch),$(sparc))
 # Do the udeb
