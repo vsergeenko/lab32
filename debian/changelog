@@ -1,3 +1,10 @@
+util-linux (2.12r-19) unstable; urgency=low
+
+  * mips/mipsel buildds use sudo.  Fix install target so that mount.deb
+    builds.  Closes: #411893
+
+ -- LaMont Jones <lamont@debian.org>  Wed, 21 Feb 2007 10:39:26 -0700
+
 util-linux (2.12r-18) unstable; urgency=low
 
   * Stop printing erroneous "rpc.idmapd appears to not be running" message.
