@@ -1,3 +1,10 @@
+util-linux (2.12r-20) unstable-UNRELEASED; urgency=low
+
+  * USB unmounting dereferenced a null pointer.  Closes: #410031
+    - Files: 70fstab.dpatch
+
+ -- LaMont Jones <lamont@debian.org>  Sun, 17 Jun 2007 06:01:46 -0600
+
 util-linux (2.12r-19) unstable; urgency=low
 
   * mips/mipsel buildds use sudo.  Fix install target so that mount.deb

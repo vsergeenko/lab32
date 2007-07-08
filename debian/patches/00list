@@ -21,3 +21,4 @@
 60_opt_O1
 65_llseek-syscall
 65page_size
+70fstab
