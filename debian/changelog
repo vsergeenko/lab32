@@ -1,3 +1,9 @@
+util-linux (2.12r-15) unstable; urgency=low
+
+  * New amd64 rdev patch.  Closes: #396842
+
+ -- LaMont Jones <lamont@debian.org>  Fri,  3 Nov 2006 20:44:05 -0700
+
 util-linux (2.12r-14) unstable; urgency=low
 
   * Make that 11 for hwclock.sh, since we need / to be writable for the

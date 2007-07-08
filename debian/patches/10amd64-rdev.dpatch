@@ -5,14 +5,15 @@
 ## DP: hacking "architecture detection" to get rdev on amd64 too.
 
 @DPATCH@
---- util-linux/MCONFIG.old	2005-03-02 23:14:51.424457925 +0100
-+++ util-linux/MCONFIG	2005-03-02 23:22:06.749245047 +0100
-@@ -17,7 +17,7 @@
- # Select for CPU i386 if the binaries must be able to run on an intel 386
- # (by default i486 code is generated, see below)
- CPU=$(shell uname -m)
--ARCH=$(shell echo $(CPU) | sed 's/i.86/intel/;s/arm.*/arm/')
-+ARCH=$(shell echo $(CPU) | sed 's/i.86/intel/;s/arm.*/arm/;s/x86_64/intel/')
+diff -urN ../tmp-orig/util-linux-2.12r/sys-utils/Makefile ./sys-utils/Makefile
+--- ../tmp-orig/util-linux-2.12r/sys-utils/Makefile	2004-11-15 17:47:47.000000000 +0000
++++ ./sys-utils/Makefile	2006-11-03 09:05:30.000000000 +0000
+@@ -37,7 +37,7 @@
+ endif
+ endif
  
- # If HAVE_PAM is set to "yes", then login, chfn, chsh, and newgrp
- # will use PAM for authentication. Additionally, passwd will not be
+-ifeq "$(ARCH)" "intel"
++ifneq (,findstring("$(ARCH)",intel x86_64))
+ MAN8:=$(MAN8) rdev.8 ramsize.8 rootflags.8 vidmode.8
+ USRSBIN:=$(USRSBIN) rdev
+ endif
