@@ -62,7 +62,6 @@
 #include <time.h>
 #include <stdio.h>
 #include "nls.h"
-#include "../defines.h"		/* for util-linux-version */
 
 #ifndef __GNUC__
 #define inline /* foo */
@@ -177,7 +176,7 @@ main (int argc, char *argv[]) {
 	case '-': 
 	    switch(argv[pi][1]) {
 	    case 'V':
-		printf(_("%s from %s\n"), progname, util_linux_version);
+		printf(_("%s (%s)\n"), progname, PACKAGE_STRING);
 	    default: goto usage;
 	    }
 	default: goto thud;
@@ -296,6 +295,7 @@ struct disc_time makeday(int imonth,int iday,int iyear) /*i for input */
     int cal[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
     int dayspast=0;
 
+    memset(&funkychickens,0,sizeof(funkychickens));
     /* basic range checks */
     if (imonth < 1 || imonth > 12) {
 	    funkychickens.season = -1;

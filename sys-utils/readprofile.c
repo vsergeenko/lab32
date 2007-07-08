@@ -194,8 +194,8 @@ main(int argc, char **argv) {
 			optVerbose++;
 			break;
 		case 'V':
-			printf(_("%s version %s\n"), prgname,
-			       UTIL_LINUX_VERSION);
+			printf(_("%s (%s)\n"), prgname,
+			       PACKAGE_STRING);
 			exit(0);
 		default:
 			usage();

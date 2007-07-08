@@ -28,7 +28,7 @@
  *
  * 1999-02-22 Arkadiusz Mi¶kiewicz <misiek@pld.ORG.PL>
  * - added Native Language Support
- * 
+ *
  */
 
 #include <stdio.h>
@@ -36,27 +36,22 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <mntent.h>
 #include <sys/ioctl.h>		/* for _IO */
 #include <sys/utsname.h>
 #include <sys/stat.h>
-#include "../defines.h"
+#include <errno.h>
+#ifdef HAVE_LIBSELINUX
+#include <selinux/selinux.h>
+#include <selinux/context.h>
+#endif
+
 #include "swapheader.h"
 #include "xstrncpy.h"
 #include "nls.h"
 
-#ifdef HAVE_uuid_uuid_h
+#ifdef HAVE_LIBUUID
 #include <uuid/uuid.h>
-#endif
-
-/* Try to get PAGE_SIZE from libc or kernel includes */
-#ifdef HAVE_sys_user_h
-				/* Note: <sys/user.h> says: for gdb only */
-#include <sys/user.h>		/* for PAGE_SIZE and PAGE_SHIFT */
-#else
-#ifdef HAVE_asm_page_h
-#include <asm/page.h>		/* for PAGE_SIZE and PAGE_SHIFT */
-				/* we also get PAGE_SIZE via getpagesize() */
-#endif
 #endif
 
 #ifndef _IO
@@ -76,6 +71,8 @@ static int check = 0;
 static int version = -1;
 
 #define MAKE_VERSION(p,q,r)	(65536*(p) + 256*(q) + (r))
+
+#define SELINUX_SWAPFILE_TYPE	"swapfile_t"
 
 static int
 linux_version_code(void) {
@@ -112,7 +109,7 @@ is_sparc64(void) {
 	if (strcmp(un.machine, "sparc"))
 		return 0; /* Should not happen */
 
-#ifdef HAVE_personality
+#ifdef HAVE_PERSONALITY
 	{
 		extern int personality(unsigned long);
 		int oldpers;
@@ -143,34 +140,33 @@ is_sparc64(void) {
 #endif
 
 /*
- * The definition of the union swap_header uses the constant PAGE_SIZE.
- * Unfortunately, on some architectures this depends on the hardware model,
- * and can only be found at run time -- we use getpagesize(), so that
- * we do not need separate binaries e.g. for sun4, sun4c/d/m and sun4u.
+ * The definition of the union swap_header uses the kernel constant PAGE_SIZE.
+ * Unfortunately, on some architectures this depends on the hardware model, and
+ * can only be found at run time -- we use getpagesize(), so that we do not
+ * need separate binaries e.g. for sun4, sun4c/d/m and sun4u.
  *
- * Even more unfortunately, getpagesize() does not always return
- * the right information. For example, libc4 and libc5 do not use
- * the system call but invent a value themselves
- * (EXEC_PAGESIZE or NBPG * CLSIZE or NBPC), and thus it may happen
- * that e.g. on a sparc PAGE_SIZE=4096 and getpagesize() returns 8192.
+ * Even more unfortunately, getpagesize() does not always return the right
+ * information. For example, libc4, libc5 and glibc 2.0 do not use the system
+ * call but invent a value themselves (EXEC_PAGESIZE or NBPG * CLSIZE or NBPC),
+ * and thus it may happen that e.g. on a sparc kernel PAGE_SIZE=4096 and
+ * getpagesize() returns 8192.
+ *
  * What to do? Let us allow the user to specify the pagesize explicitly.
+ *
+ * Update 05-Feb-2007 (kzak):
+ *      - use sysconf(_SC_PAGESIZE) to be consistent with the rest of
+ *        util-linux code.  It is the standardized and preferred way of
+ *        querying page size.
  */
-
-static int user_pagesize = 0;
-static int kernel_pagesize;	   /* obtained via getpagesize(); */
-static int defined_pagesize = 0;   /* PAGE_SIZE, when that exists */
+static int user_pagesize;
 static int pagesize;
-static long *signature_page;
+static unsigned long *signature_page;
 struct swap_header_v1 *p;
 
 static void
 init_signature_page(void) {
 
-#ifdef PAGE_SIZE
-	defined_pagesize = PAGE_SIZE;
-#endif
-	kernel_pagesize = getpagesize();
-	pagesize = kernel_pagesize;
+	int kernel_pagesize = pagesize = (int) sysconf(_SC_PAGESIZE);
 
 	if (user_pagesize) {
 		if ((user_pagesize & (user_pagesize-1)) ||
@@ -182,16 +178,12 @@ init_signature_page(void) {
 		pagesize = user_pagesize;
 	}
 
-	if (user_pagesize && user_pagesize != kernel_pagesize &&
-	    user_pagesize != defined_pagesize)
+	if (user_pagesize && user_pagesize != kernel_pagesize)
 		fprintf(stderr, _("Using user-specified page size %d, "
-				  "instead of the system values %d/%d\n"),
-			pagesize, kernel_pagesize, defined_pagesize);
-	else if (defined_pagesize && pagesize != defined_pagesize)
-		fprintf(stderr, _("Assuming pages of size %d (not %d)\n"),
-			pagesize, defined_pagesize);
+				  "instead of the system value %d\n"),
+				pagesize, kernel_pagesize);
 
-	signature_page = (long *) malloc(pagesize);
+	signature_page = (unsigned long *) malloc(pagesize);
 	memset(signature_page, 0, pagesize);
 	p = (struct swap_header_v1 *) signature_page;
 }
@@ -248,7 +240,7 @@ write_uuid_and_label(char *uuid, char *volume_name) {
 			printf("LABEL=%s, ", h->volume_name);
 		else
 			printf(_("no label, "));
-#ifdef HAVE_uuid_uuid_h
+#ifdef HAVE_LIBUUID
 		if (uuid) {
 			char uuid_string[37];
 			uuid_unparse(uuid, uuid_string);
@@ -301,7 +293,7 @@ write_uuid_and_label(char *uuid, char *volume_name) {
 #elif defined(__sparc__)
 #define V1_MAX_PAGES           (is_sparc64() ? ((3 << 29) - 1) : ((1 << 18) - 1))
 #elif defined(__ia64__)
-/* 
+/*
  * The actual size will depend on the amount of virtual address space
  * available to vmalloc the swap map.
  */
@@ -493,6 +485,29 @@ isnzdigit(char c) {
 	return (c >= '1' && c <= '9');
 }
 
+
+/*
+ * Check to make certain that our new filesystem won't be created on
+ * an already mounted partition.  Code adapted from mke2fs, Copyright
+ * (C) 1994 Theodore Ts'o.  Also licensed under GPL.
+ * (C) 2006 Karel Zak -- port to mkswap
+ */
+static int
+check_mount(void) {
+	FILE * f;
+	struct mntent * mnt;
+
+	if ((f = setmntent (MOUNTED, "r")) == NULL)
+		return 0;
+	while ((mnt = getmntent (f)) != NULL)
+		if (strcmp (device_name, mnt->mnt_fsname) == 0)
+			break;
+	endmntent (f);
+	if (!mnt)
+		return 0;
+	return 1;
+}
+
 int
 main(int argc, char ** argv) {
 	struct stat statbuf;
@@ -506,7 +521,7 @@ main(int argc, char ** argv) {
 	char *pp;
 	char *opt_label = NULL;
 	char *uuid = NULL;
-#ifdef HAVE_uuid_uuid_h
+#ifdef HAVE_LIBUUID
 	uuid_t uuid_dat;
 #endif
 
@@ -520,7 +535,7 @@ main(int argc, char ** argv) {
 
 	if (argc == 2 &&
 	    (!strcmp(argv[1], "-V") || !strcmp(argv[1], "--version"))) {
-		printf(_("%s from %s\n"), program_name, util_linux_version);
+		printf(_("%s (%s)\n"), program_name, PACKAGE_STRING);
 		exit(0);
 	}
 
@@ -562,7 +577,7 @@ main(int argc, char ** argv) {
 			usage();
 	}
 
-#ifdef HAVE_uuid_uuid_h
+#ifdef HAVE_LIBUUID
 	uuid_generate(uuid_dat);
 	uuid = uuid_dat;
 #endif
@@ -656,8 +671,19 @@ main(int argc, char ** argv) {
 	/* Want a block device. Probably not /dev/hda or /dev/hdb. */
 	if (!S_ISBLK(statbuf.st_mode))
 		check=0;
-	else if (statbuf.st_rdev == 0x0300 || statbuf.st_rdev == 0x0340)
-		die(_("Will not try to make swapdevice on '%s'"));
+	else if (statbuf.st_rdev == 0x0300 || statbuf.st_rdev == 0x0340) {
+		fprintf(stderr,
+			_("%s: error: "
+			  "will not try to make swapdevice on '%s'\n"),
+			program_name, device_name);
+		exit(1);
+	} else if (check_mount()) {
+		fprintf(stderr,
+			_("%s: error: "
+			  "%s is mounted; will not make swapspace.\n"),
+			program_name, device_name);
+		exit(1);
+	}
 
 #ifdef __sparc__
 	if (!force && version == 0) {
@@ -715,9 +741,43 @@ the -f option to force it.\n"),
 	 * A subsequent swapon() will fail if the signature
 	 * is not actually on disk. (This is a kernel bug.)
 	 */
-#ifdef HAVE_fsync
+#ifdef HAVE_FSYNC
 	if (fsync(DEV))
 		 die(_("fsync failed"));
+#endif
+
+#ifdef HAVE_LIBSELINUX
+	if (S_ISREG(statbuf.st_mode) && is_selinux_enabled()) {
+		security_context_t context_string;
+		security_context_t oldcontext;
+		context_t newcontext;
+
+		if ((fgetfilecon(DEV, &oldcontext) < 0) &&
+		    (errno != ENODATA)) {
+			fprintf(stderr, _("%s: %s: unable to obtain selinux file label: %s\n"),
+					program_name, device_name,
+					strerror(errno));
+			exit(1);
+		}
+		if (!(newcontext = context_new(oldcontext)))
+			die(_("unable to create new selinux context"));
+		if (context_type_set(newcontext, SELINUX_SWAPFILE_TYPE))
+			die(_("couldn't compute selinux context"));
+
+		context_string = context_str(newcontext);
+
+		if (strcmp(context_string, oldcontext)!=0) {
+			if (fsetfilecon(DEV, context_string)) {
+				fprintf(stderr, _("%s: unable to relabel %s to %s: %s\n"),
+						program_name, device_name,
+						context_string,
+						strerror(errno));
+				exit(1);
+			}
+		}
+		context_free(newcontext);
+		freecon(oldcontext);
+	}
 #endif
 	return 0;
 }

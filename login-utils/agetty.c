@@ -30,6 +30,9 @@
 #include <getopt.h>
 #include <time.h>
 #include <sys/file.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include "xstrncpy.h"
 #include "nls.h"
 
@@ -120,6 +123,15 @@
   */
 #ifndef BUFSIZ
 #define	BUFSIZ		1024
+#endif
+
+/* set a maximum length for the hostname,  */
+#ifdef HOST_NAME_MAX
+# define HOSTNAME_LENGTH HOST_NAME_MAX		/* defined by POSIX.1 */
+#elif defined(MAXHOSTNAMELEN)
+# define HOSTNAME_LENGTH MAXHOSTNAMELEN		/* implemented in current Unix-versions */
+#else
+# define HOSTNAME_LENGTH 255
 #endif
 
  /*
@@ -382,7 +394,7 @@ main(argc, argv)
 
     /* Let the login program take care of password validation. */
 
-    (void) execl(options.login, options.login, "--", logname, (char *) 0);
+    (void) execl(options.login, options.login, "--", logname, NULL);
     error(_("%s: can't exec %s: %m"), options.tty, options.login);
     exit(0);  /* quiet GCC */
 }
@@ -604,7 +616,7 @@ update_utmp(line)
     endutent();
 
     {
-#ifdef HAVE_updwtmp
+#ifdef HAVE_UPDWTMP
 	updwtmp(_PATH_WTMP, &ut);
 #else
 	int ut_fd;
@@ -868,14 +880,38 @@ do_prompt(op, tp)
 
 		  case 'o':
 		   {
-		     char domainname[256];
-#ifdef HAVE_getdomainname
-		     getdomainname(domainname, sizeof(domainname));
-#else
-		     strcpy(domainname, "unknown_domain");
+		     char domainname[HOST_NAME_MAX+1];
+#ifdef HAVE_GETDOMAINNAME
+		     if (getdomainname(domainname, sizeof(domainname)))
 #endif
+			 strcpy(domainname, "unknown_domain");
 		     domainname[sizeof(domainname)-1] = '\0';
 		     printf ("%s", domainname);
+		   }
+		  break;
+
+		  case 'O':
+		   {
+			char *dom = "unknown_domain";
+			char host[HOST_NAME_MAX + 1];
+			struct addrinfo hints, *info = NULL;
+
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_flags = AI_CANONNAME;
+
+			if (gethostname(host, sizeof(host)) ||
+			    getaddrinfo(host, NULL, &hints, &info) ||
+			    info == NULL)
+				fputs(dom, stdout);
+			else {
+				char *canon;
+
+				if (info->ai_canonname &&
+				    (canon = strchr(info->ai_canonname, '.')))
+					dom = canon + 1;
+				fputs(dom, stdout);
+				freeaddrinfo(info);
+			}
 		   }
 		  break;
 
@@ -951,14 +987,11 @@ do_prompt(op, tp)
 	(void) fclose(fd);
     }
 #endif
-#ifdef __linux__
-	{
-		char hn[MAXHOSTNAMELEN+1];
-
-		(void) gethostname(hn, MAXHOSTNAMELEN);
-		write(1, hn, strlen(hn));
-	}
-#endif		
+    {
+	char hn[HOST_NAME_MAX+1];
+	if (gethostname(hn, sizeof(hn)) == 0)
+	    write(1, hn, strlen(hn));
+    }
     (void) write(1, LOGIN, sizeof(LOGIN) - 1);	/* always show login prompt */
 }
 

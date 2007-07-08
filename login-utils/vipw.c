@@ -67,7 +67,7 @@ static char version_string[] = "vipw 1.4";
 #include "xstrncpy.h"
 #include "nls.h"
 
-#ifdef WITH_SELINUX
+#ifdef HAVE_LIBSELINUX
 #include <selinux/selinux.h>
 #endif
 
@@ -194,7 +194,7 @@ pw_unlock(void) {
 	unlink(tmp);
 	link(orig_file, tmp);
 
-#ifdef WITH_SELINUX
+#ifdef HAVE_LIBSELINUX
 	if (is_selinux_enabled()) {
 	  security_context_t passwd_context=NULL;
 	  int ret=0;
@@ -297,13 +297,11 @@ edit_file(int is_shadow)
 		(void)fprintf(stderr, _("%s: no changes made\n"), progname);
 		pw_error((char *)NULL, 0, 0);
 	}
+	/* see pw_lock() where we create the file with mode 600 */
 	if (!is_shadow)
 		chmod(tmp_file, 0644);
-#if 0
-	/* if shadow file, then mode is 0600 now */
 	else
 		chmod(tmp_file, 0400);
-#endif
 	pw_unlock();
 }
 

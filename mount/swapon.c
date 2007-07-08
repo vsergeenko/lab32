@@ -1,8 +1,6 @@
 /*
  * A swapon(8)/swapoff(8) for Linux 0.99.
- * swapon.c,v 1.1.1.1 1993/11/18 08:40:51 jrs Exp
  */
-
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,30 +9,37 @@
 #include <mntent.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include "xmalloc.h"
 #include "swap_constants.h"
-#include "swapargs.h"
 #include "nls.h"
-#include "mount_blkid.h"
-#include "mount_by_label.h"
+#include "fsprobe.h"
+#include "realpath.h"
+#include "mount_paths.h"
+
+#ifdef HAVE_SYS_SWAP_H
+# include <sys/swap.h>
+#endif
+
+#ifndef SWAPON_HAS_TWO_ARGS
+/* libc is insane, let's call the kernel */
+# include <sys/syscall.h>
+# define swapon(path, flags) syscall(SYS_swapon, path, flags)
+# define swapoff(path) syscall(SYS_swapoff, path)
+#endif
 
 #define streq(s, t)	(strcmp ((s), (t)) == 0)
-
-#define	_PATH_FSTAB     "/etc/fstab"
-#define PROC_SWAPS      "/proc/swaps"
-
-#define SWAPON_NEEDS_TWO_ARGS
 
 #define QUIET	1
 
 int all = 0;
 int verbose = 0;
 int priority = -1;	/* non-prioritized swap by default */
+int mount_quiet = 0;
 
 /* If true, don't complain if the device/file doesn't exist */
 int ifexists = 0;
 
-extern char version[];
 char *progname;
 
 static struct option longswaponopts[] = {
@@ -70,29 +75,6 @@ swapoff_usage(FILE *fp, int n) {
 		progname, progname, progname);
 	exit(n);
 }
-
-#ifdef SWAPON_HAS_TWO_ARGS
-#define SWAPON_NEEDS_TWO_ARGS
-#endif
-
-#ifdef SWAPON_NEEDS_TWO_ARGS
-#ifdef SWAPON_HAS_TWO_ARGS
-/* libc is OK */
-#include <unistd.h>
-#else
-/* We want a swapon with two args, but have an old libc.
-   Build the kernel call by hand. */
-#include <linux/unistd.h>
-static
-_syscall2(int,  swapon,  const char *,  path, int, flags);
-static
-_syscall1(int,  swapoff,  const char *,  path);
-#endif
-#else
-/* just do as libc says */
-#include <unistd.h>
-#endif
-
 
 /*
  * contents of /proc/swaps
@@ -137,9 +119,17 @@ read_proc_swaps(void) {
 static int
 is_in_proc_swaps(const char *fname) {
 	int i;
+	char canonical[PATH_MAX + 2];
+
+	if (!myrealpath(fname, canonical, PATH_MAX + 1)) {
+		fprintf(stderr, _("%s: cannot canonicalize %s: %s\n"),
+			progname, fname, strerror(errno));
+		strncpy(canonical, fname, PATH_MAX + 1);
+		*(canonical + (PATH_MAX + 1)) = '\0';
+	}
 
 	for (i = 0; i < numSwaps; i++)
-		if (swapFiles[i] && !strcmp(fname, swapFiles[i]))
+		if (swapFiles[i] && !strcmp(canonical, swapFiles[i]))
 			return 1;
 	return 0;
 }
@@ -151,10 +141,10 @@ display_summary(void)
        char line[1024] ;
 
        if ((swaps = fopen(PROC_SWAPS, "r")) == NULL) {
-       	       int errsv = errno;
+               int errsv = errno;
                fprintf(stderr, "%s: %s: %s\n", progname, PROC_SWAPS,
 			strerror(errsv));
-               return -1 ; 
+               return -1;
        }
 
        while (fgets(line, sizeof(line), swaps))
@@ -173,7 +163,7 @@ do_swapon(const char *orig_special, int prio) {
 	if (verbose)
 		printf(_("%s on %s\n"), progname, orig_special);
 
-	special = mount_get_devname(orig_special);
+	special = fsprobe_get_devname(orig_special);
 	if (!special) {
 		fprintf(stderr, _("%s: cannot find the device for %s\n"),
 			progname, orig_special);
@@ -212,7 +202,6 @@ do_swapon(const char *orig_special, int prio) {
 		}
 	}
 
-#ifdef SWAPON_NEEDS_TWO_ARGS
 	{
 		int flags = 0;
 
@@ -227,9 +216,7 @@ do_swapon(const char *orig_special, int prio) {
 #endif
 		status = swapon(special, flags);
 	}
-#else
-	status = swapon(special);
-#endif
+
 	if (status < 0) {
 		int errsv = errno;
 		fprintf(stderr, "%s: %s: %s\n",
@@ -248,13 +235,13 @@ cannot_find(const char *special) {
 
 static int
 swapon_by_label(const char *label, int prio) {
-	const char *special = mount_get_devname_by_label(label);
+	const char *special = fsprobe_get_devname_by_label(label);
 	return special ? do_swapon(special, prio) : cannot_find(label);
 }
 
 static int
 swapon_by_uuid(const char *uuid, int prio) {
-	const char *special = mount_get_devname_by_uuid(uuid);
+	const char *special = fsprobe_get_devname_by_uuid(uuid);
 	return special ? do_swapon(special, prio) : cannot_find(uuid);
 }
 
@@ -265,7 +252,7 @@ do_swapoff(const char *orig_special, int quiet) {
 	if (verbose)
 		printf(_("%s on %s\n"), progname, orig_special);
 
-	special = mount_get_devname(orig_special);
+	special = fsprobe_get_devname(orig_special);
 	if (!special)
 		return cannot_find(orig_special);
 
@@ -286,13 +273,13 @@ do_swapoff(const char *orig_special, int quiet) {
 
 static int
 swapoff_by_label(const char *label, int quiet) {
-	const char *special = mount_get_devname_by_label(label);
+	const char *special = fsprobe_get_devname_by_label(label);
 	return special ? do_swapoff(special, quiet) : cannot_find(label);
 }
 
 static int
 swapoff_by_uuid(const char *uuid, int quiet) {
-	const char *special = mount_get_devname_by_uuid(uuid);
+	const char *special = fsprobe_get_devname_by_uuid(uuid);
 	return special ? do_swapoff(special, quiet) : cannot_find(uuid);
 }
 
@@ -321,7 +308,7 @@ swapon_all(void) {
 		if (!streq(fstab->mnt_type, MNTTYPE_SWAP))
 			continue;
 
-		special = mount_get_devname(orig_special);
+		special = fsprobe_get_devname(orig_special);
 		if (!special)
 			continue;
 
@@ -329,7 +316,7 @@ swapon_all(void) {
 		    (!ifexists || !access(special, R_OK))) {
 			/* parse mount options; */
 			char *opt, *opts = strdup(fstab->mnt_opts);
-	   
+
 			for (opt = strtok(opts, ","); opt != NULL;
 			     opt = strtok(NULL, ",")) {
 				if (strncmp(opt, "pri=", 4) == 0)
@@ -394,7 +381,7 @@ main_swapon(int argc, char *argv[]) {
 			++verbose;
 			break;
 		case 'V':		/* version */
-			printf("%s: %s\n", progname, version);
+			printf("%s: (%s)\n", progname, PACKAGE_STRING);
 			exit(0);
 		case 0:
 			break;
@@ -446,7 +433,7 @@ main_swapoff(int argc, char *argv[]) {
 			++verbose;
 			break;
 		case 'V':		/* version */
-			printf("%s: %s\n", progname, version);
+			printf("%s (%s)\n", progname, PACKAGE_STRING);
 			exit(0);
 		case 'L':
 			addl(optarg);

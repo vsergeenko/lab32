@@ -66,15 +66,15 @@
 #include <locale.h>
 #include "errs.h"
 #include "nls.h"
-#include "../defines.h"
 
-#if defined(HAVE_ncurses)
+#if defined(HAVE_NCURSES)
 
-#if NCH
+#ifdef HAVE_NCURSES_H
 #include <ncurses.h>
-#else
-#include <curses.h>
+#elif defined(HAVE_NCURSES_NCURSES_H)
+#include <ncurses/ncurses.h>
 #endif
+
 #include <term.h>                       /* include after <curses.h> */
 
 static void
@@ -87,12 +87,16 @@ my_putstring(char *s) {
      putp(s);
 }
 
-static char *
+static const char *
 my_tgetstr(char *s, char *ss) {
-     return tigetstr(ss);
+    const char* ret = tigetstr(ss);
+    if (!ret || ret==(char*)-1)
+        return "";
+    else
+        return ret;
 }
 
-#elif defined(HAVE_termcap)
+#elif defined(HAVE_LIBTERMCAP)
 
 #include <termcap.h>
 
@@ -110,16 +114,31 @@ my_putstring(char *s) {
      tputs (s, 1, putchar);
 }
 
-static char *
+static const char *
 my_tgetstr(char *s, char *ss) {
-     return tgetstr(s, &strbuf);
+    const char* ret = tgetstr(s, &strbuf);
+    if (!ret)
+        return "";
+    else
+        return ret;
+}
+
+#else /* ! (HAVE_LIBTERMCAP || HAVE_NCURSES) */
+
+static void
+my_putstring(char *s) {
+     fputs(s, stdout);
 }
 
 #endif
+
+
 const char	*term="";
 const char	*Senter="", *Sexit="";/* enter and exit standout mode */
+int		Slen;		/* strlen of Senter+Sexit */
+char		*Hrow;		/* pointer to highlighted row in month */
 
-#ifdef HAVE_langinfo_h
+#ifdef HAVE_LANGINFO_H
 # include <langinfo.h>
 #else
 # include <localeinfo.h>	/* libc4 only */
@@ -255,13 +274,14 @@ main(int argc, char **argv) {
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-#if defined(HAVE_ncurses) || defined(HAVE_termcap)
+#if defined(HAVE_NCURSES) || defined(HAVE_LIBTERMCAP)
 	if ((term = getenv("TERM"))) {
 		int ret;
 		my_setupterm(term, 1, &ret);
 		if (ret > 0) {
 			Senter = my_tgetstr("so","smso");
 			Sexit = my_tgetstr("se","rmso");
+			Slen = strlen(Senter) + strlen(Sexit);
 		}
 	}
 #endif
@@ -283,7 +303,7 @@ main(int argc, char **argv) {
  * At some future time this may become -s for Sunday, -m for Monday,
  * no option for glibc-determined locale-dependent version.
  */
-#ifdef HAVE_langinfo_h
+#ifdef HAVE_LANGINFO_H
 	week1stday = (int)(nl_langinfo(_NL_TIME_FIRST_WEEKDAY))[0];
 #endif
 #endif
@@ -311,7 +331,7 @@ main(int argc, char **argv) {
 			break;
 		case 'V':
 			printf(_("%s from %s\n"),
-			       progname, util_linux_version);
+			       progname, PACKAGE_STRING);
 			return 0;
 		case '?':
 		default:
@@ -355,7 +375,7 @@ main(int argc, char **argv) {
 	exit(0);
 }
 
-#ifndef ENABLE_WIDECHAR
+#ifndef HAVE_WIDECHAR
 static char *eos(char *s) {
 	while (s && *s)
 		s++;
@@ -366,55 +386,51 @@ static char *eos(char *s) {
 void headers_init(void)
 {
   int i, wd;
-#ifdef ENABLE_WIDECHAR
+#ifdef HAVE_WIDECHAR
   wchar_t day_headings_wc[22],j_day_headings_wc[29];
-  wchar_t wd_wc[10];
+  char *cur_dh = day_headings, *cur_j_dh = j_day_headings;
+
+  wcscpy(day_headings_wc, L"");
+  wcscpy(j_day_headings_wc, L"");
 #endif
 
   strcpy(day_headings,"");
   strcpy(j_day_headings,"");
-#ifdef ENABLE_WIDECHAR
-  wcscpy(day_headings_wc,L"");
-  wcscpy(j_day_headings_wc,L"");
-#endif
 
-#ifdef HAVE_langinfo_h
+#ifdef HAVE_LANGINFO_H
 # define weekday(wd)	nl_langinfo(ABDAY_1+wd)
 #else
 # define weekday(wd)	_time_info->abbrev_wkday[wd]
 #endif
 
   for(i = 0 ; i < 7 ; i++ ) {
+     ssize_t space_left;
      wd = (i + week1stday) % 7;
-#ifdef ENABLE_WIDECHAR
-     mbstowcs(wd_wc,weekday(wd),10);
-     if (wcswidth(wd_wc,10) < 3)
-	     wcscat(j_day_headings_wc,L" ");
-     if (wcswidth(wd_wc,10) < 2) {
-	     wcscat(day_headings_wc, L" ");
-	     wcscat(j_day_headings_wc, L" ");
-     }
-     wcsncat(day_headings_wc,wd_wc,2);
-     wcsncat(j_day_headings_wc,wd_wc,3);
-     wcscat(day_headings_wc, L" ");
-     wcscat(j_day_headings_wc, L" ");
+#ifdef HAVE_WIDECHAR
+     swprintf(day_headings_wc, SIZE(day_headings_wc), L"%1.2s ", weekday(wd));
+     swprintf(j_day_headings_wc, SIZE(j_day_headings_wc), L"%3.3s ", weekday(wd));
+
+     space_left = sizeof(day_headings) - (cur_dh - day_headings);
+     if(space_left <= 0)
+	     break;
+     cur_dh += wcstombs(cur_dh, day_headings_wc, space_left);
+
+     space_left = sizeof(j_day_headings)-(cur_j_dh-j_day_headings);
+     if(space_left <= 0)
+	     break;
+     cur_j_dh +=  wcstombs(cur_j_dh,j_day_headings_wc, space_left);
 #else
      sprintf(eos(day_headings), "%2.2s ", weekday(wd));
      sprintf(eos(j_day_headings), "%3.3s ", weekday(wd));
 #endif
   }
 
-#ifdef ENABLE_WIDECHAR
-  wcstombs(day_headings,day_headings_wc,sizeof(day_headings));
-  wcstombs(j_day_headings,j_day_headings_wc,sizeof(j_day_headings));
-#endif
-
   trim_trailing_spaces(day_headings);
   trim_trailing_spaces(j_day_headings);
 #undef weekday
 
   for (i = 0; i < 12; i++) {
-#ifdef HAVE_langinfo_h
+#ifdef HAVE_LANGINFO_H
      full_month[i] = nl_langinfo(MON_1+i);
 #else
      full_month[i] = _time_info->full_month[i];
@@ -442,11 +458,18 @@ do_monthly(int day, int month, int year, struct fmt_st *out) {
 	sprintf(out->s[1],"%s",
 		julian ? j_day_headings : day_headings);
 	for (row = 0; row < 6; row++) {
-		for (col = 0, p = lineout; col < 7; col++)
-			p = ascii_day(p, days[row * 7 + col]);
+		int has_hl = 0;
+		for (col = 0, p = lineout; col < 7; col++) {
+			int xd = days[row * 7 + col];
+			if (xd != SPACE && (xd & TODAY_FLAG))
+				has_hl = 1;
+			p = ascii_day(p, xd);
+		}
 		*p = '\0';
 		trim_trailing_spaces(lineout);
 		sprintf(out->s[row+2], "%s", lineout);
+		if (has_hl)
+			Hrow = out->s[row+2];
 	}
 }
 
@@ -457,11 +480,8 @@ monthly(int day, int month, int year) {
 
 	do_monthly(day, month, year, &out);
 	for (i = 0; i < FMT_ST_LINES; i++) {
-#if defined(HAVE_ncurses) || defined(HAVE_termcap)
-		my_putstring(out.s[i]);putchar('\n');
-#else
-		puts(out.s[i]);
-#endif
+		my_putstring(out.s[i]);
+		putchar('\n');
 	}
 }
 
@@ -494,19 +514,26 @@ monthly3(int day, int month, int year) {
 	do_monthly(day, prev_month, prev_year, &out_prev);
 	do_monthly(day, month,      year,      &out_curm);
 	do_monthly(day, next_month, next_year, &out_next);
+
         width = (julian ? J_WEEK_LEN : WEEK_LEN) -1;
 	for (i = 0; i < 2; i++)
 		printf("%s  %s  %s\n", out_prev.s[i], out_curm.s[i], out_next.s[i]);
 	for (i = 2; i < FMT_ST_LINES; i++) {
-		snprintf(lineout, SIZE(lineout), "%-*s  %-*s  %-*s\n",
-		       width, out_prev.s[i],
-		       width, out_curm.s[i],
-		       width, out_next.s[i]);
-#if defined(HAVE_ncurses) || defined(HAVE_termcap)
-		my_putstring(lineout);
-#else
-		fputs(lineout,stdout);
+		int w1, w2, w3;
+		w1 = w2 = w3 = width;
+
+#if defined(HAVE_NCURSES) || defined(HAVE_LIBTERMCAP)
+                /* adjust width to allow for non printable characters */
+                w1 += (out_prev.s[i] == Hrow ? Slen : 0);
+                w2 += (out_curm.s[i] == Hrow ? Slen : 0);
+                w3 += (out_next.s[i] == Hrow ? Slen : 0);
 #endif
+		snprintf(lineout, SIZE(lineout), "%-*s  %-*s  %-*s\n",
+		       w1, out_prev.s[i],
+		       w2, out_curm.s[i],
+		       w3, out_next.s[i]);
+
+		my_putstring(lineout);
 	}
 }
 
@@ -539,11 +566,8 @@ j_yearly(int day, int year) {
 			}
 			*p = '\0';
 			trim_trailing_spaces(lineout);
-#if defined(HAVE_ncurses) || defined(HAVE_termcap)
-			my_putstring(lineout);putchar('\n');
-#else
-			puts(lineout);
-#endif
+			my_putstring(lineout);
+			putchar('\n');
 		}
 	}
 	printf("\n");
@@ -579,14 +603,11 @@ yearly(int day, int year) {
 			}
 			*p = '\0';
 			trim_trailing_spaces(lineout);
-#if defined(HAVE_ncurses) || defined(HAVE_termcap)
-                        my_putstring(lineout);putchar('\n');
-#else
-                        puts(lineout);
-#endif
+			my_putstring(lineout);
+			putchar('\n');
 		}
 	}
-	printf("\n");
+	putchar('\n');
 }
 
 /*
@@ -723,7 +744,7 @@ trim_trailing_spaces(s)
 void
 center_str(const char* src, char* dest, size_t dest_size, int width)
 {
-#ifdef ENABLE_WIDECHAR
+#ifdef HAVE_WIDECHAR
 	wchar_t str_wc[FMT_ST_CHARS];
 #endif
 	char str[FMT_ST_CHARS];
@@ -732,7 +753,7 @@ center_str(const char* src, char* dest, size_t dest_size, int width)
 
 	len = strlen(src);
 
-#ifdef ENABLE_WIDECHAR
+#ifdef HAVE_WIDECHAR
 	if (mbstowcs(str_wc, src, FMT_ST_CHARS) > 0) {
 		wide_char_enabled = 1;
 		len = wcswidth(str_wc, SIZE(str_wc));
@@ -741,7 +762,7 @@ center_str(const char* src, char* dest, size_t dest_size, int width)
 	if (len > width) {
 		str_to_print=str;
 		if (wide_char_enabled) {
-#ifdef ENABLE_WIDECHAR
+#ifdef HAVE_WIDECHAR
 			str_wc[width]=L'\0';
 			wcstombs(str, str_wc, SIZE(str));
 #endif

@@ -18,6 +18,11 @@ has four (main) uses: list the size of a partition, list the partitions
 on a device, check the partitions on a device, and - very dangerous -
 repartition a device.
 
+.B sfdisk
+doesn't understand GUID Partition Table (GPT) and
+it is not designed for large partitions. In particular case use more advanced GNU
+.B parted(8).
+
 .SS "List Sizes"
 .BI "sfdisk \-s " partition
 gives the size of
@@ -550,3 +555,6 @@ There is no support for non-DOS partition types.
 .BR fdisk (8),
 .BR mkfs (8),
 .BR parted (8)
+.SH AVAILABILITY
+The sfdisk command is part of the util-linux-ng package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux-ng/.

@@ -25,6 +25,7 @@
 #include <time.h>
 #include <pwd.h>
 #include <grp.h>
+#include <unistd.h>
 #include "nls.h"
 
 /* X/OPEN tells us to use <sys/{types,ipc,sem}.h> for semctl() */
@@ -279,8 +280,8 @@ void do_shm (char format)
 			(unsigned long) shminfo.shmmni);
 		printf (_("max seg size (kbytes) = %lu\n"),
 			(unsigned long) (shminfo.shmmax >> 10));
-		printf (_("max total shared memory (pages) = %lu\n"),
-			(unsigned long) shminfo.shmall);
+		printf (_("max total shared memory (kbytes) = %llu\n"),
+			sysconf(_SC_PAGESIZE) / 1024 * (unsigned long long) shminfo.shmall);
 		printf (_("min seg size (bytes) = %lu\n"),
 			(unsigned long) shminfo.shmmin);
 		return;
@@ -422,9 +423,9 @@ void do_sem (char format)
 		break;
 
 	case TIME:
-		printf (_("------ Shared Memory Operation/Change Times --------\n"));
+		printf (_("------ Semaphore Operation/Change Times --------\n"));
 		printf (_("%-8s %-10s %-26.24s %-26.24s\n"),
-			_("shmid"),_("owner"),_("last-op"),_("last-changed"));
+			_("semid"),_("owner"),_("last-op"),_("last-changed"));
 		break;
 
 	case PID:

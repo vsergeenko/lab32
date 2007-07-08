@@ -33,8 +33,6 @@
  */
 
 #define PROGNAME "sfdisk"
-#define VERSION "3.08"
-#define DATE "040824"
 
 #include <stdio.h>
 #include <stdlib.h>		/* atoi, free */
@@ -51,6 +49,8 @@
 #include <linux/unistd.h>	/* _syscall */
 #include "nls.h"
 #include "common.h"
+
+#include "gpt.h"
 
 #define SIZE(a)	(sizeof(a)/sizeof(a[0]))
 
@@ -164,36 +164,17 @@ fatal(char *s, ...) {
 /*
  * sseek: seek to specified sector - return 0 on failure
  *
- * For >4GB disks lseek needs a > 32bit arg, and we have to use llseek.
- * On the other hand, a 32 bit sector number is OK until 2TB.
- * The routines _llseek and sseek below are the only ones that
- * know about the loff_t type.
- *
  * Note: we use 512-byte sectors here, irrespective of the hardware ss.
  */
-#undef use_lseek
-#if defined (__alpha__) || defined (__ia64__) || defined (__x86_64__) || defined (__s390x__)
-#define use_lseek
-#endif
-
-#ifndef use_lseek
-static __attribute__used
-_syscall5(int,  _llseek,  unsigned int,  fd, ulong, hi, ulong, lo,
-       loff_t *, res, unsigned int, wh);
-#endif
 
 static int
 sseek(char *dev, unsigned int fd, unsigned long s) {
-    loff_t in, out;
-    in = ((loff_t) s << 9);
+    off_t in, out;
+    in = ((off_t) s << 9);
     out = 1;
 
-#ifndef use_lseek
-    if (_llseek (fd, in>>32, in & 0xffffffff, &out, SEEK_SET) != 0) {
-#else
     if ((out = lseek(fd, in, SEEK_SET)) != in) {
-#endif
-	perror("llseek");
+	perror("lseek");
 	error(_("seek error on %s - cannot seek to %lu\n"), dev, s);
 	return 0;
     }
@@ -488,8 +469,8 @@ get_cylindersize(char *dev, int fd, int silent) {
 
     R = get_geometry(dev, fd, silent);
 
-    B.heads = (U.heads ? U.heads : R.heads);
-    B.sectors = (U.sectors ? U.sectors : R.sectors);
+    B.heads = (U.heads ? U.heads : R.heads ? R.heads : 255);
+    B.sectors = (U.sectors ? U.sectors : R.sectors ? R.sectors : 63);
     B.cylinders = (U.cylinders ? U.cylinders : R.cylinders);
 
     B.cylindersize = B.heads * B.sectors;
@@ -993,12 +974,12 @@ static struct geometry
 get_fdisk_geometry_one(struct part_desc *p) {
     struct geometry G;
 
+    memset(&G, 0, sizeof(struct geometry));
     chs b = p->p.end_chs;
     longchs bb = chs_to_longchs(b);
     G.heads = bb.h+1;
     G.sectors = bb.s;
     G.cylindersize = G.heads*G.sectors;
-    G.cylinders = G.start = 0;
     return G;
 }
 
@@ -1008,8 +989,8 @@ get_fdisk_geometry(struct disk_desc *z) {
     int pno, agree;
     struct geometry G0, G;
 
+    memset(&G0, 0, sizeof(struct geometry));
     agree = 0;
-    G0.heads = G0.sectors = 0;
     for (pno=0; pno < z->partno; pno++) {
 	p = &(z->partitions[pno]);
 	if (p->size != 0 && p->p.sys_type != 0) {
@@ -1725,7 +1706,7 @@ read_stdin(unsigned char **fields, unsigned char *line, int fieldssize, int line
     fno = 0;
 
     /* read a line from stdin */
-    lp = fgets(line+2, linesize, stdin);
+    lp = fgets(line+2, linesize-2, stdin);
     if (lp == NULL) {
 	eof = 1;
 	return RD_EOF;
@@ -2299,9 +2280,7 @@ read_input(char *dev, int interactive, struct disk_desc *z) {
  */
 
 static void version(void) {
-    printf("%s %s %s (aeb@cwi.nl, %s) from util-linux-"
-	   UTIL_LINUX_VERSION "\n",
-	   PROGNAME, _("version"), VERSION, DATE);
+    printf("sfdisk (%s)", PACKAGE_STRING);
 }
 
 static void
@@ -2434,19 +2413,6 @@ is_ide_cdrom_or_tape(char *device) {
 	return is_ide;
 }
 
-static int
-is_probably_full_disk(char *name) {
-	struct hd_geometry geometry;
-	int fd, i = 0;
-
-	fd = open(name, O_RDONLY);
-	if (fd >= 0) {
-		i = ioctl(fd, HDIO_GETGEO, &geometry);
-		close(fd);
-	}
-	return (fd >= 0 && i == 0 && geometry.start == 0);
-}
-
 #define PROC_PARTITIONS	"/proc/partitions"
 static FILE *procf = NULL;
 
@@ -2479,6 +2445,23 @@ nextproc(void) {
 	procf = NULL;
 	return NULL;
 }	
+
+static void
+gpt_warning(char *dev, int warn_only)
+{
+	if (force)
+		warn_only = 1;
+
+	if (dev && gpt_probe_signature_devname(dev)) {
+		fflush(stdout);
+		fprintf(stderr, _("\nWARNING: GPT (GUID Partition Table) detected on '%s'! "
+			"The util sfdisk doesn't support GPT. Use GNU Parted.\n\n"), dev);
+		if (!warn_only) {
+			fprintf(stderr, _("Use the --force flag to overrule this check.\n"));
+			exit(1);
+		}
+	}
+}
 
 static void do_list(char *dev, int silent);
 static void do_size(char *dev, int silent);
@@ -2625,6 +2608,7 @@ main(int argc, char **argv) {
 	while ((dev = nextproc()) != NULL) {
 	    if (is_ide_cdrom_or_tape(dev))
 		continue;
+	    gpt_warning(dev, 1);
 	    if (opt_out_geom)
 		do_geom(dev, 1);
 	    if (opt_out_pt_geom)
@@ -2652,6 +2636,7 @@ main(int argc, char **argv) {
 
     if (opt_list || opt_out_geom || opt_out_pt_geom || opt_size || verify) {
 	while (optind < argc) {
+	    gpt_warning(argv[optind], 1);
 	    if (opt_out_geom)
 	      do_geom(argv[optind], 0);
 	    if (opt_out_pt_geom)
@@ -2664,6 +2649,9 @@ main(int argc, char **argv) {
 	}
 	exit(exit_status);
     }
+
+    if (optind != argc-1)
+	gpt_warning(argv[optind], 0);
 
     if (activate) {
 	do_activate(argv+optind, argc-optind, activatearg);
@@ -2684,7 +2672,7 @@ main(int argc, char **argv) {
 		     (optind == argc-2) ? 0 : argv[optind+2]);
 	exit(exit_status);
     }
-      
+
     if (optind != argc-1)
       fatal(_("can specify only one device (except with -l or -s)\n"));
     dev = argv[optind];

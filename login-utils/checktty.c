@@ -21,34 +21,15 @@
 #include <malloc.h>
 #include <netdb.h>
 #include <sys/syslog.h>
+#include <ctype.h>
 #include "nls.h"
 
-#ifdef __linux__
-#  include <sys/sysmacros.h>
-#  include <linux/major.h>
-#endif
+#include <sys/sysmacros.h>
+#include <linux/major.h>
 
 #include "pathnames.h"
 #include "login.h"
 #include "xstrncpy.h"
-
-#ifdef TESTING
-char hostaddress[4];
-char *hostname;
-
-void 
-badlogin(const char *s)
-{
-    printf("badlogin: %s\n", s);
-}
-
-void
-sleepexit(int x)
-{
-    printf("sleepexit %d\n", x);
-    exit(1);
-}
-#endif
 
 static gid_t mygroups[NGROUPS];
 static int   num_groups;
@@ -145,7 +126,6 @@ isapty(const char *tty)
 	    return 0;
     sprintf(devname, "/dev/%s", tty);
 
-#if defined(__linux__)
     if((stat(devname, &stb) >= 0) && S_ISCHR(stb.st_mode)) {
 	    int majordev = major(stb.st_rdev);
 
@@ -167,26 +147,23 @@ isapty(const char *tty)
 #endif
 
     }
-#endif
     return 0;
 }
 
-/* match the hostname hn against the pattern pat */
+
+/* IPv4 -- pattern is x.x.x.x/y.y.y.y (net/mask)*/
 static int
-hnmatch(const char *hn, const char *pat)
+hnmatch_ip4(const char *pat)
 {
-    int x1, x2, x3, x4, y1, y2, y3, y4;
-    unsigned long p, mask, a;
-    unsigned char *ha;
-    int n, m;
+	int x1, x2, x3, x4, y1, y2, y3, y4;
+	unsigned long p, mask, a;
+	unsigned char *ha;
 
-    if ((hn == NULL) && (strcmp(pat, "localhost") == 0)) return 1;
-    if ((hn == NULL) || hn[0] == 0) return 0;
-
-    if (pat[0] >= '0' && pat[0] <= '9') {
 	/* pattern is an IP QUAD address and a mask x.x.x.x/y.y.y.y */
-	sscanf(pat, "%d.%d.%d.%d/%d.%d.%d.%d", &x1, &x2, &x3, &x4,
-	       &y1, &y2, &y3, &y4);
+	if (sscanf(pat, "%d.%d.%d.%d/%d.%d.%d.%d",
+			&x1, &x2, &x3, &x4, &y1, &y2, &y3, &y4) < 8)
+		return 0;
+
 	p = (((unsigned long)x1<<24)+((unsigned long)x2<<16)
 	     +((unsigned long)x3<<8)+((unsigned long)x4));
 	mask = (((unsigned long)y1<<24)+((unsigned long)y2<<16)
@@ -199,14 +176,165 @@ hnmatch(const char *hn, const char *pat)
 	a = (((unsigned long)ha[0]<<24)+((unsigned long)ha[1]<<16)
 	     +((unsigned long)ha[2]<<8)+((unsigned long)ha[3]));
 	return ((p & mask) == (a & mask));
-    } else {
-	/* pattern is a suffix of a FQDN */
-	n = strlen(pat);
-	m = strlen(hn);
-	if (n > m) return 0;
-	return (strcasecmp(pat, hn + m - n) == 0);
-    }
 }
+
+/* IPv6 -- pattern is [hex:hex:....]/number ([net]/mask) */
+static int
+hnmatch_ip6(const char *pat)
+{
+	char *patnet;
+	char *patmask;
+	struct in6_addr addr;
+	struct addrinfo hints, *res;
+	struct sockaddr_in6 net;
+	int mask_len, i = 0;
+	char *p;
+
+	if (pat == NULL || *pat != '[')
+		return 0;
+
+	memcpy(&addr, hostaddress, sizeof(addr));
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE | AI_NUMERICHOST;
+
+	patnet = strdup(pat);
+
+	/* match IPv6 address against [netnumber]/prefixlen */
+	if (!(p = strchr(patnet, ']')))
+		goto mismatch;
+
+	*p++ = '\0';
+
+	if (! (*p == '/' && isdigit((unsigned char) *(p + 1))))
+		goto mismatch;
+
+	patmask = p + 1;
+
+	/* prepare net address */
+	if (getaddrinfo(patnet + 1, NULL, &hints, &res) != 0)
+		goto mismatch;
+
+	memcpy(&net, res->ai_addr, sizeof(net));
+	freeaddrinfo(res);
+
+	/* convert mask to number */
+	if ((mask_len = atoi(patmask)) < 0 || mask_len > 128)
+		goto mismatch;
+
+	/* compare */
+	while (mask_len > 0) {
+		if (mask_len < 32) {
+			u_int32_t mask = htonl(~(0xffffffff >> mask_len));
+
+			if ((*(u_int32_t *)&addr.s6_addr[i] & mask) !=
+			    (*(u_int32_t *)&net.sin6_addr.s6_addr[i] & mask))
+				goto mismatch;
+			break;
+		}
+		if (*(u_int32_t *)&addr.s6_addr[i] !=
+		    *(u_int32_t *)&net.sin6_addr.s6_addr[i])
+			goto mismatch;
+		i += 4;
+		mask_len -= 32;
+	}
+
+	free(patnet);
+	return 1;
+
+mismatch:
+	free(patnet);
+	return 0;
+}
+
+/* match the hostname hn against the pattern pat */
+static int
+hnmatch(const char *hn, const char *pat)
+{
+
+	if ((hn == NULL) && (strcmp(pat, "localhost") == 0))
+		return 1;
+	if ((hn == NULL) || *hn == '\0')
+		return 0;
+
+	if (*pat >= '0' && *pat <= '9')
+		return hostfamily == AF_INET ? hnmatch_ip4(pat) : 0;
+	else if (*pat == '[')
+		return hostfamily == AF_INET6 ? hnmatch_ip6(pat) : 0;
+	else {
+		/* pattern is a suffix of a FQDN */
+		int 	n = strlen(pat),
+			m = strlen(hn);
+
+		if (n > m)
+			return 0;
+		return (strcasecmp(pat, hn + m - n) == 0);
+	}
+}
+
+#ifdef MAIN_TEST_CHECKTTY
+
+char	hostaddress[16];
+sa_family_t hostfamily;
+char	*hostname;
+void	sleepexit(int eval) {}		/* dummy for this test */
+void	badlogin(const char *s) {}	/* dummy for this test */
+
+int
+main(int argc, char **argv)
+{
+	struct addrinfo hints, *info = NULL;
+	struct addrexp {
+		const char *range;
+		const char *ip;
+	} alist[] = {
+		{ "130.225.16.0/255.255.254.0",	"130.225.16.1" },
+		{ "130.225.16.0/255.255.254.0",	"10.20.30.1" },
+		{ "130.225.0.0/255.254.0.0",	"130.225.16.1" },
+		{ "130.225.0.0/255.254.0.0",	"130.225.17.1" },
+		{ "130.225.0.0/255.254.0.0",	"150.160.170.180" },
+		{ "[3ffe:505:2:1::]/64",	"3ffe:505:2:1::" },
+		{ "[3ffe:505:2:1::]/64",	"3ffe:505:2:2::" },
+		{ "[3ffe:505:2:1::]/64",	"3ffe:505:2:1:ffff:ffff::" },
+		{ NULL, NULL }
+	}, *item;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_flags = AI_NUMERICHOST |  AI_PASSIVE | AI_ADDRCONFIG;
+	hints.ai_socktype = SOCK_STREAM;
+
+	for (item = alist; item->range; item++) {
+
+		printf("hnmatch() on %-30s <-- %-15s: ", item->range, item->ip);
+
+		if (getaddrinfo(item->ip, NULL, &hints, &info)==0 && info) {
+			if (info->ai_family == AF_INET)	{
+			    struct sockaddr_in *sa =
+				    	(struct sockaddr_in *) info->ai_addr;
+			    memcpy(hostaddress, &(sa->sin_addr),
+					sizeof(sa->sin_addr));
+			}
+			else if (info->ai_family == AF_INET6) {
+			    struct sockaddr_in6 *sa =
+				    	(struct sockaddr_in6 *) info->ai_addr;
+			    memcpy(hostaddress, &(sa->sin6_addr),
+					sizeof(sa->sin6_addr));
+			}
+			hostfamily = info->ai_family;
+			freeaddrinfo(info);
+			printf("%s\n", hnmatch("dummy", item->range) ?
+						"match" : "mismatch");
+		}
+		else
+			printf("getaddrinfo() failed\n");
+
+	}
+	return 0;
+}
+#endif /* MAIN_TEST_CHECKTTY */
 
 static char *wdays[] = { "sun", "mon", "tue", "wed", "thu", "fri", "sat" };
 
@@ -349,11 +477,7 @@ checktty(const char *user, const char *tty, struct passwd *pwd)
     int found_match = 0;
 
     /* no /etc/usertty, default to allow access */
-#ifdef TESTING
-    if (!(f = fopen("usertty", "r"))) return;
-#else
     if (!(f = fopen(_PATH_USERTTY, "r"))) return;
-#endif
 
     if (pwd == NULL) {
 	fclose(f);
@@ -439,13 +563,3 @@ checktty(const char *user, const char *tty, struct passwd *pwd)
        on all tty's */
     free_all(); /* JDS */
 }
-
-#ifdef TESTING
-main(int argc, char *argv[]) 
-{
-    struct passwd *pw;
-
-    pw = getpwnam(argv[1]);
-    checktty(argv[1], argv[2], pw);
-}
-#endif

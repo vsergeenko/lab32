@@ -1,4 +1,5 @@
 /* kd.c - KDGHWCLK stuff, possibly m68k only - deprecated */
+
 #ifndef __m68k__
 
 #include "clock.h"
@@ -16,7 +17,6 @@ probe_for_kd_clock() {
 #include <sysexits.h>
 #include <sys/ioctl.h>
 
-#include "../defines.h"		/* for HAVE_nanosleep */
 #include "clock.h"
 #include "nls.h"
 
@@ -44,7 +44,7 @@ static int
 synchronize_to_clock_tick_kd(void) {
 /*----------------------------------------------------------------------------
    Wait for the top of a clock tick by calling KDGHWCLK in a busy loop until
-   we see it.  
+   we see it.
 -----------------------------------------------------------------------------*/
   int i;
 
@@ -58,7 +58,7 @@ synchronize_to_clock_tick_kd(void) {
     outsyserr(_("KDGHWCLK ioctl to read time failed"));
     return 3;
   }
-	
+
   i = 0;
   do {
     /* Added by Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de> */
@@ -68,7 +68,7 @@ synchronize_to_clock_tick_kd(void) {
     /* Christian T. Steigies: 1 instead of 1000000 is still sufficient
        to keep the machine from freezing. */
 
-#ifdef HAVE_nanosleep
+#ifdef HAVE_NANOSLEEP
     struct timespec xsleep = { 0, 1 };
     nanosleep( &xsleep, NULL );
 #else
@@ -95,7 +95,7 @@ read_hardware_clock_kd(struct tm *tm) {
   Read the hardware clock and return the current time via <tm>
   argument.  Use ioctls to /dev/tty1 on what we assume is an m68k
   machine.
-  
+
   Note that we don't use /dev/console here.  That might be a serial
   console.
 -----------------------------------------------------------------------------*/
@@ -103,7 +103,7 @@ read_hardware_clock_kd(struct tm *tm) {
 
   if (ioctl(con_fd, KDGHWCLK, &t) == -1) {
     outsyserr(_("ioctl() failed to read time from %s"), con_fd_filename);
-    exit(EX_IOERR);
+    hwclock_exit(EX_IOERR);
   }
 
   tm->tm_sec  = t.sec;
@@ -139,7 +139,7 @@ set_hardware_clock_kd(const struct tm *new_broken_time) {
 
   if (ioctl(con_fd, KDSHWCLK, &t ) == -1) {
     outsyserr(_("ioctl KDSHWCLK failed"));
-    exit(1);
+    hwclock_exit(1);
   }
   return 0;
 }

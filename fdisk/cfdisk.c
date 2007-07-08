@@ -64,14 +64,14 @@
 #include <errno.h>
 #include <getopt.h>
 #include <fcntl.h>
-#ifdef SLCURSES
-  #include <slcurses.h>
-#else
-#if NCH
-  #include <ncurses.h>
-#else
-  #include <curses.h>
-#endif
+#ifdef HAVE_SLCURSES_H
+#include <slcurses.h>
+#elif defined(HAVE_SLANG_SLCURSES_H)
+#include <slang/slcurses.h>
+#elif defined(HAVE_NCURSES_H)
+#include <ncurses.h>
+#elif defined(HAVE_NCURSES_NCURSES_H)
+#include <ncurses/ncurses.h>
 #endif
 #include <signal.h>
 #include <math.h>
@@ -83,11 +83,7 @@
 #include "nls.h"
 #include "xstrncpy.h"
 #include "common.h"
-
-extern long long ext2_llseek(unsigned int fd, long long offset,
-			     unsigned int origin);
-
-#define VERSION UTIL_LINUX_VERSION
+#include "gpt.h"
 
 #define DEFAULT_DEVICE "/dev/hda"
 #define ALTERNATE_DEVICE "/dev/sda"
@@ -538,7 +534,7 @@ static void
 die_x(int ret) {
     signal(SIGINT, old_SIGINT);
     signal(SIGTERM, old_SIGTERM);
-#ifdef SLCURSES
+#if defined(HAVE_SLCURSES_H) || defined(HAVE_SLANG_SLCURSES_H)
     SLsmg_gotorc(LINES-1, 0);
     SLsmg_refresh();
 #else
@@ -551,16 +547,16 @@ die_x(int ret) {
 }
 
 static void
-read_sector(char *buffer, long long sect_num) {
-    if (ext2_llseek(fd, sect_num*SECTOR_SIZE, SEEK_SET) < 0)
+read_sector(unsigned char *buffer, long long sect_num) {
+    if (lseek(fd, sect_num*SECTOR_SIZE, SEEK_SET) < 0)
 	fatal(_("Cannot seek on disk drive"), 2);
     if (read(fd, buffer, SECTOR_SIZE) != SECTOR_SIZE)
 	fatal(_("Cannot read disk drive"), 2);
 }
 
 static void
-write_sector(char *buffer, long long sect_num) {
-    if (ext2_llseek(fd, sect_num*SECTOR_SIZE, SEEK_SET) < 0)
+write_sector(unsigned char *buffer, long long sect_num) {
+    if (lseek(fd, sect_num*SECTOR_SIZE, SEEK_SET) < 0)
 	fatal(_("Cannot seek on disk drive"), 2);
     if (write(fd, buffer, SECTOR_SIZE) != SECTOR_SIZE)
 	fatal(_("Cannot write disk drive"), 2);
@@ -587,7 +583,7 @@ get_dos_label(int i) {
 	long long offset;
 
 	offset = (p_info[i].first_sector + p_info[i].offset) * SECTOR_SIZE;
-	if (ext2_llseek(fd, offset, SEEK_SET) == offset
+	if (lseek(fd, offset, SEEK_SET) == offset
 	    && read(fd, &sector, sizeof(sector)) == sizeof(sector)) {
 		dos_copy_to_info(p_info[i].ostype, OSTYPESZ,
 				 sector+DOS_OSTYPE_OFFSET, DOS_OSTYPE_SZ);
@@ -672,7 +668,7 @@ get_linux_label(int i) {
 
 	offset = (p_info[i].first_sector + p_info[i].offset) * SECTOR_SIZE
 		+ 1024;
-	if (ext2_llseek(fd, offset, SEEK_SET) == offset
+	if (lseek(fd, offset, SEEK_SET) == offset
 	    && read(fd, &e2fsb, sizeof(e2fsb)) == sizeof(e2fsb)
 	    && e2fsb.s_magic[0] + (e2fsb.s_magic[1]<<8) == EXT2_SUPER_MAGIC) {
 		label = e2fsb.s_volume_name;
@@ -688,10 +684,10 @@ get_linux_label(int i) {
 	}
 
 	offset = (p_info[i].first_sector + p_info[i].offset) * SECTOR_SIZE + 0;
-	if (ext2_llseek(fd, offset, SEEK_SET) == offset
+	if (lseek(fd, offset, SEEK_SET) == offset
 	    && read(fd, &xfsb, sizeof(xfsb)) == sizeof(xfsb)
-	    && !strncmp(xfsb.s_magic, XFS_SUPER_MAGIC, 4)) {
-		label = xfsb.s_fname;
+	    && !strncmp((char *) xfsb.s_magic, XFS_SUPER_MAGIC, 4)) {
+		label = (char *) xfsb.s_fname;
 		for(j=0; j<XFSLABELSZ && j<LABELSZ && isprint(label[j]); j++)
 			p_info[i].volume_label[j] = label[j];
 		p_info[i].volume_label[j] = 0;
@@ -702,7 +698,7 @@ get_linux_label(int i) {
 	/* jfs? */
 	offset = (p_info[i].first_sector + p_info[i].offset) * SECTOR_SIZE
 		+ JFS_SUPER1_OFF;
-	if (ext2_llseek(fd, offset, SEEK_SET) == offset
+	if (lseek(fd, offset, SEEK_SET) == offset
 	    && read(fd, &jfsb, sizeof(jfsb)) == sizeof(jfsb)
 	    && !strncmp(jfsb.s_magic, JFS_MAGIC, strlen(JFS_MAGIC))) {
 		label = jfsb.s_label;
@@ -716,12 +712,12 @@ get_linux_label(int i) {
 	/* reiserfs? */
 	offset = (p_info[i].first_sector + p_info[i].offset) * SECTOR_SIZE
 		+ REISERFS_DISK_OFFSET_IN_BYTES;
-	if (ext2_llseek(fd, offset, SEEK_SET) == offset
+	if (lseek(fd, offset, SEEK_SET) == offset
 	    && read(fd, &reiserfsb, sizeof(reiserfsb)) == sizeof(reiserfsb)
 	    && has_reiserfs_magic_string(&reiserfsb, &reiserfs_is_3_6)) {
 		if (reiserfs_is_3_6) {
 			/* label only on version 3.6 onward */
-			label = reiserfsb.s_label;
+			label = (char *) reiserfsb.s_label;
 			for(j=0; j<REISERFSLABELSZ && j<LABELSZ &&
 				    isprint(label[j]); j++)
 				p_info[i].volume_label[j] = label[j];
@@ -1536,7 +1532,7 @@ get_kernel_geometry(void) {
 
 static int
 said_yes(char answer) {
-#ifdef HAVE_rpmatch
+#ifdef HAVE_RPMATCH
 	char reply[2];
 	int yn;
 
@@ -1673,6 +1669,13 @@ fill_p_info(void) {
     } else
 	 opentype = O_RDWR;
     opened = TRUE;
+
+    if (gpt_probe_signature_fd(fd)) {
+	 print_warning(_("Warning!!  Unsupported GPT (GUID Partition Table) detected. Use GNU Parted."));
+	 refresh();
+	 getch();
+	 clear_warning();
+    }
 
     /* Blocks are visible in more than one way:
        e.g. as block on /dev/hda and as block on /dev/hda3
@@ -1860,7 +1863,7 @@ write_part_table(void) {
 
 	 while (!done) {
 	      mvaddstr(COMMAND_LINE_Y, COMMAND_LINE_X,
-		       _("Are you sure you want write the partition table "
+		       _("Are you sure you want to write the partition table "
 		       "to disk? (yes or no): "));
 	      len = get_string(response, LINE_LENGTH, NULL);
 	      clear_warning();
@@ -1944,13 +1947,13 @@ fp_printf(FILE *fp, char *format, ...) {
 
 #define MAX_PER_LINE 16
 static void
-print_file_buffer(FILE *fp, char *buffer) {
+print_file_buffer(FILE *fp, unsigned char *buffer) {
     int i,l;
 
     for (i = 0, l = 0; i < SECTOR_SIZE; i++, l++) {
 	if (l == 0)
 	    fp_printf(fp, "0x%03X:", i);
-	fp_printf(fp, " %02X", (unsigned char) buffer[i]);
+	fp_printf(fp, " %02X", buffer[i]);
 	if (l == MAX_PER_LINE - 1) {
 	    fp_printf(fp, "\n");
 	    l = -1;
@@ -2100,7 +2103,7 @@ print_p_info(void) {
 	if (to_file) {
 	    if ((fp = fopen(fname, "w")) == NULL) {
 		char errstr[LINE_LENGTH];
-		sprintf(errstr, _("Cannot open file '%s'"), fname);
+		snprintf(errstr, LINE_LENGTH, _("Cannot open file '%s'"), fname);
 		print_warning(errstr);
 		return;
 	    }
@@ -2184,7 +2187,7 @@ print_part_table(void) {
 	if (to_file) {
 	    if ((fp = fopen(fname, "w")) == NULL) {
 		char errstr[LINE_LENGTH];
-		sprintf(errstr, _("Cannot open file '%s'"), fname);
+		snprintf(errstr, LINE_LENGTH, _("Cannot open file '%s'"), fname);
 		print_warning(errstr);
 		return;
 	    }
@@ -2638,9 +2641,9 @@ draw_screen(void) {
 	mvaddstr(WARNING_START, 0, line);
 
 
-    sprintf(line, "cfdisk %s", VERSION);
+    snprintf(line, COLS+1, "cfdisk (%s)", PACKAGE_STRING);
     mvaddstr(HEADER_START, (COLS-strlen(line))/2, line);
-    sprintf(line, _("Disk Drive: %s"), disk_device);
+    snprintf(line, COLS+1, _("Disk Drive: %s"), disk_device);
     mvaddstr(HEADER_START+2, (COLS-strlen(line))/2, line);
     {
 	    long long bytes = actual_size*(long long) SECTOR_SIZE;
@@ -2654,7 +2657,7 @@ draw_screen(void) {
 			    bytes, megabytes/K, (10*megabytes/K)%10);
     }
     mvaddstr(HEADER_START+3, (COLS-strlen(line))/2, line);
-    sprintf(line, _("Heads: %d   Sectors per Track: %d   Cylinders: %lld"),
+    snprintf(line, COLS+1, _("Heads: %d   Sectors per Track: %d   Cylinders: %lld"),
 	    heads, sectors, cylinders);
     mvaddstr(HEADER_START+4, (COLS-strlen(line))/2, line);
 
@@ -2955,7 +2958,7 @@ main(int argc, char **argv)
 	    }
 	    break;
 	case 'v':
-	    fprintf(stderr, "cfdisk %s\n", VERSION);
+	    fprintf(stderr, "cfdisk (%s)\n", PACKAGE_STRING);
 	    copyright();
 	    exit(0);
 	case 'z':

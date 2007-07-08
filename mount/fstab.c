@@ -9,12 +9,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
-#include "mntent.h"
+#include <sys/time.h>
+#include <time.h>
+#include "mount_mntent.h"
 #include "fstab.h"
 #include "sundries.h"
 #include "xmalloc.h"
-#include "mount_blkid.h"
-#include "paths.h"
+#include "fsprobe.h"
+#include "mount_paths.h"
 #include "nls.h"
 
 #define streq(s, t)	(strcmp ((s), (t)) == 0)
@@ -46,7 +48,7 @@ mtab_does_not_exist(void) {
 	return var_mtab_does_not_exist;
 }
 
-int
+static int
 mtab_is_a_symlink(void) {
 	get_mtab_info();
 	return var_mtab_is_a_symlink;
@@ -54,7 +56,7 @@ mtab_is_a_symlink(void) {
 
 int
 mtab_is_writable() {
-	static int ret = -1;
+	int fd;
 
 	/* Should we write to /etc/mtab upon an update?
 	   Probably not if it is a symlink to /proc/mounts, since that
@@ -63,15 +65,12 @@ mtab_is_writable() {
 	if (mtab_is_a_symlink())
 		return 0;
 
-	if (ret == -1) {
-		int fd = open(MOUNTED, O_RDWR | O_CREAT, 0644);
-		if (fd >= 0) {
-			close(fd);
-			ret = 1;
-		} else
-			ret = 0;
-	}
-	return ret;
+	fd = open(MOUNTED, O_RDWR | O_CREAT, 0644);
+	if (fd >= 0) {
+		close(fd);
+		return 1;
+	} else
+		return 0;
 }
 
 /* Contents of mtab and fstab ---------------------------------*/
@@ -103,16 +102,24 @@ my_free(const void *s) {
 }
 
 static void
-discard_mntentchn(struct mntentchn *mc0) {
-	struct mntentchn *mc, *mc1;
-
-	for (mc = mc0->nxt; mc && mc != mc0; mc = mc1) {
-		mc1 = mc->nxt;
+my_free_mc(struct mntentchn *mc) {
+	if (mc) {
 		my_free(mc->m.mnt_fsname);
 		my_free(mc->m.mnt_dir);
 		my_free(mc->m.mnt_type);
 		my_free(mc->m.mnt_opts);
 		free(mc);
+	}
+}
+
+
+static void
+discard_mntentchn(struct mntentchn *mc0) {
+	struct mntentchn *mc, *mc1;
+
+	for (mc = mc0->nxt; mc && mc != mc0; mc = mc1) {
+		mc1 = mc->nxt;
+		my_free_mc(mc);
 	}
 }
 
@@ -285,9 +292,12 @@ has_label(const char *device, const char *label) {
 	const char *devlabel;
 	int ret;
 
-	devlabel = mount_get_volume_label_by_spec(device);
+	devlabel = fsprobe_get_label_by_devname(device);
+	if (!devlabel)
+		return 0;
+
 	ret = !strcmp(label, devlabel);
-	/* free(devlabel); */
+	my_free(devlabel);
 	return ret;
 }
 
@@ -296,78 +306,131 @@ has_uuid(const char *device, const char *uuid){
 	const char *devuuid;
 	int ret;
 
-	devuuid = mount_get_devname_by_uuid(device);
+	devuuid = fsprobe_get_uuid_by_devname(device);
+	if (!devuuid)
+		return 0;
+
 	ret = !strcmp(uuid, devuuid);
-	/* free(devuuid); */
+	my_free(devuuid);
 	return ret;
 }
 
-/* Find the entry (SPEC,FILE) in fstab */
+/* Find the entry (SPEC,DIR) in fstab -- spec and dir must be canonicalized! */
 struct mntentchn *
-getfsspecfile (const char *spec, const char *file) {
+getfs_by_specdir (const char *spec, const char *dir) {
 	struct mntentchn *mc, *mc0;
 
 	mc0 = fstab_head();
 
-	/* first attempt: names occur precisely as given */
-	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt)
-		if (streq(mc->m.mnt_dir, file) &&
-		    streq(mc->m.mnt_fsname, spec))
-			return mc;
-
-	/* second attempt: names found after symlink resolution */
-	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt)
-		if ((streq(mc->m.mnt_dir, file) ||
-		     streq(canonicalize(mc->m.mnt_dir), file))
-		    && (streq(mc->m.mnt_fsname, spec) ||
-			streq(canonicalize(mc->m.mnt_fsname), spec)))
-			return mc;
-
-	/* third attempt: names found after LABEL= or UUID= resolution */
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt) {
-		if (!strncmp (mc->m.mnt_fsname, "LABEL=", 6) &&
-		    (streq(mc->m.mnt_dir, file) ||
-		     streq(canonicalize(mc->m.mnt_dir), file))) {
-			if (has_label(spec, mc->m.mnt_fsname+6))
-				return mc;
+		/* dir */
+		if (!streq(mc->m.mnt_dir, dir)) {
+			char *dr = canonicalize(mc->m.mnt_dir);
+			int ok = 0;
+
+			if (streq(dr, dir))
+				ok = 1;
+			my_free(dr);
+			if (!ok)
+				continue;
 		}
-		if (!strncmp (mc->m.mnt_fsname, "UUID=", 5) &&
-		    (streq(mc->m.mnt_dir, file) ||
-		     streq(canonicalize(mc->m.mnt_dir), file))) {
-			if (has_uuid(spec, mc->m.mnt_fsname+5))
-				return mc;
+
+		/* spec */
+		if (!streq(mc->m.mnt_fsname, spec)) {
+			char *fs = canonicalize(mc->m.mnt_fsname);
+			int ok = 0;
+
+			if (streq(fs, spec))
+				ok = 1;
+			else if (strncmp (fs, "LABEL=", 6) == 0) {
+				if (has_label(spec, fs + 6))
+					ok = 1;
+			}
+			else if (strncmp (fs, "UUID=", 5) == 0) {
+				if (has_uuid(spec, fs + 5))
+					ok = 1;
+			}
+			my_free(fs);
+			if (!ok)
+				continue;
 		}
+		return mc;
 	}
+
 	return NULL;
 }
 
-/* Find the dir FILE in fstab.  */
+/* Find the dir DIR in fstab.  */
 struct mntentchn *
-getfsfile (const char *file) {
+getfs_by_dir (const char *dir) {
 	struct mntentchn *mc, *mc0;
+	char *cdir;
 
 	mc0 = fstab_head();
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt)
-		if (streq(mc->m.mnt_dir, file))
+		if (streq(mc->m.mnt_dir, dir))
 			return mc;
+
+	cdir = canonicalize(dir);
+	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt) {
+		if (streq(mc->m.mnt_dir, cdir)) {
+			free(cdir);
+			return mc;
+		}
+	}
+	free(cdir);
 	return NULL;
 }
 
 /* Find the device SPEC in fstab.  */
 struct mntentchn *
-getfsspec (const char *spec) {
+getfs_by_spec (const char *spec) {
+	char *name, *value, *cspec;
+	struct mntentchn *mc = NULL;
+
+	if (!spec)
+		return NULL;
+
+	if (parse_spec(spec, &name, &value) != 0)
+		return NULL;				/* parse error */
+
+	if (name) {
+		if (!strcmp(name,"LABEL"))
+			mc = getfs_by_label (value);
+		else if (!strcmp(name,"UUID"))
+			mc = getfs_by_uuid (value);
+
+		free((void *) name);
+		return mc;
+	}
+
+	cspec = canonicalize(spec);
+	mc = getfs_by_devname(cspec);
+	free(cspec);
+
+	if (!mc)
+		/* noncanonical name  like /dev/cdrom */
+		mc = getfs_by_devname(spec);
+
+	return mc;
+}
+
+/* Find the device in fstab.  */
+struct mntentchn *
+getfs_by_devname (const char *devname) {
 	struct mntentchn *mc, *mc0;
 
 	mc0 = fstab_head();
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt)
-		if (streq(mc->m.mnt_fsname, spec))
+		if (streq(mc->m.mnt_fsname, devname))
 			return mc;
 	return NULL;
 }
 
+
 /* Find the uuid UUID in fstab. */
 struct mntentchn *
-getfsuuidspec (const char *uuid) {
+getfs_by_uuid (const char *uuid) {
 	struct mntentchn *mc, *mc0;
 
 	mc0 = fstab_head();
@@ -380,7 +443,7 @@ getfsuuidspec (const char *uuid) {
 
 /* Find the label LABEL in fstab. */
 struct mntentchn *
-getfsvolspec (const char *label) {
+getfs_by_label (const char *label) {
 	struct mntentchn *mc, *mc0;
 
 	mc0 = fstab_head();
@@ -395,6 +458,7 @@ getfsvolspec (const char *label) {
 
 /* Flag for already existing lock file. */
 static int we_created_lockfile = 0;
+static int lockfile_fd = -1;
 
 /* Flag to indicate that signals have been set up. */
 static int signals_have_been_setup = 0;
@@ -416,6 +480,8 @@ setlkw_timeout (int sig) {
 void
 unlock_mtab (void) {
 	if (we_created_lockfile) {
+		close(lockfile_fd);
+		lockfile_fd = -1;
 		unlink (MOUNTED_LOCK);
 		we_created_lockfile = 0;
 	}
@@ -441,9 +507,32 @@ unlock_mtab (void) {
 #define MOUNTLOCK_LINKTARGET		MOUNTED_LOCK "%d"
 #define MOUNTLOCK_LINKTARGET_LTH	(sizeof(MOUNTED_LOCK)+20)
 
+/*
+ * The original mount locking code has used sleep(1) between attempts and
+ * maximal number of attemps has been 5.
+ *
+ * There was very small number of attempts and extremely long waiting (1s)
+ * that is useless on machines with large number of concurret mount processes.
+ *
+ * Now we wait few thousand microseconds between attempts and we have global
+ * time limit (30s) rather than limit for number of attempts. The advantage
+ * is that this method also counts time which we spend in fcntl(F_SETLKW) and
+ * number of attempts is not so much restricted.
+ *
+ * -- kzak@redhat.com [2007-Mar-2007]
+ */
+
+/* maximum seconds between first and last attempt */
+#define MOUNTLOCK_MAXTIME		30
+
+/* sleep time (in microseconds, max=999999) between attempts */
+#define MOUNTLOCK_WAITTIME		5000
+
 void
 lock_mtab (void) {
-	int tries = 3;
+	int i;
+	struct timespec waittime;
+	struct timeval maxtime;
 	char linktargetfile[MOUNTLOCK_LINKTARGET_LTH];
 
 	at_die = unlock_mtab;
@@ -455,7 +544,7 @@ lock_mtab (void) {
 		sa.sa_handler = handler;
 		sa.sa_flags = 0;
 		sigfillset (&sa.sa_mask);
-  
+
 		while (sigismember (&sa.sa_mask, ++sig) != -1
 		       && sig != SIGCHLD) {
 			if (sig == SIGALRM)
@@ -469,45 +558,55 @@ lock_mtab (void) {
 
 	sprintf(linktargetfile, MOUNTLOCK_LINKTARGET, getpid ());
 
+	i = open (linktargetfile, O_WRONLY|O_CREAT, 0);
+	if (i < 0) {
+		int errsv = errno;
+		/* linktargetfile does not exist (as a file)
+		   and we cannot create it. Read-only filesystem?
+		   Too many files open in the system?
+		   Filesystem full? */
+		die (EX_FILEIO, _("can't create lock file %s: %s "
+						  "(use -n flag to override)"),
+			 linktargetfile, strerror (errsv));
+	}
+	close(i);
+
+	gettimeofday(&maxtime, NULL);
+	maxtime.tv_sec += MOUNTLOCK_MAXTIME;
+
+	waittime.tv_sec = 0;
+	waittime.tv_nsec = (1000 * MOUNTLOCK_WAITTIME);
+
 	/* Repeat until it was us who made the link */
 	while (!we_created_lockfile) {
+		struct timeval now;
 		struct flock flock;
-		int errsv, fd, i, j;
-
-		i = open (linktargetfile, O_WRONLY|O_CREAT, 0);
-		if (i < 0) {
-			int errsv = errno;
-			/* linktargetfile does not exist (as a file)
-			   and we cannot create it. Read-only filesystem?
-			   Too many files open in the system?
-			   Filesystem full? */
-			die (EX_FILEIO, _("can't create lock file %s: %s "
-			     "(use -n flag to override)"),
-			     linktargetfile, strerror (errsv));
-		}
-		close(i);
+		int errsv, j;
 
 		j = link(linktargetfile, MOUNTED_LOCK);
 		errsv = errno;
-
-		(void) unlink(linktargetfile);
 
 		if (j == 0)
 			we_created_lockfile = 1;
 
 		if (j < 0 && errsv != EEXIST) {
+			(void) unlink(linktargetfile);
 			die (EX_FILEIO, _("can't link lock file %s: %s "
 			     "(use -n flag to override)"),
 			     MOUNTED_LOCK, strerror (errsv));
 		}
 
-		fd = open (MOUNTED_LOCK, O_WRONLY);
+		lockfile_fd = open (MOUNTED_LOCK, O_WRONLY);
 
-		if (fd < 0) {
-			int errsv = errno;
+		if (lockfile_fd < 0) {
 			/* Strange... Maybe the file was just deleted? */
-			if (errno == ENOENT && tries-- > 0)
+			int errsv = errno;
+			gettimeofday(&now, NULL);
+			if (errno == ENOENT && now.tv_sec < maxtime.tv_sec) {
+				we_created_lockfile = 0;
 				continue;
+			}
+			(void) unlink(linktargetfile);
 			die (EX_FILEIO, _("can't open lock file %s: %s "
 			     "(use -n flag to override)"),
 			     MOUNTED_LOCK, strerror (errsv));
@@ -520,38 +619,38 @@ lock_mtab (void) {
 
 		if (j == 0) {
 			/* We made the link. Now claim the lock. */
-			if (fcntl (fd, F_SETLK, &flock) == -1) {
+			if (fcntl (lockfile_fd, F_SETLK, &flock) == -1) {
 				if (verbose) {
 				    int errsv = errno;
 				    printf(_("Can't lock lock file %s: %s\n"),
 					   MOUNTED_LOCK, strerror (errsv));
 				}
-				/* proceed anyway */
+				/* proceed, since it was us who created the lockfile anyway */
 			}
+			(void) unlink(linktargetfile);
 		} else {
-			static int tries = 0;
-
 			/* Someone else made the link. Wait. */
-			alarm(LOCK_TIMEOUT);
-			if (fcntl (fd, F_SETLKW, &flock) == -1) {
-				int errsv = errno;
-				die (EX_FILEIO, _("can't lock lock file %s: %s"),
-				     MOUNTED_LOCK, (errno == EINTR) ?
-				     _("timed out") : strerror (errsv));
-			}
-			alarm(0);
-			/* Limit the number of iterations - maybe there
-			   still is some old /etc/mtab~ */
-			if (tries++ > 3) {
-				if (tries > 5)
-					die (EX_FILEIO, _("Cannot create link %s\n"
-					    "Perhaps there is a stale lock file?\n"),
-					     MOUNTED_LOCK);
-				sleep(1);
-			}
-		}
+			gettimeofday(&now, NULL);
+			if (now.tv_sec < maxtime.tv_sec) {
+				alarm(maxtime.tv_sec - now.tv_sec);
+				if (fcntl (lockfile_fd, F_SETLKW, &flock) == -1) {
+					int errsv = errno;
+					(void) unlink(linktargetfile);
+					die (EX_FILEIO, _("can't lock lock file %s: %s"),
+					     MOUNTED_LOCK, (errno == EINTR) ?
+					     _("timed out") : strerror (errsv));
+				}
+				alarm(0);
 
-		close(fd);
+				nanosleep(&waittime, NULL);
+			} else {
+				(void) unlink(linktargetfile);
+				die (EX_FILEIO, _("Cannot create link %s\n"
+						  "Perhaps there is a stale lock file?\n"),
+					 MOUNTED_LOCK);
+			}
+			close(lockfile_fd);
+		}
 	}
 }
 
@@ -572,7 +671,7 @@ update_mtab (const char *dir, struct my_mntent *instead) {
 	struct mntentchn mtabhead;	/* dummy */
 	struct mntentchn *mc, *mc0, *absent = NULL;
 
-	if (mtab_does_not_exist() || mtab_is_a_symlink())
+	if (mtab_does_not_exist() || !mtab_is_writable())
 		return;
 
 	lock_mtab();
@@ -601,18 +700,33 @@ update_mtab (const char *dir, struct my_mntent *instead) {
 			if (mc && mc != mc0) {
 				mc->prev->nxt = mc->nxt;
 				mc->nxt->prev = mc->prev;
-				free(mc);
+				my_free_mc(mc);
 			}
-		} else {
+		} else if (!strcmp(mc->m.mnt_dir, instead->mnt_dir)) {
 			/* A remount */
-			mc->m.mnt_opts = instead->mnt_opts;
+			my_free(mc->m.mnt_opts);
+			mc->m.mnt_opts = xstrdup(instead->mnt_opts);
+		} else {
+			/* A move */
+			my_free(mc->m.mnt_dir);
+			mc->m.mnt_dir = xstrdup(instead->mnt_dir);
 		}
 	} else if (instead) {
 		/* not found, add a new entry */
 		absent = xmalloc(sizeof(*absent));
-		absent->m = *instead;
+		absent->m.mnt_fsname = xstrdup(instead->mnt_fsname);
+		absent->m.mnt_dir = xstrdup(instead->mnt_dir);
+		absent->m.mnt_type = xstrdup(instead->mnt_type);
+		absent->m.mnt_opts = xstrdup(instead->mnt_opts);
+		absent->m.mnt_freq = instead->mnt_freq;
+		absent->m.mnt_passno = instead->mnt_passno;
 		absent->nxt = mc0;
-		absent->prev = mc0->prev;
+		if (mc0->prev != NULL) {
+			absent->prev = mc0->prev;
+			mc0->prev->nxt = absent;
+		} else {
+			absent->prev = mc0;
+		}
 		mc0->prev = absent;
 		if (mc0->nxt == NULL)
 			mc0->nxt = absent;
@@ -624,6 +738,7 @@ update_mtab (const char *dir, struct my_mntent *instead) {
 		int errsv = errno;
 		error (_("cannot open %s (%s) - mtab not updated"),
 		       MOUNTED_TEMP, strerror (errsv));
+		discard_mntentchn(mc0);
 		goto leave;
 	}
 
@@ -665,3 +780,120 @@ update_mtab (const char *dir, struct my_mntent *instead) {
  leave:
 	unlock_mtab();
 }
+
+
+#ifdef MAIN_TEST_MTABLOCK
+
+/*
+ * This is mtab locking code test for:
+ *
+ *	- performance (how many concurrent processes)
+ *
+ *	- lock reliability (is possible to see corrupted data  if more
+ *	                    concurrent processes modify a same file)
+ *
+ *  The test is very simple -- it reads a number from locked file, increments the
+ *  number and writes the number back to the file.
+ */
+
+/* dummy */
+int verbose;
+int mount_quiet;
+char *progname;
+
+const char *fsprobe_get_label_by_devname(const char *spec) { return NULL; }
+const char *fsprobe_get_uuid_by_devname(const char *spec) { return NULL; }
+struct my_mntent *my_getmntent (mntFILE *mfp) { return NULL; }
+mntFILE *my_setmntent (const char *file, char *mode) { return NULL; }
+void my_endmntent (mntFILE *mfp) { }
+int my_addmntent (mntFILE *mfp, struct my_mntent *mnt) { return 0; }
+char *myrealpath(const char *path, char *resolved_path, int m) { return NULL; }
+
+int
+main(int argc, char **argv)
+{
+	time_t synctime;
+	char *filename;
+	int nloops, id, i;
+	pid_t pid = getpid();
+	unsigned int usecs;
+	struct timeval tv;
+	struct stat st;
+	long last = 0;
+
+	progname = argv[0];
+
+	if (argc < 3)
+		die(EXIT_FAILURE,
+			"usage: %s <id> <synctime> <file> <nloops>\n",
+			progname);
+
+	id = atoi(argv[1]);
+	synctime = (time_t) atol(argv[2]);
+	filename = argv[3];
+	nloops = atoi(argv[4]);
+
+	if (stat(filename, &st) < -1)
+		die(EXIT_FAILURE, "%s: %s\n", filename, strerror(errno));
+
+	fprintf(stderr, "%05d (pid=%05d): START\n", id, pid);
+
+	gettimeofday(&tv, NULL);
+	if (synctime && synctime - tv.tv_sec > 1) {
+		usecs = ((synctime - tv.tv_sec) * 1000000UL) -
+					(1000000UL - tv.tv_usec);
+		usleep(usecs);
+	}
+
+	for (i = 0; i < nloops; i++) {
+		FILE *f;
+		long num;
+		char buf[256];
+
+		lock_mtab();
+
+		if (!(f = fopen(filename, "r"))) {
+			unlock_mtab();
+			die(EXIT_FAILURE, "ERROR: %d (pid=%d, loop=%d): "
+					"open for read failed\n", id, pid, i);
+		}
+		if (!fgets(buf, sizeof(buf), f)) {
+			unlock_mtab();
+			die(EXIT_FAILURE, "ERROR: %d (pid=%d, loop=%d): "
+					"read failed\n", id, pid, i);
+		}
+		fclose(f);
+
+		num = atol(buf) + 1;
+
+		if (!(f = fopen(filename, "w"))) {
+			unlock_mtab();
+			die(EXIT_FAILURE, "ERROR: %d (pid=%d, loop=%d): "
+					"open for write failed\n", id, pid, i);
+		}
+		fprintf(f, "%ld", num);
+		fclose(f);
+
+		unlock_mtab();
+
+		gettimeofday(&tv, NULL);
+
+		fprintf(stderr, "%010ld.%06ld %04d (pid=%05d, loop=%05d): "
+				"num=%09ld last=%09ld\n",
+				tv.tv_sec, tv.tv_usec, id,
+				pid, i, num, last);
+		last = num;
+
+		/* The mount command usually finish after mtab update. We
+		 * simulate this via short sleep -- it's also enough to make
+		 * concurrent processes happy.
+		 */
+		usleep(50000);
+	}
+
+	fprintf(stderr, "%05d (pid=%05d): DONE\n", id, pid);
+
+	exit(EXIT_SUCCESS);
+}
+#endif
+

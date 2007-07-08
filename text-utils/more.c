@@ -47,6 +47,7 @@
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <termios.h>
 #include <setjmp.h>
 #include <sys/ioctl.h>
@@ -165,18 +166,14 @@ struct {
 } context, screen_start;
 extern char	PC;		/* pad character */
 
-#ifndef HAVE_termcap
-#define USE_CURSES
+#ifdef HAVE_NCURSES_H
+# include <ncurses.h>
+#elif defined(HAVE_NCURSES_NCURSES_H)
+# include <ncurses/ncurses.h>
 #endif
 
-#ifdef USE_CURSES
-
-#if NCH
-#include <ncurses.h>
-#else
-#include <curses.h>
-#endif
-#include <term.h>			/* include after <curses.h> */
+#if defined(HAVE_NCURSES_H) || defined(HAVE_NCURSES_NCURSES_H)
+# include <term.h>			/* include after <curses.h> */
 
 static void
 my_putstring(char *s) {
@@ -208,7 +205,8 @@ my_tgoto(const char *cap, int col, int row) {
      return tparm(cap, col, row);
 }
 
-#else /* no CURSES */
+#elif defined(HAVE_LIBTERMCAP)          /* !ncurses */
+
 #include <termcap.h>
 
 char termbuffer[4096];
@@ -245,8 +243,7 @@ my_tgoto(const char *cap, int col, int row) {
      return tgoto(cap, col, row);
 }
 
-
-#endif /* USE_CURSES */
+#endif /* HAVE_LIBTERMCAP */
 
 static void
 idummy(int *kk) {}
@@ -523,6 +520,7 @@ checkf (fs, clearfirst)
 	}
 	if (magic(f, fs))
 		return((FILE *)NULL);
+	fcntl(fileno(f), F_SETFD, FD_CLOEXEC );
 	c = Getc(f);
 	*clearfirst = (c == '\f');
 	Ungetc (c, f);
@@ -782,7 +780,7 @@ int get_line(register FILE *f, int *length)
     int	column;
     static int colflg;
 
-#ifdef ENABLE_WIDECHAR
+#ifdef HAVE_WIDECHAR
     int i;
     wchar_t wc;
     int wc_width;
@@ -805,7 +803,7 @@ int get_line(register FILE *f, int *length)
 	c = Getc (f);
     }
     while (p < &Line[LINSIZ - 1]) {
-#ifdef ENABLE_WIDECHAR
+#ifdef HAVE_WIDECHAR
 	if (fold_opt && use_mbc_buffer_flag && MB_CUR_MAX > 1) {
 	    use_mbc_buffer_flag = 0;
 	    state_bak = state;
@@ -923,7 +921,7 @@ process_mbc:
 	    *length = p - Line;
 	    return (column);
 	} else {
-#ifdef ENABLE_WIDECHAR
+#ifdef HAVE_WIDECHAR
 	    if (fold_opt && MB_CUR_MAX > 1) {
 		memset (mbc, '\0', MB_LEN_MAX);
 		mbc_pos = 0;
@@ -1851,7 +1849,7 @@ void ttyin (unsigned char buf[], register int nmax, char pchar) {
 	}
 	else if (((cc_t) c == otty.c_cc[VERASE]) && !slash) {
 	    if (sp > buf) {
-#ifdef ENABLE_WIDECHAR
+#ifdef HAVE_WIDECHAR
 		if (MB_CUR_MAX > 1)
 		  {
 		    wchar_t wc;

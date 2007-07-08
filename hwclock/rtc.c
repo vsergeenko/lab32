@@ -82,30 +82,47 @@ struct linux_rtc_time {
 #define RTC_EPOCH_SET	_IOW('p', 0x0e, unsigned long)	 /* Set epoch */
 #endif
 
+/* /dev/rtc is conventionally chardev 10/135
+ * ia64 uses /dev/efirtc, chardev 10/136
+ * devfs (obsolete) used /dev/misc/... for miscdev
+ * new RTC framework + udev uses dynamic major and /dev/rtc0.../dev/rtcN
+ * ... so we need an overridable default
+ */
 
-/* ia64 uses /dev/efirtc (char 10,136) */
-/* devfs uses /dev/misc/rtc */
-#if __ia64__
-#define RTC_DEVN	"efirtc"
-#else
-#define RTC_DEVN	"rtc"
-#endif
-
-static char *rtc_dev_name;
+/* default or user defined dev (by hwclock --rtc=<path>) */
+char *rtc_dev_name;
 
 static int
 open_rtc(void) {
-	int rtc_fd;
+	char *fls[] = {
+#ifdef __ia64__
+		"/dev/efirtc",
+		"/dev/misc/efirtc",
+#endif
+		"/dev/rtc",
+		"/dev/rtc0",
+		"/dev/misc/rtc",
+		NULL
+	};
+	char **p = fls;
+	char *fname = rtc_dev_name ? : *p;
 
-	rtc_dev_name = "/dev/" RTC_DEVN;
-	rtc_fd = open(rtc_dev_name, O_RDONLY);
-	if (rtc_fd < 0 && errno == ENOENT) {
-		rtc_dev_name = "/dev/misc/" RTC_DEVN;
-		rtc_fd = open(rtc_dev_name, O_RDONLY);
-		if (rtc_fd < 0 && errno == ENOENT)
-			rtc_dev_name = "/dev/" RTC_DEVN;
-	}
-	return rtc_fd;
+	do {
+		int fd = open(fname, O_RDONLY);
+
+		if (fd < 0 && errno == ENOENT) {
+			if (fname == rtc_dev_name)
+				break;
+			fname = *++p;
+		} else {
+			rtc_dev_name = *p;
+			return fd;
+		}
+	} while(fname);
+
+	if (!rtc_dev_name)
+		rtc_dev_name = *fls;
+	return -1;
 }
 
 static int
@@ -114,7 +131,7 @@ open_rtc_or_exit(void) {
 
 	if (rtc_fd < 0) {
 		outsyserr(_("open() of %s failed"), rtc_dev_name);
-		exit(EX_OSFILE);
+		hwclock_exit(EX_OSFILE);
 	}
 	return rtc_fd;
 }
@@ -149,7 +166,7 @@ do_rtc_read_ioctl(int rtc_fd, struct tm *tm) {
 		perror(ioctlname);
 		fprintf(stderr, _("ioctl() to %s to read the time failed.\n"),
 			rtc_dev_name);
-		exit(EX_IOERR);
+		hwclock_exit(EX_IOERR);
 	}
 
 	tm->tm_isdst = -1;          /* don't know whether it's dst */
@@ -160,7 +177,7 @@ static int
 busywait_for_rtc_clock_tick(const int rtc_fd) {
 /*----------------------------------------------------------------------------
    Wait for the top of a clock tick by reading /dev/rtc in a busy loop until
-   we see it.  
+   we see it.
 -----------------------------------------------------------------------------*/
   struct tm start_time;
     /* The time when we were called (and started waiting) */
@@ -329,7 +346,7 @@ set_hardware_clock_rtc(const struct tm *new_broken_time) {
 		perror(ioctlname);
 		fprintf(stderr, _("ioctl() to %s to set the time failed.\n"),
 			rtc_dev_name);
-		exit(EX_IOERR);
+		hwclock_exit(EX_IOERR);
 	}
 
 	if (debug)
@@ -346,7 +363,7 @@ get_permissions_rtc(void) {
 }
 
 static struct clock_ops rtc = {
-	"/dev/" RTC_DEVN " interface to clock",
+	"/dev interface to clock",
 	get_permissions_rtc,
 	read_hardware_clock_rtc,
 	set_hardware_clock_rtc,
@@ -378,13 +395,13 @@ get_epoch_rtc(unsigned long *epoch_p, int silent) {
   rtc_fd = open_rtc();
   if (rtc_fd < 0) {
     if (!silent) {
-      if (errno == ENOENT) 
+      if (errno == ENOENT)
         fprintf(stderr, _(
 		"To manipulate the epoch value in the kernel, we must "
                 "access the Linux 'rtc' device driver via the device special "
                 "file %s.  This file does not exist on this system.\n"),
 		rtc_dev_name);
-      else 
+      else
         outsyserr(_("Unable to open %s"), rtc_dev_name);
     }
     return 1;
@@ -425,7 +442,7 @@ set_epoch_rtc(unsigned long epoch) {
 
   rtc_fd = open_rtc();
   if (rtc_fd < 0) {
-    if (errno == ENOENT) 
+    if (errno == ENOENT)
       fprintf(stderr, _("To manipulate the epoch value in the kernel, we must "
               "access the Linux 'rtc' device driver via the device special "
               "file %s.  This file does not exist on this system.\n"),
@@ -443,7 +460,7 @@ set_epoch_rtc(unsigned long epoch) {
     if (errno == EINVAL)
       fprintf(stderr, _("The kernel device driver for %s "
 	      "does not have the RTC_EPOCH_SET ioctl.\n"), rtc_dev_name);
-    else 
+    else
       outsyserr(_("ioctl(RTC_EPOCH_SET) to %s failed"), rtc_dev_name);
     close(rtc_fd);
     return 1;

@@ -1,7 +1,7 @@
 /*
  * mkcramfs - make a cramfs file system
  *
- * Copyright (C) 1999-2001 Transmeta Corporation
+ * Copyright (C) 1999-2002 Transmeta Corporation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,27 +35,25 @@
 #include <string.h>
 #include <assert.h>
 #include <getopt.h>
+#include <stdarg.h>
 #include <zlib.h>
 
 #include "cramfs.h"
 #include "md5.h"
 #include "nls.h"
 
-#define PAD_SIZE 512		/* only 0 and 512 supported by kernel */
+/* Exit codes used by mkfs-type programs */
+#define MKFS_OK          0     /* No errors */
+#define MKFS_ERROR       8     /* Operational error */
+#define MKFS_USAGE       16    /* Usage or syntax error */
+
+/* The kernel only supports PAD_SIZE of 0 and 512. */
+#define PAD_SIZE 512
 
 static const char *progname = "mkcramfs";
 static int verbose = 0;
 
-#ifdef __ia64__
-#define PAGE_CACHE_SIZE (16384)
-#elif defined __alpha__
-#define PAGE_CACHE_SIZE (8192)
-#else
-#define PAGE_CACHE_SIZE (4096)
-#endif
-
-/* The kernel assumes PAGE_CACHE_SIZE as block size. */
-static unsigned int blksize = PAGE_CACHE_SIZE; /* settable via -b option */
+static unsigned int blksize; /* settable via -b option */
 static long total_blocks = 0, total_nodes = 1; /* pre-count the root node */
 static int image_length = 0;
 
@@ -85,18 +83,21 @@ static int warn_uid = 0;
 # define MIN(_a,_b) ((_a) < (_b) ? (_a) : (_b))
 #endif
 
+/* entry.flags */
+#define CRAMFS_EFLAG_MD5	1
+#define CRAMFS_EFLAG_INVALID	2
+
 /* In-core version of inode / directory entry. */
 struct entry {
 	/* stats */
-	char *name;
+	unsigned char *name;
 	unsigned int mode, size, uid, gid;
 	unsigned char md5sum[16];
-	unsigned char flags;
-#define HAVE_MD5	1
-#define	INVALID		2
+	unsigned char flags;	   /* CRAMFS_EFLAG_* */
 
 	/* FS data */
 	char *path;
+	int fd;			    /* temporarily open files while mmapped */
         struct entry *same;	    /* points to other identical file */
         unsigned int offset;        /* pointer to compressed data in archive */
 	unsigned int dir_offset;    /* offset of directory entry in archive */
@@ -121,13 +122,13 @@ usage(int status) {
 	FILE *stream = status ? stderr : stdout;
 
 	fprintf(stream,
-		_("usage: %s [-h] [-v] [-b blksz] [-e edition] [-i file] "
+		_("usage: %s [-h] [-v] [-b blksize] [-e edition] [-i file] "
 		  "[-n name] dirname outfile\n"
 		  " -h         print this help\n"
 		  " -v         be verbose\n"
 		  " -E         make all warnings errors "
 		    "(non-zero exit status)\n"
-		  " -b blksz   use this blocksize, must equal page size\n"
+		  " -b blksize use this blocksize, must equal page size\n"
 		  " -e edition set edition number (part of fsid)\n"
 		  " -i file    insert a file image into the filesystem "
 		    "(requires >= 2.4.0)\n"
@@ -204,7 +205,7 @@ mdfile(struct entry *e) {
 
 	start = do_mmap(e->path, e->size, e->mode);
 	if (start == NULL) {
-		e->flags |= INVALID;
+		e->flags |= CRAMFS_EFLAG_INVALID;
 	} else {
 		MD5Init(&ctx);
 		MD5Update(&ctx, start, e->size);
@@ -212,7 +213,7 @@ mdfile(struct entry *e) {
 
 		do_munmap(start, e->size, e->mode);
 
-		e->flags |= HAVE_MD5;
+		e->flags |= CRAMFS_EFLAG_MD5;
 	}
 }
 
@@ -256,7 +257,8 @@ static int find_identical_file(struct entry *orig, struct entry *new)
 		if (!new->flags)
 			mdfile(new);
 
-		if ((orig->flags & HAVE_MD5) && (new->flags & HAVE_MD5) &&
+		if ((orig->flags & CRAMFS_EFLAG_MD5) &&
+		    (new->flags & CRAMFS_EFLAG_MD5) &&
 		    !memcmp(orig->md5sum, new->md5sum, 16) &&
 		    identical_file(orig, new)) {
 			new->same = orig;
@@ -472,11 +474,13 @@ static void set_data_offset(struct entry *entry, char *base, unsigned long offse
  * entries, using a stack to remember the directories
  * we've seen.
  */
-#define MAXENTRIES (100)
 static unsigned int write_directory_structure(struct entry *entry, char *base, unsigned int offset)
 {
 	int stack_entries = 0;
-	struct entry *entry_stack[MAXENTRIES];
+	int stack_size = 64;
+	struct entry **entry_stack;
+
+	entry_stack = xmalloc(stack_size * sizeof(struct entry *));
 
 	for (;;) {
 		int dir_start = stack_entries;
@@ -509,13 +513,13 @@ static unsigned int write_directory_structure(struct entry *entry, char *base, u
 			if (verbose)
 				printf("  %s\n", entry->name);
 			if (entry->child) {
-				if (stack_entries >= MAXENTRIES) {
-					fprintf(stderr,
-						_("Exceeded MAXENTRIES.  Raise"
-						  " this value in mkcramfs.c "
-						  "and recompile.  Exiting.\n")
-						);
-					exit(8);
+				if (stack_entries >= stack_size) {
+					stack_size *= 2;
+					entry_stack = realloc(entry_stack, stack_size * sizeof(struct entry *));
+					if (!entry_stack) {
+						perror(NULL);
+						exit(8);        /* out of memory */
+					}
 				}
 				entry_stack[stack_entries] = entry;
 				stack_entries++;
@@ -552,6 +556,7 @@ static unsigned int write_directory_structure(struct entry *entry, char *base, u
 			printf("'%s':\n", entry->name);
 		entry = entry->child;
 	}
+	free(entry_stack);
 	return offset;
 }
 
@@ -659,7 +664,7 @@ write_data(struct entry *entry, char *base, unsigned int offset) {
                         if (e->same) {
                                 set_data_offset(e, base, e->same->offset);
                                 e->offset = e->same->offset;
-                        } else {
+                        } else if (e->size) {
                                 set_data_offset(e, base, offset);
                                 e->offset = offset;
                                 offset = do_compress(base, offset, e->name,
@@ -730,6 +735,7 @@ int main(int argc, char **argv)
 	u32 crc = crc32(0L, Z_NULL, 0);
 	int c;
 
+	blksize = sysconf(_SC_PAGESIZE);
 	total_blocks = 0;
 
 	if (argc) {
@@ -775,8 +781,8 @@ int main(int argc, char **argv)
 			/* old option, ignored */
 			break;
 		case 'V':
-			printf(_("%s from %s\n"),
-			       progname, util_linux_version);
+			printf(_("%s (%s)\n"),
+			       progname, PACKAGE_STRING);
 			exit(0);
 		case 'v':
 			verbose = 1;

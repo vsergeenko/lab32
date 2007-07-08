@@ -1,0 +1,14 @@
+#!/bin/bash
+
+. commands.sh
+. functions.sh
+
+TS_COMPONENT="mount"
+TS_DESC="basic paths"
+
+ts_init "$*"
+
+$TS_CMD_MOUNT -n -f -v -v -v /dev/dummy /mnt &> $TS_OUTPUT
+
+ts_finalize
+

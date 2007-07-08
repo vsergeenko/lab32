@@ -131,6 +131,41 @@ to another place. The call is
 .B "mount --move olddir newdir"
 .RE
 
+Since Linux 2.6.15 it is possible to mark a mount and its submounts as shared,
+private, slave or unbindable. A shared mount provides ability to create mirrors
+of that mount such that mounts and umounts within any of the mirrors propagate
+to the other mirror. A slave mount receives propagation from its master, but
+any not vice-versa.  A private mount carries no propagation abilities.  A
+unbindable mount is a private mount which cannot cloned through a bind
+operation. Detailed semantics is documented in Documentation/sharedsubtree.txt
+file in the kernel source tree.
+.RS
+.br
+.B "mount --make-shared mountpoint"
+.br
+.B "mount --make-slave mountpoint"
+.br
+.B "mount --make-private mountpoint"
+.br
+.B "mount --make-unbindable mountpoint"
+.br
+.RE
+
+The following commands allows one to recursively change the type of all the
+mounts under a given mountpoint.
+.RS
+.br
+.B "mount --make-rshared mountpoint"
+.br
+.B "mount --make-rslave mountpoint"
+.br
+.B "mount --make-rprivate mountpoint"
+.br
+.B
+"mount --make-runbindable mountpoint"
+.br
+.RE
+
 The
 .I proc
 file system is not associated with a special device, and when
@@ -306,7 +341,9 @@ conjunction with the
 flag to determine what the
 .B mount
 command is trying to do. It can also be used to add entries for devices
-that were mounted earlier with the -n option.
+that were mounted earlier with the -n option. The -f option checks for
+existing record in /etc/mtab and fails when the record already
+exists (with regular non-fake mount, this check is done by kernel).
 .TP
 .B \-i
 Don't call the /sbin/mount.<filesystem> helper even if it exists.
@@ -367,9 +404,11 @@ currently supported include:
 .IR adfs ,
 .IR affs ,
 .IR autofs ,
+.IR cifs ,
 .IR coda ,
 .IR coherent ,
 .IR cramfs ,
+.IR debugfs ,
 .IR devpts ,
 .IR efs ,
 .IR ext ,
@@ -383,6 +422,7 @@ currently supported include:
 .IR msdos ,
 .IR ncpfs ,
 .IR nfs ,
+.IR nfs4 ,
 .IR ntfs ,
 .IR proc ,
 .IR qnx4 ,
@@ -414,14 +454,16 @@ do not exist anymore. Earlier,
 .I usbfs
 was known as
 .IR usbdevfs .
+Note, the real list of all supported filesystems depends on your
+kernel.
 
 For most types all the
 .B mount
 program has to do is issue a simple
 .IR mount (2)
 system call, and no detailed knowledge of the filesystem type is required.
-For a few types however (like nfs, smbfs, ncpfs) ad hoc code is
-necessary. The nfs ad hoc code is built in, but smbfs and ncpfs
+For a few types however (like nfs, nfs4, cifs, smbfs, ncpfs) ad hoc code is
+necessary. The nfs, nfs4, cifs, smbfs, and ncpfs
 have a separate mount program. In order to make it possible to
 treat all types in a uniform way, mount will execute the program
 .I /sbin/mount.TYPE
@@ -438,9 +480,8 @@ If no
 option is given, or if the
 .B auto
 type is specified, mount will try to guess the desired type.
-If mount was compiled with the blkid library, the guessing is done
-by this library. Otherwise, mount guesses itself by probing the
-superblock; if that does not turn up anything that looks familiar,
+Mount uses the blkid or volume_id library for guessing the filesystem
+type; if that does not turn up anything that looks familiar,
 mount will try to read the file
 .IR /etc/filesystems ,
 or, if that does not exist,
@@ -536,7 +577,7 @@ Some of these options are only useful when they appear in the
 file.  The following options apply to any file system that is being
 mounted (but not every file system actually honors them - e.g., the
 .B sync
-option today has effect only for ext2, ext3 and ufs):
+option today has effect only for ext2, ext3, fat, vfat and ufs):
 .RS
 .TP
 .B async
@@ -580,6 +621,16 @@ until the network has been enabled on the system).
 .B noatime
 Do not update inode access times on this file system (e.g, for faster
 access on the news spool to speed up news servers).
+.TP
+.B nodiratime
+Do not update directory inode access times on this filesystem.
+.TP
+.B relatime
+Update inode access times relative to modify or change time.  Access
+time is only updated if the previous access time was earlier than the
+current modify or change time. (Similar to noatime, but doesn't break
+mutt or other applications that need to know if a file has been read
+since the last time it was modified.)
 .TP
 .B noauto
 Can only be mounted explicitly (i.e., the
@@ -631,7 +682,8 @@ Allow set-user-identifier or set-group-identifier bits to take
 effect.
 .TP
 .B sync
-All I/O to the file system should be done synchronously.
+All I/O to the file system should be done synchronously. In case of media with limited number of write cycles 
+(e.g. some flash drives) "sync" may cause life-cycle shortening.
 .TP
 .B dirsync
 All directory updates within the file system should be done synchronously.
@@ -653,6 +705,50 @@ This option implies the options
 .BR noexec ", " nosuid ", and " nodev
 (unless overridden by subsequent options, as in the option line
 .BR users,exec,dev,suid ).
+.TP
+\fBcontext=\fP\fIcontext\fP, \fBfscontext=\fP\fIcontext\fP and \fBdefcontext=\fP\fIcontext\fP
+The
+.BR context=
+option is useful when mounting filesystems that do not support
+extended attributes, such as a floppy or hard disk formatted with VFAT, or
+systems that are not normally running under SELinux, such as an ext3 formatted
+disk from a non-SELinux workstation. You can also use
+.BR context=
+on filesystems you do not trust, such as a floppy. It also helps in compatibility with
+xattr-supporting filesystems on earlier 2.4.<x> kernel versions. Even where
+xattrs are supported, you can save time not having to label every file by
+assigning the entire disk one security context.
+
+A commonly used option for removable media is
+.BR context=system_u:object_r:removable_t .
+
+Two other options are
+.BR fscontext=
+and
+.BR defcontext= ,
+both of which are mutually exclusive of the context option. This means you
+can use fscontext and defcontext with each other, but neither can be used with
+context.
+
+The
+.BR fscontext=
+option works for all filesystems, regardless of their xattr
+support. The fscontext option sets the overarching filesystem label to a
+specific security context. This filesystem label is separate from the
+individual labels on the files. It represents the entire filesystem for
+certain kinds of permission checks, such as during mount or file creation.
+Individual file labels are still obtained from the xattrs on the files
+themselves. The context option actually sets the aggregate context that
+fscontext provides, in addition to supplying the same label for individual
+files.
+
+You can set the default security context for unlabeled files using
+.BR defcontext=
+option. This overrides the value set for unlabeled files in the policy and requires a
+file system that supports xattr labeling.
+
+For more details see
+.BR selinux (8)
 .RE
 .TP
 .B \-\-bind
@@ -733,8 +829,20 @@ These options are accepted but ignored.
 (However, quota utilities may react to such strings in
 .IR /etc/fstab .)
 
+.SH "Mount options for cifs"
+See the options section of the
+.BR mount.cifs (8)
+man page (cifs-mount package must be installed).
+
 .SH "Mount options for coherent"
 None.
+
+.SH "Mount options for debugfs"
+The debugfs file system is a pseudo file system, traditionally mounted on
+.IR /sys/kernel/debug .
+.\" or just /debug
+.\" present since 2.6.11
+There are no mount options.
 
 .SH "Mount options for devpts"
 The devpts file system is a pseudo file system, traditionally mounted on
@@ -805,20 +913,6 @@ Filesystem   1024-blocks  Used Available Capacity Mounted on
 to the options given in
 .IR /etc/fstab .)
 
-.TP
-.\" Before Linux 2.3.99-pre3:
-.\" .BR check " / " check=normal " / " check=strict
-.\" Set checking level. When at least one of these options is set (and
-.\" .B check=normal
-.\" is set by default) the inodes and blocks bitmaps are checked upon mount
-.\" (which can take half a minute or so on a big disk, and is rather useless).
-.\" With strict checking, block deallocation checks that the block to free
-.\" is in the data zone.
-.\" Since 2.3.99-pre3 but before 2.6.0-test7 every string check=foo
-.\" was equivalent to just check. Since 2.6.0-test7 only check is accepted.
-.BR check
-Check filesystem (block and inode bitmaps) at mount time.
-.\" requires CONFIG_EXT2_CHECK
 .TP
 .BR check=none " / " nocheck
 No checking is done at mount time. This is the default. This is fast.
@@ -1288,81 +1382,20 @@ and the current version of
 .B mount
 (2.12) does not know anything about ncpfs.
 
-.SH "Mount options for nfs"
-Instead of a textual option string, parsed by the kernel, the
-.I nfs
-file system expects a binary argument of type
-.IR "struct nfs_mount_data" .
-The program
-.B mount
-itself parses the following options of the form `tag=value',
-and puts them in the structure mentioned:
-.BI rsize= n,
-.BI wsize= n,
-.BI timeo= n,
-.BI retrans= n,
-.BI acregmin= n,
-.BI acregmax= n,
-.BI acdirmin= n,
-.BI acdirmax= n,
-.BI actimeo= n,
-.BI retry= n,
-.BI port= n,
-.BI mountport= n,
-.BI mounthost= name,
-.BI mountprog= n,
-.BI mountvers= n,
-.BI nfsprog= n,
-.BI nfsvers= n,
-.BI namlen= n.
-The option
-.BI addr= n
-is accepted but ignored.
-Also the following Boolean options, possibly preceded by
-.B no
-are recognized:
-.BR bg ,
-.BR fg ,
-.BR soft ,
-.BR hard ,
-.BR intr ,
-.BR posix ,
-.BR cto ,
-.BR ac ,
-.BR tcp ,
-.BR udp ,
-.BR lock .
-For details, see
-.BR nfs (5).
+.SH "Mount options for nfs and nfs4"
+See the options section of the
+.BR nfs (5)
+man page (nfs-utils package must be installed).
 
-Especially useful options include
-.TP
-.B rsize=8192,wsize=8192
-This will make your nfs connection faster than with the default
-buffer size of 4096. (NFSv2 does not work with larger values of
-.B rsize
-and
-.BR wsize .)
-.TP
-.B hard
-The program accessing a file on a NFS mounted file system will hang
-when the server crashes. The process cannot be interrupted or
-killed unless you also specify
-.BR intr .
-When the NFS server is back online the program will continue undisturbed
-from where it was. This is probably what you want.
-.TP
-.B soft
-This option allows the kernel to time out if the nfs server is not
-responding for some time. The time can be
-specified with
-.BR timeo=time .
-This option might be useful if your nfs server sometimes doesn't respond
-or will be rebooted while some process tries to get a file from the server.
-Usually it just causes lots of trouble.
-.TP
-.B nolock
-Do not use locking. Do not start lockd.
+The
+.IR nfs " and " nfs4
+implementation expects a binary argument (a
+.IR "struct nfs_mount_data" )
+to the mount system call. This argument is constructed by
+.BR mount.nfs (8)
+and the current version of
+.B mount
+(2.13) does not know anything about nfs and nfs4.
 
 .SH "Mount options for ntfs"
 .TP
@@ -1879,10 +1912,7 @@ system error (out of memory, cannot fork, no more loop devices)
 .BR 4
 internal
 .B mount
-bug or missing
-.BR nfs
-support in
-.B mount
+bug
 .TP
 .BR 8
 user interrupt
@@ -1895,6 +1925,16 @@ mount failure
 .TP
 .BR 64
 some mount succeeded
+
+.SH NOTES
+The syntax of external mount helpers is:
+
+.br
+.BI "/sbin/mount.<suffix> spec dir [\-sfnv] [\-o options]
+.br
+
+where the <suffix> is filesystem type and \-sfnvo options have same meaning like
+standard mount options.
 
 .SH FILES
 .TP 18n
@@ -1933,11 +1973,11 @@ It is possible for a corrupted file system to cause a crash.
 .PP
 Some Linux file systems don't support
 .B "\-o sync and \-o dirsync"
-(the ext2 and ext3 file systems
+(the ext2, ext3, fat and vfat file systems
 .I do
 support synchronous updates (a la BSD) when mounted with the
 .B sync
-option).
+option). 
 .PP
 The
 .B "\-o remount"
@@ -1956,7 +1996,28 @@ Mount by label or uuid will work only if your devices have the names listed in
 .IR /proc/partitions .
 In particular, it may well fail if the kernel was compiled with devfs
 but devfs is not mounted.
+.PP
+It is possible that files
+.IR /etc/mtab
+and
+.IR /proc/mounts
+don't match. The first file is based only on the mount command options, but the
+content of the second file also depends on the kernel and others settings (e.g.
+remote NFS server. In particular case the mount command may reports unreliable
+information about a NFS mount point and the /proc/mounts file usually contains
+more reliable information.)
+.PP
+Checking files on NFS filesystem referenced by file descriptors (i.e. the
+.BR fcntl
+and
+.BR ioctl
+families of functions) may lead to inconsistent result due to the lack of
+consistency check in kernel even if noac is used.
 .SH HISTORY
 A
 .B mount
 command existed in Version 5 AT&T UNIX.
+.SH AVAILABILITY
+The mount command is part of the util-linux-ng package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux-ng/.
+

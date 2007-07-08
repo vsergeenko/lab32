@@ -23,6 +23,8 @@
 #define BLKFLSBUF  _IO(0x12,97)
 #define BLKRASET   _IO(0x12,98)
 #define BLKRAGET   _IO(0x12,99)
+#define BLKFRASET  _IO(0x12,100)
+#define BLKFRAGET  _IO(0x12,101)
 #define BLKSSZGET  _IO(0x12,104)
 #define BLKBSZGET  _IOR(0x12,112,size_t)
 #define BLKBSZSET  _IOW(0x12,113,size_t)
@@ -86,6 +88,12 @@ struct bdc {
 #ifdef BLKRAGET
 	{ "--getra", "BLKRAGET", BLKRAGET, ARGLINTG, -1, NULL, N_("get readahead") },
 #endif
+#ifdef BLKFRASET
+	{ "--setfra", "BLKFRASET", BLKFRASET, ARGINTA, 0, "FSREADAHEAD", N_("set filesystem readahead") },
+#endif
+#ifdef BLKFRAGET
+	{ "--getfra", "BLKFRAGET", BLKFRAGET, ARGLINTG, -1, NULL, N_("get filesystem readahead") },
+#endif
 #ifdef BLKFLSBUF
 	{ "--flushbufs", "BLKFLSBUF", BLKFLSBUF, ARGNONE, 0, NULL, N_("flush buffers") },
 #endif
@@ -100,20 +108,26 @@ struct bdc {
 static void
 usage(void) {
 	int i;
+	fputc('\n', stderr);
 	fprintf(stderr, _("Usage:\n"));
 	fprintf(stderr, "  %s -V\n", progname);
 	fprintf(stderr, _("  %s --report [devices]\n"), progname);
 	fprintf(stderr, _("  %s [-v|-q] commands devices\n"), progname);
+	fputc('\n', stderr);
+
 	fprintf(stderr, _("Available commands:\n"));
-	fprintf(stderr, "\t--getsz\t(%s)\n", "get size in 512-byte sectors");
+	fprintf(stderr, "\t%-30s %s\n", "--getsz",
+			"get size in 512-byte sectors");
 	for (i = 0; i < SIZE(bdcms); i++) {
-		fprintf(stderr, "\t%s", bdcms[i].name);
 		if (bdcms[i].argname)
-			fprintf(stderr, " %s", bdcms[i].argname);
-		if (bdcms[i].help)
-			fprintf(stderr, "\t(%s)", _(bdcms[i].help));
-		fprintf(stderr, "\n");
+			fprintf(stderr, "\t%s %-*s %s\n", bdcms[i].name,
+					(int) (29 - strlen(bdcms[i].name)),
+					bdcms[i].argname, _(bdcms[i].help));
+		else
+			fprintf(stderr, "\t%-30s %s\n", bdcms[i].name,
+					_(bdcms[i].help));
 	}
+	fputc('\n', stderr);
 	exit(1);
 }
 
@@ -171,7 +185,7 @@ main(int argc, char **argv) {
 
 	/* -V not together with commands */
 	if (!strcmp(argv[1], "-V") || !strcmp(argv[1], "--version")) {
-		printf("%s from %s\n", progname, util_linux_version);
+		printf("%s (%s)\n", progname, PACKAGE_STRING);
 		exit(0);
 	}
 

@@ -20,18 +20,7 @@
 #include "env.h"
 #include "nls.h"
 
-#ifdef HAVE_NFS
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <netdb.h>
-#include <rpc/rpc.h>
-#include <rpc/pmap_clnt.h>
-#include <rpc/pmap_prot.h>
-#include "nfsmount.h"
-#include <arpa/inet.h>
-#endif
-
-#if defined(MNT_FORCE) && !defined(__sparc__) && !defined(__arm__)
+#if defined(MNT_FORCE)
 /* Interesting ... it seems libc knows about MNT_FORCE and presumably
    about umount2 as well -- need not do anything */
 #else /* MNT_FORCE */
@@ -146,100 +135,6 @@ check_special_umountprog(const char *spec, const char *node,
 	return 0;
 }
 
-#ifdef HAVE_NFS
-static int xdr_dir(XDR *xdrsp, char *dirp)
-{
-      return (xdr_string(xdrsp, &dirp, MNTPATHLEN));
-}
-
-static int
-nfs_umount_rpc_call(const char *spec, const char *opts)
-{
-      register CLIENT *clp;
-      struct sockaddr_in saddr;
-      struct timeval pertry, try;
-      enum clnt_stat clnt_stat;
-      int port = 0;
-      int so = RPC_ANYSOCK;
-      struct hostent *hostp;
-      char *hostname;
-      char *dirname;
-      char *p;
-
-      if (spec == NULL || (p = strchr(spec,':')) == NULL)
-		return 0;
-      hostname = xstrndup(spec, p-spec);
-      dirname = xstrdup(p+1);
-#ifdef DEBUG
-      printf(_("host: %s, directory: %s\n"), hostname, dirname);
-#endif
-
-      if (opts && (p = strstr(opts, "addr="))) {
-	   char *q;
-
-	   free(hostname);
-	   p += 5;
-	   q = p;
-	   while (*q && *q != ',') q++;
-	   hostname = xstrndup(p,q-p);
-      }
-
-      if (opts && (p = strstr(opts, "mountport=")) && isdigit(*(p+10)))
-	   port = atoi(p+10);
-
-      if (hostname[0] >= '0' && hostname[0] <= '9')
-	   saddr.sin_addr.s_addr = inet_addr(hostname);
-      else {
-	   if ((hostp = gethostbyname(hostname)) == NULL) {
-		fprintf(stderr, _("umount: can't get address for %s\n"),
-			hostname);
-		return 1;
-	   }
-	   if (hostp->h_length > sizeof(struct in_addr)) {
-		fprintf(stderr, _("umount: got bad hostp->h_length\n"));
-		hostp->h_length = sizeof(struct in_addr);
-	   }
-	   memcpy(&saddr.sin_addr, hostp->h_addr, hostp->h_length);
-      }
-
-      saddr.sin_family = AF_INET;
-      saddr.sin_port = htons(port);
-      pertry.tv_sec = 3;
-      pertry.tv_usec = 0;
-      if (opts && (p = strstr(opts, "tcp"))) {
-	   /* possibly: make sure option is not "notcp"
-	      possibly: try udp if tcp fails */
-	   if ((clp = clnttcp_create(&saddr, MOUNTPROG, MOUNTVERS,
-				     &so, 0, 0)) == NULL) {
-		clnt_pcreateerror("Cannot MOUNTPROG RPC (tcp)");
-		return 1;
-	   }
-      } else {
-           if ((clp = clntudp_create(&saddr, MOUNTPROG, MOUNTVERS,
-				     pertry, &so)) == NULL) {
-		clnt_pcreateerror("Cannot MOUNTPROG RPC");
-		return 1;
-	   }
-      }
-      clp->cl_auth = authunix_create_default();
-      try.tv_sec = 20;
-      try.tv_usec = 0;
-      clnt_stat = clnt_call(clp, MOUNTPROC_UMNT,
-			    (xdrproc_t) xdr_dir, dirname,
-			    (xdrproc_t) xdr_void, (caddr_t) 0,
-			    try);
-
-      if (clnt_stat != RPC_SUCCESS) {
-	   clnt_perror(clp, "Bad UMNT RPC");
-	   return 1;
-      }
-      auth_destroy(clp->cl_auth);
-      clnt_destroy(clp);
-
-      return 0;
-}
-#endif /* HAVE_NFS */
-
 /* complain about a failed umount */
 static void complain(int err, const char *dev) {
   switch (err) {
@@ -293,13 +188,6 @@ umount_one (const char *spec, const char *node, const char *type,
 	if (check_special_umountprog(spec, node, type, &status))
 		return status;
 
-#ifdef HAVE_NFS
-	/* Ignore any RPC errors, so that you can umount the filesystem
-	   if the server is down.  */
-	if (strcasecmp(type, "nfs") == 0)
-		nfs_umount_rpc_call(spec, opts);
-#endif
- 
 	umnt_err = umnt_err2 = 0;
 	if (lazy) {
 		res = umount2 (node, MNT_DETACH);
@@ -355,7 +243,8 @@ umount_one (const char *spec, const char *node, const char *type,
 			remnt.mnt_type = remnt.mnt_fsname = NULL;
 			remnt.mnt_dir = xstrdup(node);
 			remnt.mnt_opts = xstrdup("ro");
-			update_mtab(node, &remnt);
+			if (!nomtab)
+				update_mtab(node, &remnt);
 			return 0;
 		} else if (errno != EBUSY) { 	/* hmm ... */
 			perror("remount");
@@ -408,7 +297,7 @@ umount_one (const char *spec, const char *node, const char *type,
 		del_loop(loopdev);
 
  writemtab:
-	if (!nomtab && mtab_is_writable() &&
+	if (!nomtab &&
 	    (umnt_err == 0 || umnt_err == EINVAL || umnt_err == ENOENT)) {
 		update_mtab (node, NULL);
 	}
@@ -480,7 +369,6 @@ umount_all (char *types, char *test_opts) {
      return errors;
 }
 
-extern char version[];
 static struct option longopts[] =
 {
   { "all", 0, 0, 'a' },
@@ -571,6 +459,23 @@ umount_file (char *arg) {
 			die(2,
 			    _("umount: %s is not mounted (according to mtab)"),
 			    file);
+		/*
+		 * uhelper - unprivileged umount helper
+		 * -- external umount (for example HAL mounts)
+		 */
+		if (external_allowed) {
+			char *uhelper = NULL;
+
+			if (mc->m.mnt_opts)
+				uhelper = get_value(mc->m.mnt_opts, "uhelper=");
+			if (uhelper) {
+				int status = 0;
+				if (check_special_umountprog(arg, arg,
+							uhelper, &status))
+					return status;
+			}
+		}
+
 		/* The 2.4 kernel will generally refuse to mount the same
 		   filesystem on the same mount point, but will accept NFS.
 		   So, unmounting must be possible. */
@@ -585,9 +490,9 @@ umount_file (char *arg) {
 		   then "mount /dev/sda4" followed by "umount /mnt/zip"
 		   used to fail. So, we must not look for file, but for
 		   the pair (spec,file) in fstab. */
-		fs = getfsspecfile(mc->m.mnt_fsname, mc->m.mnt_dir);
+		fs = getfs_by_specdir(mc->m.mnt_fsname, mc->m.mnt_dir);
 		if (!fs) {
-			if (!getfsspec (file) && !getfsfile (file))
+			if (!getfs_by_spec (file) && !getfs_by_dir (file))
 				die (2,
 				     _("umount: %s is not in the fstab "
 				       "(and you are not root)"),
@@ -697,7 +602,7 @@ main (int argc, char *argv[]) {
 			++verbose;
 			break;
 		case 'V':		/* version */
-			printf ("umount: %s\n", version);
+			printf ("umount (%s)\n", PACKAGE_STRING);
 			exit (0);
 		case 't':		/* specify file system type */
 			types = optarg;
@@ -724,7 +629,7 @@ main (int argc, char *argv[]) {
 	if (all) {
 		/* nodev stuff: sysfs, usbfs, oprofilefs, ... */
 		if (types == NULL)
-			types = "noproc,nodevfs,nodevpts";
+			types = "noproc,nodevfs,nodevpts,nosysfs,norpc_pipefs,nonfsd";
 		result = umount_all (types, test_opts);
 	} else if (argc < 1) {
 		usage (stderr, 2);

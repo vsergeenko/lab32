@@ -2,7 +2,10 @@
  * sundries.h
  * Support function prototypes.  Functions are in sundries.c.
  */
+#ifndef SUNDRIES_H
+#define SUNDRIES_H
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -28,16 +31,12 @@ int matching_opts (const char *options, const char *test_opts);
 void *xmalloc (size_t size);
 char *xstrdup (const char *s);
 char *xstrndup (const char *s, int n);
-char *xstrconcat2 (const char *, const char *);
-char *xstrconcat3 (const char *, const char *, const char *);
-char *xstrconcat4 (const char *, const char *, const char *, const char *);
+char *xstrconcat3 (char *, const char *, const char *);
+char *xstrconcat4 (char *, const char *, const char *, const char *);
+
+int parse_spec(const char *spec, char **name, char **value);
 
 void die (int errcode, const char *fmt, ...);
-
-#ifdef HAVE_NFS
-int nfsmount (const char *spec, const char *node, int *flags,
-	      char **orig_opts, char **opt_args, int *version, int running_bg);
-#endif
 
 /* exit status - bits below are ORed */
 #define EX_USAGE	1	/* incorrect invocation or permission */
@@ -49,3 +48,6 @@ int nfsmount (const char *spec, const char *node, int *flags,
 #define EX_SOMEOK      64	/* some mount succeeded */
 
 #define EX_BG         256       /* retry in background (internal only) */
+
+#endif /* SUNDRIES_H */
+
