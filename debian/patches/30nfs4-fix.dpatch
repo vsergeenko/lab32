@@ -5,9 +5,9 @@
 ## DP: No description.
 
 @DPATCH@
-diff -urNad util-linux-2.12r~/mount/nfsmount.c util-linux-2.12r/mount/nfsmount.c
---- util-linux-2.12r~/mount/nfsmount.c	2006-04-28 18:59:19.000000000 +0200
-+++ util-linux-2.12r/mount/nfsmount.c	2006-04-28 19:00:18.000000000 +0200
+diff -urNad --exclude=CVS --exclude=.svn ./mount/nfsmount.c /tmp/dpep-work.DQTPki/util-linux-2.12r/mount/nfsmount.c
+--- ./mount/nfsmount.c	2006-05-15 17:56:55.000000000 -0500
++++ /tmp/dpep-work.DQTPki/util-linux-2.12r/mount/nfsmount.c	2006-05-15 17:59:35.000000000 -0500
 @@ -301,6 +301,7 @@
  			 (xdrproc_t)xdr_void, (caddr_t)NULL,
  			 (xdrproc_t)xdr_void, (caddr_t)&clnt_res,
@@ -16,6 +16,34 @@ diff -urNad util-linux-2.12r~/mount/nfsmount.c util-linux-2.12r/mount/nfsmount.c
  	clnt_destroy(clnt);
  	close(sock);
  	if (stat != RPC_PROGVERSMISMATCH)
+@@ -332,17 +333,17 @@
+ 	p_prot = prot ? &prot : protos;
+ 	p_vers = vers ? &vers : versions;
+ 	rpc_createerr.cf_stat = 0;
++	p_port = port;
+ 	for (;;) {
+-		saddr->sin_port = htons(PMAPPORT);
+-		p_port = pmap_getport(saddr, prog, *p_vers, *p_prot);
+-		if (p_port) {
+-			if (!port || port == p_port) {
+-				saddr->sin_port = htons(port);
+-				if (clnt_ping(saddr, prog, *p_vers, *p_prot))
+-					goto out_ok;
+-			}
+-		} else if (rpc_createerr.cf_stat != RPC_PROGNOTREGISTERED)
+-			break;
++		if (!port) {
++			saddr->sin_port = htons(PMAPPORT);
++			p_port = pmap_getport(saddr, prog, *p_vers, *p_prot);
++			if (p_port == 0 && rpc_createerr.cf_stat != RPC_PROGNOTREGISTERED)
++				break;
++		}
++		saddr->sin_port = htons(p_port);
++		if (clnt_ping(saddr, prog, *p_vers, *p_prot))
++			goto out_ok;
+ 		if (!prot) {
+ 			if (*++p_prot)
+ 				continue;
 @@ -416,7 +417,8 @@
  				return 1;
  			memcpy(mnt_pmap, &save_mnt, sizeof(*mnt_pmap));
