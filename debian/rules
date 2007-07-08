@@ -60,8 +60,8 @@ build:
 clean:
 	$(checkdir)
 	rm -f build sys-utils/rdev
-	touch make_include
-	$(MAKE) distclean
+	#rm make_include
+	-$(MAKE) distclean
 	find . -name '*~' -print0 | xargs -0r rm
 	find . -name '*.orig' -print0 | xargs -0r rm
 	find . -name '*.rej' -print0 | xargs -0r rm
