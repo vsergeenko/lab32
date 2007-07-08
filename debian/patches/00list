@@ -1,0 +1,10 @@
+10agetty.dpatch
+10cal-widechar.dpatch
+10cfdisk.dpatch
+10debian.dpatch
+10fstab.dpatch
+10license.dpatch
+10misc.dpatch
+10mount.dpatch
+#20xgethostname.dpatch
+#50hurd.dpatch
