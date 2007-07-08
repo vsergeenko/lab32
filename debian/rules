@@ -21,8 +21,8 @@ endif
 export arch = $(DEB_HOST_ARCH)
 version := $(shell sed -e '1{;s|^util-linux (\(.*\))\ .*|\1|;q;}' debian/changelog)
 
-fdisk_arch = $(findstring $(arch),alpha i386 powerpc arm mips mipsel hppa ia64 hurd-i386 amd64 s390)
-sparc = $(findstring $(arch),sparc)
+fdisk_arch = $(findstring $(arch),alpha i386 powerpc ppc64 arm mips mipsel hppa ia64 hurd-i386 amd64 s390)
+sparc = $(findstring $(arch),sparc sparc64)
 nohwclock = $(findstring $(arch),s390)
 
 SUBDIRS=po lib getopt disk-utils login-utils misc-utils mount sys-utils text-utils
@@ -200,7 +200,7 @@ ifneq ($(DOCFILES),)
 	install -m 644 $(DOCFILES)  debian/tmp/usr/share/doc/$(PACKAGE)
 endif
 	install -m 644 $(EXAMPLES)  debian/tmp/usr/share/doc/$(PACKAGE)/examples
-ifeq ($(arch), powerpc)
+ifeq ($(arch),$(findstring $(arch),powerpc ppc64))
 	mv -f debian/tmp/sbin/fdisk debian/tmp/sbin/ddisk
 	mv -f debian/tmp/usr/share/man/man8/fdisk.8 debian/tmp/usr/share/man/man8/ddisk.8
 endif
@@ -212,7 +212,7 @@ ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
 	(cd debian/tmp/sbin ; mv agetty getty)
 	(cd debian/tmp/usr/share/man/man8 ; mv agetty.8 getty.8)
 ifneq ($(arch), $(nohwclock))
-ifneq ($(arch), powerpc)
+ifneq ($(arch),$(findstring $(arch),powerpc ppc64))
 	(cd debian/tmp/usr/share/man/man8 && ln -s hwclock.8.gz clock.8.gz)
 endif
 endif

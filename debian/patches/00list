@@ -8,6 +8,7 @@
 10misc
 10mount
 10sparcumount
+10warnings
 20guesshelper
 #20xgethostname
 #50hurd

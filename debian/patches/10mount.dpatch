@@ -9,9 +9,9 @@
 ## DP: - Extra options to take keysize, etc.
 
 @DPATCH@
-diff -urNad util-linux/mount/Makefile /tmp/dpep.iuZnRq/util-linux/mount/Makefile
---- util-linux/mount/Makefile	2004-12-22 09:01:56.172327518 -0700
-+++ /tmp/dpep.iuZnRq/util-linux/mount/Makefile	2004-12-22 09:02:09.065556018 -0700
+diff -urNad --exclude=CVS --exclude=.svn ./mount/Makefile /tmp/dpep-work.31redI/util-linux/mount/Makefile
+--- ./mount/Makefile	2005-08-16 11:50:21.000000000 -0600
++++ /tmp/dpep-work.31redI/util-linux/mount/Makefile	2006-01-16 11:09:51.000000000 -0700
 @@ -29,7 +29,7 @@
  
  MAYBE = pivot_root swapoff
@@ -30,9 +30,9 @@ diff -urNad util-linux/mount/Makefile /tmp/dpep.iuZnRq/util-linux/mount/Makefile
  	$(LINK) $^ -o $@
  
  mount.o umount.o nfsmount.o losetup.o fstab.o realpath.o sundries.o: sundries.h
-diff -urNad util-linux/mount/lomount.c /tmp/dpep.iuZnRq/util-linux/mount/lomount.c
---- util-linux/mount/lomount.c	2004-12-22 09:01:56.173327303 -0700
-+++ /tmp/dpep.iuZnRq/util-linux/mount/lomount.c	2004-12-22 09:06:40.163281442 -0700
+diff -urNad --exclude=CVS --exclude=.svn ./mount/lomount.c /tmp/dpep-work.31redI/util-linux/mount/lomount.c
+--- ./mount/lomount.c	2005-08-16 11:50:21.000000000 -0600
++++ /tmp/dpep-work.31redI/util-linux/mount/lomount.c	2006-01-16 11:20:45.000000000 -0700
 @@ -20,6 +20,7 @@
  
  #include "loop.h"
@@ -157,7 +157,7 @@ diff -urNad util-linux/mount/lomount.c /tmp/dpep.iuZnRq/util-linux/mount/lomount
  		}
  	}
  
-@@ -289,30 +370,105 @@
+@@ -289,30 +370,114 @@
  	}
  #endif
  
@@ -192,19 +192,23 @@ diff -urNad util-linux/mount/lomount.c /tmp/dpep.iuZnRq/util-linux/mount/lomount
 +	case LO_CRYPT_RIJNDAEL:
 +	    {
 +#define HASHLENGTH 20
-+#define PASSWDBUFFLEN 130 /* getpass returns only max. 128 bytes, see man getpass */
 +		char keybits[2*HASHLENGTH]; 
-+		char passwdbuff[PASSWDBUFFLEN];
++		char *pass2;
++		int passwdlen;
 +		int keylength;
 +		int i;
 +
 +  		pass = xgetpass(pfd, _("Password: "));
-+		strncpy(passwdbuff+1,pass,PASSWDBUFFLEN-1);
-+		passwdbuff[PASSWDBUFFLEN-1] = '\0';
-+		passwdbuff[0] = 'A';
-+		rmd160_hash_buffer(keybits,pass,strlen(pass));
-+		rmd160_hash_buffer(keybits+HASHLENGTH,passwdbuff,strlen(pass)+1);
++		passwdlen=strlen(pass);
++		pass2=malloc(passwdlen+2);
++		pass2[0]='A';
++		strcpy(pass2+1,pass);
++		rmd160_hash_buffer(keybits,pass,passwdlen);
++		rmd160_hash_buffer(keybits+HASHLENGTH,pass2,passwdlen+1);
 +		memcpy((char*)loopinfo64.lo_encrypt_key,keybits,2*HASHLENGTH);
++		memset(pass, 0, passwdlen);
++		memset(pass2, 0, passwdlen+1);
++		free(pass2);
 +		keylength=0;
 +		for(i=0; crypt_type_tbl[i].id != -1; i++){
 +		         if(loopinfo64.lo_encrypt_type == crypt_type_tbl[i].id){
@@ -218,15 +222,20 @@ diff -urNad util-linux/mount/lomount.c /tmp/dpep.iuZnRq/util-linux/mount/lomount
 +	default:
 +		if (hash_password) {
 +		    char keybits[2*HASHLENGTH]; 
-+		    char passwdbuff[PASSWDBUFFLEN];
++		    char *pass2;
++		    int passwdlen;
 +
 +		    pass = xgetpass(pfd, _("Password: "));
-+		    strncpy(passwdbuff+1,pass,PASSWDBUFFLEN-1);
-+		    passwdbuff[PASSWDBUFFLEN-1] = '\0';
-+		    passwdbuff[0] = 'A';
-+		    rmd160_hash_buffer(keybits,pass,strlen(pass));
-+		    rmd160_hash_buffer(keybits+HASHLENGTH,passwdbuff,strlen(pass)+1);
-+		    memset(pass, 0, strlen(pass));
++		    passwdlen=strlen(pass);
++		    pass2=malloc(passwdlen+2);
++		    pass2[0]='A';
++		    strcpy(pass2+1,pass);
++		    rmd160_hash_buffer(keybits,pass,passwdlen);
++		    rmd160_hash_buffer(keybits+HASHLENGTH,pass2,passwdlen+1);
++		    memset(pass, 0, passwdlen);
++		    memset(pass2, 0, passwdlen+1);
++		    free(pass2);
++
 +		    memcpy((char*)loopinfo64.lo_encrypt_key,keybits,keysz/8);
 +		    loopinfo64.lo_encrypt_key_size = keysz/8;
 +		} else {
@@ -271,7 +280,7 @@ diff -urNad util-linux/mount/lomount.c /tmp/dpep.iuZnRq/util-linux/mount/lomount
  		struct loop_info loopinfo;
  		int errsv = errno;
  
-@@ -326,6 +482,7 @@
+@@ -326,6 +491,7 @@
  				perror("ioctl: LOOP_SET_STATUS");
  		}
  		memset(&loopinfo, 0, sizeof(loopinfo));
@@ -279,7 +288,7 @@ diff -urNad util-linux/mount/lomount.c /tmp/dpep.iuZnRq/util-linux/mount/lomount
  	}
  	memset(&loopinfo64, 0, sizeof(loopinfo64));
  
-@@ -334,12 +491,19 @@
+@@ -334,12 +500,19 @@
  		close (fd);
  		return 1;
  	}
@@ -299,7 +308,7 @@ diff -urNad util-linux/mount/lomount.c /tmp/dpep.iuZnRq/util-linux/mount/lomount
  }
  
  int 
-@@ -404,10 +568,27 @@
+@@ -404,10 +577,27 @@
  static void
  usage(void) {
  	fprintf(stderr, _("usage:\n\
@@ -331,7 +340,7 @@ diff -urNad util-linux/mount/lomount.c /tmp/dpep.iuZnRq/util-linux/mount/lomount
  		progname, progname, progname, progname);
  	exit(1);
  }
-@@ -442,10 +623,13 @@
+@@ -442,10 +632,13 @@
  int
  main(int argc, char **argv) {
  	char *p, *offset, *encryption, *passfd, *device, *file;
@@ -345,7 +354,7 @@ diff -urNad util-linux/mount/lomount.c /tmp/dpep.iuZnRq/util-linux/mount/lomount
  	unsigned long long off;
  
  	setlocale(LC_ALL, "");
-@@ -455,12 +639,14 @@
+@@ -455,12 +648,14 @@
  	delete = find = 0;
  	off = 0;
  	offset = encryption = passfd = NULL;
@@ -361,7 +370,7 @@ diff -urNad util-linux/mount/lomount.c /tmp/dpep.iuZnRq/util-linux/mount/lomount
  		switch (c) {
  		case 'd':
  			delete = 1;
-@@ -472,6 +658,12 @@
+@@ -472,6 +667,12 @@
  		case 'f':
  			find = 1;
  			break;
@@ -374,7 +383,7 @@ diff -urNad util-linux/mount/lomount.c /tmp/dpep.iuZnRq/util-linux/mount/lomount
  		case 'o':
  			offset = optarg;
  			break;
-@@ -527,7 +719,10 @@
+@@ -527,7 +728,10 @@
  			usage();
  		if (passfd && sscanf(passfd, "%d", &pfd) != 1)
  			usage();
@@ -386,9 +395,9 @@ diff -urNad util-linux/mount/lomount.c /tmp/dpep.iuZnRq/util-linux/mount/lomount
  	}
  	return res;
  }
-diff -urNad util-linux/mount/lomount.h /tmp/dpep.iuZnRq/util-linux/mount/lomount.h
---- util-linux/mount/lomount.h	2004-12-22 09:01:56.174327088 -0700
-+++ /tmp/dpep.iuZnRq/util-linux/mount/lomount.h	2004-12-22 09:02:09.066555803 -0700
+diff -urNad --exclude=CVS --exclude=.svn ./mount/lomount.h /tmp/dpep-work.31redI/util-linux/mount/lomount.h
+--- ./mount/lomount.h	2005-08-16 11:50:21.000000000 -0600
++++ /tmp/dpep-work.31redI/util-linux/mount/lomount.h	2006-01-16 11:09:51.000000000 -0700
 @@ -1,6 +1,6 @@
  extern int verbose;
  extern int set_loop(const char *, const char *, unsigned long long,
@@ -397,9 +406,9 @@ diff -urNad util-linux/mount/lomount.h /tmp/dpep.iuZnRq/util-linux/mount/lomount
  extern int del_loop(const char *);
  extern int is_loop_device(const char *);
  extern char * find_unused_loop_device(void);
-diff -urNad util-linux/mount/loop.h /tmp/dpep.iuZnRq/util-linux/mount/loop.h
---- util-linux/mount/loop.h	2004-12-22 09:01:56.174327088 -0700
-+++ /tmp/dpep.iuZnRq/util-linux/mount/loop.h	2004-12-22 09:02:09.066555803 -0700
+diff -urNad --exclude=CVS --exclude=.svn ./mount/loop.h /tmp/dpep-work.31redI/util-linux/mount/loop.h
+--- ./mount/loop.h	2005-08-16 11:50:21.000000000 -0600
++++ /tmp/dpep-work.31redI/util-linux/mount/loop.h	2006-01-16 11:09:51.000000000 -0700
 @@ -1,8 +1,39 @@
 -#define LO_CRYPT_NONE	0
 -#define LO_CRYPT_XOR	1
@@ -443,9 +452,9 @@ diff -urNad util-linux/mount/loop.h /tmp/dpep.iuZnRq/util-linux/mount/loop.h
  #define LOOP_SET_FD		0x4C00
  #define LOOP_CLR_FD		0x4C01
  #define LOOP_SET_STATUS		0x4C02
-diff -urNad util-linux/mount/losetup.8 /tmp/dpep.iuZnRq/util-linux/mount/losetup.8
---- util-linux/mount/losetup.8	2004-12-22 09:01:56.174327088 -0700
-+++ /tmp/dpep.iuZnRq/util-linux/mount/losetup.8	2004-12-22 09:02:09.066555803 -0700
+diff -urNad --exclude=CVS --exclude=.svn ./mount/losetup.8 /tmp/dpep-work.31redI/util-linux/mount/losetup.8
+--- ./mount/losetup.8	2005-08-16 11:50:21.000000000 -0600
++++ /tmp/dpep-work.31redI/util-linux/mount/losetup.8	2006-01-16 11:09:51.000000000 -0700
 @@ -66,23 +66,29 @@
  .B \-e
  option.)
@@ -490,9 +499,9 @@ diff -urNad util-linux/mount/losetup.8 /tmp/dpep.iuZnRq/util-linux/mount/losetup
  .\" .SH AUTHORS
  .\" .nf
  .\" Original version: Theodore Ts'o <tytso@athena.mit.edu>
-diff -urNad util-linux/mount/mount.8 /tmp/dpep.iuZnRq/util-linux/mount/mount.8
---- util-linux/mount/mount.8	2004-12-22 09:01:56.175326873 -0700
-+++ /tmp/dpep.iuZnRq/util-linux/mount/mount.8	2004-12-22 09:02:09.067555588 -0700
+diff -urNad --exclude=CVS --exclude=.svn ./mount/mount.8 /tmp/dpep-work.31redI/util-linux/mount/mount.8
+--- ./mount/mount.8	2005-08-16 11:50:21.000000000 -0600
++++ /tmp/dpep-work.31redI/util-linux/mount/mount.8	2006-01-16 11:09:51.000000000 -0700
 @@ -281,6 +281,12 @@
  .B \-v
  Verbose mode.
@@ -542,9 +551,9 @@ diff -urNad util-linux/mount/mount.8 /tmp/dpep.iuZnRq/util-linux/mount/mount.8
  .BR mke2fs (8),
  .BR tune2fs (8),
  .BR losetup (8)
-diff -urNad util-linux/mount/mount.c /tmp/dpep.iuZnRq/util-linux/mount/mount.c
---- util-linux/mount/mount.c	2004-12-22 09:01:56.177326443 -0700
-+++ /tmp/dpep.iuZnRq/util-linux/mount/mount.c	2004-12-22 09:02:09.068555373 -0700
+diff -urNad --exclude=CVS --exclude=.svn ./mount/mount.c /tmp/dpep-work.31redI/util-linux/mount/mount.c
+--- ./mount/mount.c	2005-08-16 11:50:21.000000000 -0600
++++ /tmp/dpep-work.31redI/util-linux/mount/mount.c	2006-01-16 11:09:51.000000000 -0700
 @@ -59,6 +59,9 @@
  /* Nonzero for chatty (-v).  */
  int verbose = 0;
@@ -656,9 +665,9 @@ diff -urNad util-linux/mount/mount.c /tmp/dpep.iuZnRq/util-linux/mount/mount.c
  	switch (argc+specseen) {
  	case 0:
  		/* mount -a */
-diff -urNad util-linux/mount/rmd160.c /tmp/dpep.iuZnRq/util-linux/mount/rmd160.c
---- util-linux/mount/rmd160.c	1969-12-31 17:00:00.000000000 -0700
-+++ /tmp/dpep.iuZnRq/util-linux/mount/rmd160.c	2004-12-22 09:02:09.069555158 -0700
+diff -urNad --exclude=CVS --exclude=.svn ./mount/rmd160.c /tmp/dpep-work.31redI/util-linux/mount/rmd160.c
+--- ./mount/rmd160.c	1969-12-31 17:00:00.000000000 -0700
++++ /tmp/dpep-work.31redI/util-linux/mount/rmd160.c	2006-01-16 11:09:51.000000000 -0700
 @@ -0,0 +1,532 @@
 +/* rmd160.c  -	RIPE-MD160
 + *	Copyright (C) 1998 Free Software Foundation, Inc.
@@ -1192,9 +1201,9 @@ diff -urNad util-linux/mount/rmd160.c /tmp/dpep.iuZnRq/util-linux/mount/rmd160.c
 +    rmd160_final( &hd );
 +    memcpy( outbuf, hd.buf, 20 );
 +}
-diff -urNad util-linux/mount/rmd160.h /tmp/dpep.iuZnRq/util-linux/mount/rmd160.h
---- util-linux/mount/rmd160.h	1969-12-31 17:00:00.000000000 -0700
-+++ /tmp/dpep.iuZnRq/util-linux/mount/rmd160.h	2004-12-22 09:02:09.069555158 -0700
+diff -urNad --exclude=CVS --exclude=.svn ./mount/rmd160.h /tmp/dpep-work.31redI/util-linux/mount/rmd160.h
+--- ./mount/rmd160.h	1969-12-31 17:00:00.000000000 -0700
++++ /tmp/dpep-work.31redI/util-linux/mount/rmd160.h	2006-01-16 11:09:51.000000000 -0700
 @@ -0,0 +1,9 @@
 +#ifndef RMD160_H
 +#define RMD160_H

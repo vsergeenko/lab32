@@ -1,3 +1,18 @@
+util-linux (2.12r-3) unstable; urgency=low
+
+  * Add ppc64 support.  Closes: #322130
+  * Update sections to match the overrides file.
+  * hwclockfirst.sh may not exit, since it gets sourced.
+    Closes: #343447
+  * make the start messages from hwclock{first,}.sh slightly
+    different, for clarity.
+  * Build sparc binaries on sparc64
+  * Actually cleanup pager alternatives.  Closes: #348235
+  * Deal better with long passwords.  Based on patch from YAEGASHI Takeshi
+    <yaegashi@debian.org>.  Closes: #315660
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 16 Jan 2006 14:35:42 -0700
+
 util-linux (2.12r-2) unstable; urgency=low
 
   * Add back in dropped cramfs-udebsize patch.

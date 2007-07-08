@@ -4,7 +4,6 @@ set -e
 
 case "$1" in
 	remove)
-		update-alternatives --remove pager /bin/more
 		if [ -L /usr/doc/util-linux-locales ] ; then
         		rm -f /usr/doc/util-linux-locales
 		fi
