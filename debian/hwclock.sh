@@ -26,7 +26,7 @@ HWCLOCKPARS=
 . /etc/default/rcS
 
 . /lib/lsb/init-functions
-verbose_log_action_msg() { [ "$VERBOSE" = no ] || log_action_msg $@; }
+verbose_log_action_msg() { [ "$VERBOSE" = no ] || log_action_msg "$@"; }
 
 [ "$GMT" = "-u" ] && UTC="yes"
 case "$UTC" in
