@@ -1,3 +1,9 @@
+util-linux (2.12r-7) unstable; urgency=low
+
+  * Add nfsv4 patch.  Closes: #302420, #239031
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 21 Feb 2006 11:01:21 -0700
+
 util-linux (2.12r-6) unstable; urgency=low
 
   * make hwclock even more policy compilant.
