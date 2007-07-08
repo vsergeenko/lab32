@@ -5,9 +5,24 @@
 ## DP: No description.
 
 @DPATCH@
-diff -urNad --exclude=CVS --exclude=.svn ./mount/nfsmount.c /tmp/dpep-work.DQTPki/util-linux-2.12r/mount/nfsmount.c
---- ./mount/nfsmount.c	2006-05-15 17:56:55.000000000 -0500
-+++ /tmp/dpep-work.DQTPki/util-linux-2.12r/mount/nfsmount.c	2006-05-15 17:59:35.000000000 -0500
+diff -urNad 2.12r-11~/mount/nfs4mount.c 2.12r-11/mount/nfs4mount.c
+--- 2.12r-11~/mount/nfs4mount.c	2006-09-19 09:29:41.000000000 -0600
++++ 2.12r-11/mount/nfs4mount.c	2006-09-19 09:32:58.000000000 -0600
+@@ -367,7 +367,10 @@
+ 		/*
+ 		 * ditto with rpc.gssd daemon
+ 		 */
+-		gssd_check();
++		/*
++		 * The latest nfs-common doesn't create pid files at all.
++		 */
++		/* gssd_check(); */
+ 	}
+ 	data.auth_flavourlen = num_flavour;
+ 	data.auth_flavours = pseudoflavour;
+diff -urNad 2.12r-11~/mount/nfsmount.c 2.12r-11/mount/nfsmount.c
+--- 2.12r-11~/mount/nfsmount.c	2006-09-19 09:29:41.000000000 -0600
++++ 2.12r-11/mount/nfsmount.c	2006-09-19 09:29:42.000000000 -0600
 @@ -301,6 +301,7 @@
  			 (xdrproc_t)xdr_void, (caddr_t)NULL,
  			 (xdrproc_t)xdr_void, (caddr_t)&clnt_res,

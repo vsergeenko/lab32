@@ -1,3 +1,11 @@
+util-linux (2.12r-11) unstable; urgency=low
+
+  * typos in NFSv4 (GSSDLCK didn't have .pid, and the latest
+    nfs-common no longer creates the file at all.) Closes: #376931
+    - modified 30nfs4-fix.dpatch
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 19 Sep 2006 09:33:31 -0600
+
 util-linux (2.12r-10) unstable; urgency=low
 
   * NFSv4 patch fixes for cfs.  Closes: #367049
