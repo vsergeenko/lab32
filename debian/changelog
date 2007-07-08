@@ -1,3 +1,10 @@
+util-linux (2.12r-14) unstable; urgency=low
+
+  * Make that 11 for hwclock.sh, since we need / to be writable for the
+    adjfile.
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 31 Oct 2006 15:01:01 -0700
+
 util-linux (2.12r-13) unstable; urgency=low
 
   * NFS seems to not like 127.0.0.1 as a client ID for everyone.
