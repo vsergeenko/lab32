@@ -26,6 +26,14 @@ RDEV_LINKS = ramsize vidmode rootflags
 endif
 endif
 
+if BUILD_RDEV
+if ARCH_86_64
+usrsbinexec_PROGRAMS += rdev
+man_MANS += rdev.8 ramsize.8 rootflags.8 vidmode.8
+RDEV_LINKS = ramsize vidmode rootflags
+endif
+endif
+
 SETARCH_LINKS = linux32 linux64
 
 if ARCH_S390
