@@ -243,7 +243,7 @@ diff -urNad --exclude=CVS --exclude=.svn ./mount/nfs4mount.c /tmp/dpep-work.TJbh
 +#endif
 +
 +extern int clnt_ping(struct sockaddr_in *, const u_long, const u_long, const u_int);
-+extern void rpc_strerror();
++extern void rpc_strerror(void);
 +
 +struct {
 +	char    *flavour;
@@ -1053,7 +1053,7 @@ diff -urNad --exclude=CVS --exclude=.svn ./mount/nfsmount.c /tmp/dpep-work.TJbhs
 +int clnt_ping(struct sockaddr_in *, const u_long, const u_long, const u_int);
 +
 +/* Convert RPC errors into strings */
-+void rpc_strerror()
++void rpc_strerror(void)
 +{
 +	int cf_stat = rpc_createerr.cf_stat; 
 +	int cf_errno = rpc_createerr.cf_error.re_errno;

@@ -10,7 +10,7 @@
 10sparcumount
 10warnings
 20guesshelper
-30nfs4
+#30nfs4
 #20xgethostname
 #50hurd
 60_opt_O1
