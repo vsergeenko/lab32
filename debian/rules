@@ -1,5 +1,4 @@
 #! /usr/bin/make -f
-include /usr/share/dpatch/dpatch.make
 
 SHELL = bash
 PACKAGE = util-linux
@@ -51,14 +50,14 @@ endif
 CFDISK_PO_DIR=cfdisk-po
 CFDISK_POT=$(CFDISK_PO_DIR)/cfdisk.pot
 
-build: patch
+build: 
 	$(checkdir)
-	./configure
+	./configure --with-selinux	# --with-fsprobe=volume_id
 	$(MAKE) all CPU=$(arch) arch=$(arch) SUBDIRS="${SUBDIRS}"
 	# $(MAKE) disk-utils/raw - this is done above if linux/raw.h exists
 	touch build
 
-clean: unpatch
+clean:
 	$(checkdir)
 	rm -f build sys-utils/rdev
 	touch make_include
