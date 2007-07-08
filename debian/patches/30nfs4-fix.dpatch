@@ -1,0 +1,28 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 30nfs4-fix.dpatch by Steinar H. Gunderson <sesse@debian.org>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad util-linux-2.12r~/mount/nfsmount.c util-linux-2.12r/mount/nfsmount.c
+--- util-linux-2.12r~/mount/nfsmount.c	2006-04-28 18:59:19.000000000 +0200
++++ util-linux-2.12r/mount/nfsmount.c	2006-04-28 19:00:18.000000000 +0200
+@@ -301,6 +301,7 @@
+ 			 (xdrproc_t)xdr_void, (caddr_t)NULL,
+ 			 (xdrproc_t)xdr_void, (caddr_t)&clnt_res,
+ 			 TIMEOUT);
++	rpc_createerr.cf_stat = stat;
+ 	clnt_destroy(clnt);
+ 	close(sock);
+ 	if (stat != RPC_PROGVERSMISMATCH)
+@@ -416,7 +417,8 @@
+ 				return 1;
+ 			memcpy(mnt_pmap, &save_mnt, sizeof(*mnt_pmap));
+ 		}
+-		if (rpc_createerr.cf_stat != RPC_PROGNOTREGISTERED)
++		if (rpc_createerr.cf_stat != RPC_PROGNOTREGISTERED &&
++		    rpc_createerr.cf_stat != RPC_PROGVERSMISMATCH)
+ 			break;
+ 		memcpy(nfs_pmap, &save_nfs, sizeof(*nfs_pmap));
+ 	}

@@ -1,7 +1,7 @@
 Source: util-linux
 Section: base
 Priority: required
-Build-Depends: libncurses5-dev, libslang2-dev (>=2.0.4-1), gettext, zlib1g-dev, libblkid-dev, uuid-dev, dpatch
+Build-Depends: libncurses5-dev, libslang2-dev (>=2.0.4-1), gettext, zlib1g-dev, libblkid-dev, uuid-dev, dpatch, dpkg-dev (>=1.13.12)
 Maintainer: LaMont Jones <lamont@debian.org>
 Standards-Version: 3.6.2.0
 

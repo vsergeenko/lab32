@@ -1,3 +1,18 @@
+util-linux (2.12r-9) unstable; urgency=low
+
+  * Release NFSv4 support. Closes: #302420, #239031, #290873
+  * Deliver isosize. Closes: #354960
+  * Fix udeb dependencies.  Closes: #360352
+
+ -- LaMont Jones <lamont@debian.org>  Sat,  6 May 2006 21:53:12 -0600
+
+util-linux (2.12r-8.2nfs4) experimental; urgency=low
+
+  * Turn on fixed nfsv4 patch.  Closes: #302420, #239031
+    Thanks to Steinar H. Gunderson <sgunderson@bigfoot.com>
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 28 Apr 2006 11:04:39 -0600
+
 util-linux (2.12r-8) unstable; urgency=high
 
   * Drop NFS v4 patch, since it breaks mounting things exported by
