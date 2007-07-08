@@ -1,3 +1,9 @@
+util-linux (2.12r-6) unstable; urgency=low
+
+  * make hwclock even more policy compilant.
+
+ -- LaMont Jones <lamont@debian.org>  Sat, 28 Jan 2006 08:57:45 -0700
+
 util-linux (2.12r-5) unstable; urgency=low
 
   * make hwclock prettier.  Closes: #348718
