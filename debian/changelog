@@ -1,3 +1,9 @@
+util-linux (2.12r-4) unstable; urgency=low
+
+  * Stupid fat-fingers typo.  Closes: #348483
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 17 Jan 2006 07:40:56 -0700
+
 util-linux (2.12r-3) unstable; urgency=low
 
   * Add ppc64 support.  Closes: #322130

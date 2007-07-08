@@ -24,7 +24,7 @@ FIRST=no	# debian/rules sets this to 'yes' when creating hwclockfirst.sh
 # as machine hardware clock type for Alphas.
 HWCLOCKPARS=
 
-hwclock_sh()
+hwclocksh()
 {
     [ ! -x /sbin/hwclock ] && return 0
     . /etc/default/rcS
@@ -155,4 +155,4 @@ hwclock_sh()
     esac
 }
 
-hwclock_sh
+hwclocksh "$@"

@@ -164,7 +164,7 @@ endif
 install:
 
 debian/hwclockfirst.sh: debian/hwclock.sh
-	sed '/^FIRST/s/no/yes/; s/hwclock.sh/hwclockfirst.sh/g' debian/hwclock.sh > debian/hwclockfirst.sh
+	sed '/^FIRST/s/no/yes/; s/hwclock\.sh/hwclockfirst.sh/g' debian/hwclock.sh > debian/hwclockfirst.sh
 
 binary-indep:	checkroot build binary-arch
 	$(checkdir)
