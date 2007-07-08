@@ -1,3 +1,10 @@
+util-linux (2.12r-17) unstable; urgency=low
+
+  * Userspace software suspend fix.  Closes: #409365
+  * armel support.  Closes: #408816
+
+ -- LaMont Jones <lamont@debian.org>  Fri,  2 Feb 2007 11:08:04 -0700
+
 util-linux (2.12r-16) unstable; urgency=low
 
   * actually apply 30swsusp-resume.  And support userspace sw susp too.

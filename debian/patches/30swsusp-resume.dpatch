@@ -67,7 +67,7 @@ diff -urNad --exclude=CVS --exclude=.svn ./mount/swapon.c /tmp/dpep-work.5ak7Cm/
  
  #define SWAPON_NEEDS_TWO_ARGS
  
-@@ -164,6 +168,84 @@
+@@ -164,6 +168,85 @@
         return 0 ;
  }
  
@@ -98,7 +98,8 @@ diff -urNad --exclude=CVS --exclude=.svn ./mount/swapon.c /tmp/dpep-work.5ak7Cm/
 +	if (lseek(fd, n, SEEK_SET) >= 0 &&
 +	    read(fd, buf, sizeof buf) == sizeof buf &&
 +	    (memcmp("S1SUSPEND", buf, 9)==0 ||
-+			memcmp("S2SUSPEND", buf, 9)==0))
++			memcmp("S2SUSPEND", buf, 9)==0 ||
++			memcmp("ULSUSPEND", buf, 9)==0))
 +		re = 0;
 +
 +	close(fd);
