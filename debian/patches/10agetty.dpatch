@@ -7,9 +7,9 @@
 ## DP: code trying to interoperate better with gdm.
 
 @DPATCH@
-diff -urNad util-linux/login-utils/agetty.c /tmp/dpep.hTGWc1/util-linux/login-utils/agetty.c
---- util-linux/login-utils/agetty.c	2004-12-15 17:12:15.678862928 -0700
-+++ /tmp/dpep.hTGWc1/util-linux/login-utils/agetty.c	2004-12-15 17:15:56.246450201 -0700
+diff -urNad 2.12r-16~/login-utils/agetty.c 2.12r-16/login-utils/agetty.c
+--- 2.12r-16~/login-utils/agetty.c	2006-12-19 09:02:16.000000000 -0700
++++ 2.12r-16/login-utils/agetty.c	2007-01-09 11:21:56.000000000 -0700
 @@ -30,6 +30,8 @@
  #include <getopt.h>
  #include <time.h>
@@ -19,6 +19,15 @@ diff -urNad util-linux/login-utils/agetty.c /tmp/dpep.hTGWc1/util-linux/login-ut
  #include "xstrncpy.h"
  #include "nls.h"
  
+@@ -402,7 +404,7 @@
+     while (isascii(c = getopt(argc, argv, "I:LH:f:hil:mt:wn"))) {
+ 	switch (c) {
+ 	case 'I':
+-	    if (!(op->initstring = malloc(strlen(optarg)))) {
++	    if (!(op->initstring = malloc(strlen(optarg)+1))) {
+ 		error(_("can't malloc initstring"));
+ 		break;
+ 	    }
 @@ -652,6 +654,91 @@
  	if ((st.st_mode & S_IFMT) != S_IFCHR)
  	    error(_("/dev/%s: not a character device"), tty);

@@ -1,3 +1,16 @@
+util-linux (2.12r-16) unstable; urgency=low
+
+  * actually apply 30swsusp-resume.  And support userspace sw susp too.
+    Closes: #406204
+  * Fix off-by-one issue in agetty -I.  Closes: #392445
+  * Drop extraneous "again" from hwclock.sh and remove references to
+    hwclockfirst.sh.  Closes: #396755
+  * Drop PAGE_SIZE usage completely, use sysconf(_SC_PAGESIZE).
+  * Make intr the default for NFS v2 & v3 mounts in addition to being the
+    default for NFS v4.  Thanks to Tollef Fog Heen for the idea.
+
+ -- LaMont Jones <lamont@debian.org>  Wed, 17 Jan 2007 11:57:35 -0700
+
 util-linux (2.12r-15) unstable; urgency=low
 
   * New amd64 rdev patch.  Closes: #396842

@@ -13,8 +13,11 @@
 20guesshelper
 30nfs4
 30nfs4-fix
+30nfs4-intr-default
 30nfs4-setclientid
+30swsusp-resume
 #20xgethostname
 #50hurd
 60_opt_O1
 65_llseek-syscall
+65page_size
