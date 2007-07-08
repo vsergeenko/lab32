@@ -1,3 +1,10 @@
+util-linux (2.12r-18) unstable; urgency=low
+
+  * Stop printing erroneous "rpc.idmapd appears to not be running" message.
+    Files: 30nfs4.dpatch. Closes: #385879
+
+ -- LaMont Jones <lamont@debian.org>  Mon,  5 Feb 2007 13:47:10 -0700
+
 util-linux (2.12r-17) unstable; urgency=low
 
   * Userspace software suspend fix.  Closes: #409365
