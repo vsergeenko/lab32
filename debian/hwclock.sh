@@ -112,11 +112,12 @@ hwclocksh()
 		fi
 
 		#	Announce the local time.
+		log_end_msg 0
 		verbose_log_action_msg "System Clock set. Local time: `date $UTC`"
 	    else
+		log_end_msg 0
 		verbose_log_action_msg "Not setting System Clock"
 	    fi
-	    log_end_msg 0
 	    ;;
 	stop|restart|reload|force-reload)
 	    if [ "X$FIRST" = "Xyes" ]; then
@@ -135,11 +136,12 @@ hwclocksh()
 		    GMT="--utc"
 		fi
 		/sbin/hwclock --systohc $GMT $HWCLOCKPARS $BADYEAR
+		log_end_msg 0
 		verbose_log_action_msg "Hardware Clock updated to `date`"
 	    else
+		log_end_msg 0
 		verbose_log_action_msg "Not saving System Clock"
 	    fi
-	    log_end_msg 0
 	    ;;
 	show)
 	    if [ "$HWCLOCKACCESS" != no ]; then

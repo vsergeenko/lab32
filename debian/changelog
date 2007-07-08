@@ -1,3 +1,9 @@
+util-linux (2.12r-5) unstable; urgency=low
+
+  * make hwclock prettier.  Closes: #348718
+
+ -- LaMont Jones <lamont@debian.org>  Wed, 18 Jan 2006 11:44:06 -0700
+
 util-linux (2.12r-4) unstable; urgency=low
 
   * Stupid fat-fingers typo.  Closes: #348483
