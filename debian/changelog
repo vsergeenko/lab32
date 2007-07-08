@@ -1,3 +1,12 @@
+util-linux (2.12r-12) unstable; urgency=low
+
+  * drop hwclockfirst.sh, and put hwclock.sh back at 50.  See #50572 and
+    Closes: #342887
+  * Deal with _syscall5 going away.  Patch imported from Ubuntu.
+    Closes: #392236
+
+ -- LaMont Jones <lamont@debian.org>  Thu, 19 Oct 2006 19:01:33 -0600
+
 util-linux (2.12r-11) unstable; urgency=low
 
   * typos in NFSv4 (GSSDLCK didn't have .pid, and the latest

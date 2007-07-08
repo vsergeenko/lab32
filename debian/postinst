@@ -26,9 +26,9 @@ if [ "$(uname -s)" = "Linux" ]; then
     model=$(uname -m)
     if [ ${model%x} != "s390" ]; then
         update-rc.d -f hwclock.sh remove 2>/dev/null > /dev/null
-        update-rc.d hwclock.sh start 22 S . stop 25 0 6 . > /dev/null
+        update-rc.d hwclock.sh start 50 S . stop 25 0 6 . > /dev/null
         update-rc.d -f hwclockfirst.sh remove 2>/dev/null > /dev/null
-        update-rc.d hwclockfirst.sh start 18 S . > /dev/null
+        #update-rc.d hwclockfirst.sh start 18 S . > /dev/null
     fi
 fi
 

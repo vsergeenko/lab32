@@ -75,7 +75,7 @@ SBINFILES = disk-utils/mkswap
 
 ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
 ifneq ($(arch),$(nohwclock))
-INITFILES = debian/hwclock.sh debian/hwclockfirst.sh
+INITFILES = debian/hwclock.sh # debian/hwclockfirst.sh
 SBINFILES += hwclock/hwclock
 endif
 BINFILES  += sys-utils/dmesg
