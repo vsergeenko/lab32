@@ -1,4 +1,5 @@
 10agetty
+10amd64-rdev
 10cal-widechar
 10cfdisk
 10cramfs-udebsize
@@ -12,6 +13,7 @@
 20guesshelper
 30nfs4
 30nfs4-fix
+30nfs4-setclientid
 #20xgethostname
 #50hurd
 60_opt_O1

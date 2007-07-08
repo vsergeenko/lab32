@@ -1,3 +1,15 @@
+util-linux (2.12r-13) unstable; urgency=low
+
+  * NFS seems to not like 127.0.0.1 as a client ID for everyone.
+    Closes: #394941
+    - 30nfs4-setclientid.dpatch by Steinar H. Gunderson <sesse@debian.org>
+  * Move hwclock.sh to 8 since localtime is now a file, not a symlink.
+    Adds Depends: tzdata (>=2006c-2)
+    Closes: #342887
+  * ship rdev on amd64.  Closes: #297789
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 31 Oct 2006 13:51:50 -0700
+
 util-linux (2.12r-12) unstable; urgency=low
 
   * drop hwclockfirst.sh, and put hwclock.sh back at 50.  See #50572 and
