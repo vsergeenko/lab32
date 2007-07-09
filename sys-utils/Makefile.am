@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/include-Makefile.am
 
-bin_PROGRAMS = dmesg
+bin_PROGRAMS = dmesg arch
 
 usrbinexec_PROGRAMS = cytune flock ipcrm ipcs renice setsid setarch
 
