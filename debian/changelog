@@ -1,13 +1,20 @@
 util-linux (2.13~rc1-0) experimental-UNRELEASED; urgency=low
 
-  * New upstream
+  * New upstream (util-linux-ng).  Closes: #431817
     - several patches were not ported forward from 2.12-19
-      - dropped kerneli support in crypto loop
-      - 20guesshelper: filesystem detection has been dropped
+      - no kerneli support in crypto loop, since it is not in 2.6 kernels.
+      - 20guesshelper: filesystem detection has been dropped.  Mount is built
+        with filesystem probing
       - 20xgethostname: does anyone care?
-      - 30nfs*: NFS support has moved to nfs-utils
+      - 30nfs*: NFS support has moved to nfs-utils, and removed from
+        util-linux.
+    - umounting usb sticks as a user no longer segfaults. Closes: #410031
+  * Add LSB formatted dependency info in hwclock.sh.  Closes: #330227
+  * Reflect Debian locations in getopt manpage.  Closes: #352221
+  * Conflict/Replaces/Provides: schedutils.  Closes: #322883
+  * README.Debian.hwclock needs a .gz in hwclock.sh.  Closes: #393539
 
- -- LaMont Jones <lamont@debian.org>  Sun,  8 Jul 2007 17:11:29 -0600
+ -- LaMont Jones <lamont@debian.org>  Mon,  9 Jul 2007 11:37:04 -0600
 
 util-linux (2.12r-20) unstable-UNRELEASED; urgency=low
 
