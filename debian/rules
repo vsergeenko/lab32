@@ -30,19 +30,6 @@ rdev_arch = $(findstring $(arch),i386 amd64)
 sparc = $(findstring $(arch),sparc sparc64)
 nohwclock = $(findstring $(arch),s390)
 
-SUBDIRS=po lib getopt disk-utils login-utils misc-utils mount sys-utils text-utils
-ifeq ($(arch),$(fdisk_arch))
-SUBDIRS += fdisk
-endif
-ifeq ($(arch),$(sparc))
-SUBDIRS += fdisk
-endif
-ifeq ($(DEB_HOST_ARCH_OS),linux)
-ifneq ($(arch),$(nohwclock))
-SUBDIRS += hwclock 
-endif
-endif
-
 ifneq ($(DEB_HOST_ARCH_OS),linux)
 util-linux_Conflicts = getty
 endif
@@ -50,12 +37,12 @@ endif
 CFDISK_PO_DIR=cfdisk-po
 CFDISK_POT=$(CFDISK_PO_DIR)/cfdisk.pot
 
+HISTORY=docs/v2.13-ReleaseNotes 
+
 build: 
 	$(checkdir)
-	#./autogen.sh
-	./configure --with-selinux	# --with-fsprobe=volume_id
-	$(MAKE) all CPU=$(arch) arch=$(arch) SUBDIRS="${SUBDIRS}"
-	# $(MAKE) disk-utils/raw - this is done above if linux/raw.h exists
+	./configure --with-selinux --enable-raw	--enable-rdev # --with-fsprobe=volume_id
+	$(MAKE) all CPU=$(arch) arch=$(arch)
 	touch build
 
 clean:
@@ -86,7 +73,7 @@ endif
 BINFILES  += sys-utils/dmesg
 SBINFILES += disk-utils/{blockdev,raw,isosize} mount/pivot_root login-utils/agetty
 UBINFILES += disk-utils/fdformat
-USBINFILES = sys-utils/readprofile disk-utils/elvtune # disk-utils/setfdprm
+USBINFILES = sys-utils/readprofile # disk-utils/elvtune disk-utils/setfdprm
 endif
 
 UBINFILES2= misc-utils/chkdupexe # debian/fdformat # don't strip these
@@ -100,24 +87,24 @@ endif
 BSDUBINFILES = misc-utils/script misc-utils/logger sys-utils/renice \
                login-utils/wall
                # misc-utils/scriptreplay is handled seperately
-BSDMAN1FILES = login-utils/wall.1 misc-utils/script.1 \
+BSDMAN1FILES = login-utils/wall.1 misc-utils/script.1 sys-utils/renice.1 \
                misc-utils/logger.1 misc-utils/scriptreplay.1 # misc-utils/kill.1
-BSDMAN8FILES = sys-utils/renice.8
+BSDMAN8FILES =
 BSDDOCFILES = debian/README.script
 
 # Architecture independant docs
 
 MAN1FILES = text-utils/{pg,more,line,rev}.1 misc-utils/{namei.1,mcookie.1} \
             misc-utils/{chkdupexe.1,setterm.1,whereis.1,ddate.1} \
-	    sys-utils/arch.1 getopt/getopt.1
-MAN8FILES = sys-utils/{ipcrm.8,ipcs.8,setsid.8} disk-utils/mkswap.8
+	    sys-utils/arch.1 getopt/getopt.1 sys-utils/{ipcrm.1,ipcs.1,setsid.1} 
+MAN8FILES = disk-utils/mkswap.8
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 ifneq ($(arch),$(nohwclock))
 MAN8FILES += hwclock/hwclock.8
 endif
-MAN1FILES += sys-utils/readprofile.1
+MAN1FILES += sys-utils/dmesg.1 sys-utils/readprofile.1
 MAN8FILES += login-utils/agetty.8 disk-utils/{blockdev.8,elvtune.8,isosize.8} \
-	     sys-utils/dmesg.8 mount/pivot_root.8 \
+	     mount/pivot_root.8 \
 	     disk-utils/fdformat.8 disk-utils/raw.8 # disk-utils/setfdprm.8
 endif
 
@@ -136,7 +123,7 @@ endif
 endif
 
 ifeq ($(DEB_HOST_ARCH_OS),linux)
-MOUNTMAN5FILES = mount/fstab.5 mount/nfs.5
+MOUNTMAN5FILES = mount/fstab.5
 MOUNTMAN8FILES = mount/losetup.8 mount/swapoff.8 mount/umount.8 \
 		 mount/mount.8 mount/swapon.8
 MOUNTDOCFILES  = mount/README.mount
@@ -226,10 +213,11 @@ endif
 endif
 	install -m 644 debian/changelog \
 	  debian/tmp/usr/share/doc/$(PACKAGE)/changelog.Debian
-	install -m 644 HISTORY debian/tmp/usr/share/doc/$(PACKAGE)/changelog
+	install -m 644 $(HISTORY) debian/tmp/usr/share/doc/$(PACKAGE)/changelog
 	find debian/tmp/usr/share/{info,doc,man} -type f | xargs gzip -9
 	install -m 644 debian/mime.$(PACKAGE) debian/tmp/usr/lib/mime/packages/$(PACKAGE)
 	install -m 644 debian/copyright debian/tmp/usr/share/doc/$(PACKAGE)/copyright
+	install -m 644 AUTHORS debian/tmp/usr/share/doc/$(PACKAGE)/AUTHORS
 	install debian/{preinst,postinst,prerm,postrm} debian/tmp/DEBIAN/
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 ifneq ($(arch),$(nohwclock))
@@ -242,7 +230,7 @@ endif
 	install -m 755 debian/util-linux-locales.postinst debian/tmp-util-linux-locales/DEBIAN/postinst
 	install -m 755 debian/util-linux-locales.prerm debian/tmp-util-linux-locales/DEBIAN/prerm
 	mv debian/tmp/usr/share/locale debian/tmp-util-linux-locales/usr/share/
-	install -m 644 HISTORY debian/tmp-util-linux-locales/usr/share/doc/util-linux-locales/changelog
+	install -m 644 $(HISTORY) debian/tmp-util-linux-locales/usr/share/doc/util-linux-locales/changelog
 	install -m 644 debian/changelog debian/tmp-util-linux-locales/usr/share/doc/util-linux-locales/changelog.Debian
 	find debian/tmp-util-linux-locales/usr/share/doc -type f | xargs gzip -9
 	install -m 644 debian/copyright debian/tmp-util-linux-locales/usr/share/doc/util-linux-locales/copyright
@@ -308,7 +296,7 @@ ifeq ($(DEB_HOST_ARCH_OS),linux)
 	  debian/tmp-mount/usr/share/doc/mount/changelog.Debian
 	install -m 644 debian/changelog.Debian-mount.old \
 	  debian/tmp-mount/usr/share/doc/mount/changelog.Debian-mount.old
-	install -m 644 HISTORY debian/tmp-mount/usr/share/doc/mount/changelog
+	install -m 644 $(HISTORY) debian/tmp-mount/usr/share/doc/mount/changelog
 	find debian/tmp-mount/usr/share/{doc,man} -type f | xargs gzip -9
 	install -m 644 debian/copyright debian/tmp-mount/usr/share/doc/mount/copyright
 	install debian/mount.postinst debian/tmp-mount/DEBIAN/postinst
@@ -324,15 +312,17 @@ endif
 	install -m 755 -s $(BSDUBINFILES) debian/tmp-bsd/usr/bin/.
 	cp misc-utils/scriptreplay.pl debian/tmp-bsd/usr/bin/scriptreplay
 	chmod 755 debian/tmp-bsd/usr/bin/scriptreplay
+ifneq ($(BSDMAN8FILES),)
 	install -m 644 $(BSDMAN8FILES) debian/tmp-bsd/usr/share/man/man8
 	mv debian/tmp-bsd/usr/share/man/man8/renice.8 debian/tmp-bsd/usr/share/man/man1/renice.1
+endif
 	install -m 644 $(BSDMAN1FILES) debian/tmp-bsd/usr/share/man/man1
 	install -m 644 $(BSDDOCFILES) debian/tmp-bsd/usr/share/doc/bsdutils
 	chown root:tty debian/tmp-bsd/usr/bin/wall
 	chmod g+s debian/tmp-bsd/usr/bin/wall
 	install -m 644 debian/changelog \
 	  debian/tmp-bsd/usr/share/doc/bsdutils/changelog.Debian
-	install -m 644 HISTORY debian/tmp-bsd/usr/share/doc/bsdutils/changelog
+	install -m 644 $(HISTORY) debian/tmp-bsd/usr/share/doc/bsdutils/changelog
 	find debian/tmp-bsd/usr/share/{doc,man} -type f | xargs gzip -9
 	install -m 644 debian/copyright debian/tmp-bsd/usr/share/doc/bsdutils/copyright
 	install debian/bsdutils.postinst debian/tmp-bsd/DEBIAN/postinst

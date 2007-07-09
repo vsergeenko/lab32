@@ -1,4 +1,4 @@
-util-linux (2.13~pre7+git-0) experimental-UNRELEASED; urgency=low
+util-linux (2.13~rc1-0) experimental-UNRELEASED; urgency=low
 
   * New upstream
     - several patches were not ported forward from 2.12-19
