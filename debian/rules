@@ -52,6 +52,7 @@ CFDISK_POT=$(CFDISK_PO_DIR)/cfdisk.pot
 
 build: 
 	$(checkdir)
+	./autogen.sh
 	./configure --with-selinux	# --with-fsprobe=volume_id
 	$(MAKE) all CPU=$(arch) arch=$(arch) SUBDIRS="${SUBDIRS}"
 	# $(MAKE) disk-utils/raw - this is done above if linux/raw.h exists
