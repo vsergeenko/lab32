@@ -12,7 +12,7 @@ headers_common = fstab.h linux_fs.h mount_mntent.h mount_constants.h my_dev_t.h 
 	mount_paths.h lomount.h fsprobe.h realpath.h xmalloc.h \
 	getusername.h loop.h sundries.h
 
-mount_common = fstab.c mount_mntent.c getusername.c lomount.c \
+mount_common = fstab.c mount_mntent.c getusername.c lomount.c rmd160.c \
 	$(utils_common) $(headers_common) ../lib/env.c
 
 mount_SOURCES = mount.c $(mount_common) ../lib/setproctitle.c
@@ -25,7 +25,7 @@ umount_LDFLAGS = $(SUID_LDFLAGS) $(AM_LDFLAGS)
 
 swapon_SOURCES = swapon.c swap_constants.h $(utils_common)
 
-losetup_SOURCES = lomount.c loop.h lomount.h
+losetup_SOURCES = lomount.c loop.h lomount.h rmd160.c
 losetup_CPPFLAGS = -DMAIN $(AM_CPPFLAGS)
 
 mount_LDADD = $(LDADD_common)

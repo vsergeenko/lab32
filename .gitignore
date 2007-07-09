@@ -4,7 +4,6 @@ Makefile
 aclocal.m4
 autom4te.cache
 stamp-h.in
-Makefile.in
 configure
 config.cache
 config.h

@@ -339,6 +339,7 @@ set_loop(const char *device, const char *file, unsigned long long offset,
 		memset(pass, 0, strlen(pass));
 		loopinfo64.lo_encrypt_key_size = LO_KEY_SIZE;
 		break;
+#define HASHLENGTH 20
 #if 0
 	case LO_CRYPT_FISH2:
 	case LO_CRYPT_BLOW:
@@ -351,7 +352,6 @@ set_loop(const char *device, const char *file, unsigned long long offset,
 	case LO_CRYPT_DFC:
 	case LO_CRYPT_RIJNDAEL:
 	    {
-#define HASHLENGTH 20
 		char keybits[2*HASHLENGTH]; 
 		char *pass2;
 		int passwdlen;
