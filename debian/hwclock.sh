@@ -12,7 +12,7 @@
 #		 - Added comments to alert users of hwclock issues
 #		   and discourage tampering without proper doc reading.
 
-# WARNING:	Please read /usr/share/doc/util-linux/README.Debian.hwclock
+# WARNING:	Please read /usr/share/doc/util-linux/README.Debian.hwclock.gz
 #		before changing this file. You risk serious clock
 #		misbehaviour otherwise.
 
@@ -76,7 +76,7 @@ hwclocksh()
 	    # to a very different value and hwclock --adjust is being
 	    # used.
 	    #
-	    # Please read /usr/share/doc/util-linux/README.Debian.hwclock
+	    # Please read /usr/share/doc/util-linux/README.Debian.hwclock.gz
 	    # before enablig hwclock --adjust.
 
 	    #hwclock --adjust $GMT $BADYEAR
