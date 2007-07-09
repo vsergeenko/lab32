@@ -30,8 +30,6 @@
 #include <getopt.h>
 #include <time.h>
 #include <sys/file.h>
-#include <sys/vt.h>
-#include <linux/tty.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -696,6 +694,8 @@ open_tty(tty, tp, local)
 #if 0
 	if (strncmp(tty,"tty",3) == 0)
 	{
+#include <sys/vt.h>
+#include <linux/tty.h>
 	    char *end;
 	    int vtno;
 
