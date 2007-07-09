@@ -193,7 +193,7 @@ static const struct opt_map opt_map[] = {
 
 static const char *opt_loopdev, *opt_vfstype, *opt_offset, *opt_encryption,
 	*opt_speed, *opt_comment, *opt_uhelper;
-static confst char *opt_keybits, *opt_nohashpass;
+static const char *opt_keybits, *opt_nohashpass;
 
 static int mounted (const char *spec0, const char *node0);
 static int check_special_mountprog(const char *spec, const char *node,
