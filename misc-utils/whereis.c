@@ -75,9 +75,7 @@ static char *bindirs[] = {
    "/usr/tex/bin",
    "/usr/interviews/bin/LINUX",
    
-   "/usr/X11R6/bin",
    "/usr/X386/bin",
-   "/usr/bin/X11",
    "/usr/X11/bin",
    "/usr/X11R5/bin",
 
