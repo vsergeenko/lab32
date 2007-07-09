@@ -7,14 +7,14 @@ util-linux (2.13~rc1-0) experimental-UNRELEASED; urgency=low
         with filesystem probing
       - 20xgethostname: does anyone care?
       - 30nfs*: NFS support has moved to nfs-utils, and removed from
-        util-linux.
+        util-linux.  Add Depends: nfs-common until Lenny ships.
     - umounting usb sticks as a user no longer segfaults. Closes: #410031
   * Add LSB formatted dependency info in hwclock.sh.  Closes: #330227
   * Reflect Debian locations in getopt manpage.  Closes: #352221
   * Conflict/Replaces/Provides: schedutils.  Closes: #322883
   * README.Debian.hwclock needs a .gz in hwclock.sh.  Closes: #393539
 
- -- LaMont Jones <lamont@debian.org>  Mon,  9 Jul 2007 11:37:04 -0600
+ -- LaMont Jones <lamont@debian.org>  Mon,  9 Jul 2007 12:14:07 -0600
 
 util-linux (2.12r-20) unstable-UNRELEASED; urgency=low
 
