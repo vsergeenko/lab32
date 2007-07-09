@@ -1,4 +1,4 @@
-AC_INIT(util-linux-ng, 2.13-rc1, kzak@redhat.com)
+AC_INIT(util-linux, 2.13-rc1, kzak@redhat.com)
 
 AC_PREREQ(2.59)
 
@@ -91,7 +91,7 @@ elif test x$with_fsprobe = xvolume_id; then
 fi
 
 if test $have_blkid = no && test $have_volume_id = no; then
-  AC_MSG_ERROR([blkid or volume_id is needed to build util-linux-ng.])
+  AC_MSG_ERROR([blkid or volume_id is needed to build util-linux.])
 fi
 
 AM_GNU_GETTEXT_VERSION([0.14.1])
