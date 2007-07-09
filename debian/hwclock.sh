@@ -16,6 +16,14 @@
 #		before changing this file. You risk serious clock
 #		misbehaviour otherwise.
 
+### BEGIN INIT INFO
+# Provides:          hwclock
+# Required-Start:    mountdevsubfs
+# Required-Stop:     $local_fs
+# Default-Start:     S
+# Default-Stop:      0 6
+### END INIT INFO
+
 # Set this to any options you might need to give to hwclock, such
 # as machine hardware clock type for Alphas.
 HWCLOCKPARS=
