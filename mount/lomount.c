@@ -585,8 +585,8 @@ main(int argc, char **argv) {
 		{ "find", 0, 0, 'f' },
 		{ "help", 0, 0, 'h' },
 		{ "keybits", 1, 0, 'k' },
-		{ "nopasshash", 0, 0, 'N' }
-		{ "nohashpass", 0, 0, 'N' }
+		{ "nopasshash", 0, 0, 'N' },
+		{ "nohashpass", 0, 0, 'N' },
 		{ "offset", 1, 0, 'o' },
 		{ "pass-fd", 1, 0, 'p' },
 		{ "read-only", 0, 0, 'r' },
