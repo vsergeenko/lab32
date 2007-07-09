@@ -59,10 +59,12 @@ clean:
 # Architecture independant stuff
 
 SUIDFILES = debian/tmp-mount/bin/{u,}mount
-BINFILES  = sys-utils/arch text-utils/more
+BINFILES  = sys-utils/arch text-utils/{more,tailf}
 UBINFILES = sys-utils/{ipcs,ipcrm,setsid} \
 	misc-utils/{namei,setterm,mcookie,whereis,ddate} \
-	getopt/getopt text-utils/{rev,line,pg}
+	getopt/getopt text-utils/{rev,line,pg} \
+	schedutils/{chrt,ionice,taskset} \
+	partx/{addpart,delpart,partx}
 SBINFILES = disk-utils/mkswap
 
 ifeq ($(DEB_HOST_ARCH_OS),linux)
@@ -94,10 +96,11 @@ BSDDOCFILES = debian/README.script
 
 # Architecture independant docs
 
-MAN1FILES = text-utils/{pg,more,line,rev}.1 misc-utils/{namei.1,mcookie.1} \
-            misc-utils/{chkdupexe.1,setterm.1,whereis.1,ddate.1} \
-	    sys-utils/arch.1 getopt/getopt.1 sys-utils/{ipcrm.1,ipcs.1,setsid.1} 
-MAN8FILES = disk-utils/mkswap.8
+MAN1FILES = text-utils/{pg,tailf,more,line,rev}.1 \
+	    misc-utils/{namei,mcookie,chkdupexe,setterm,whereis,ddate}.1 \
+	    sys-utils/{arch,ipcrm,ipcs,setsid}.1 getopt/getopt.1 \
+	    schedutils/{chrt,ionice,taskset}.1
+MAN8FILES = disk-utils/mkswap.8 partx/{addpart,delpart,partx}.8
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 ifneq ($(arch),$(nohwclock))
 MAN8FILES += hwclock/hwclock.8

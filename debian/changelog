@@ -1,6 +1,6 @@
 util-linux (2.13~rc1-0) experimental-UNRELEASED; urgency=low
 
-  * New upstream (util-linux-ng).  Closes: #431817
+  * New upstream (util-linux-ng).  Closes: #431817, #355536
     - several patches were not ported forward from 2.12-19
       - no kerneli support in crypto loop, since it is not in 2.6 kernels.
       - 20guesshelper: filesystem detection has been dropped.  Mount is built
@@ -8,13 +8,16 @@ util-linux (2.13~rc1-0) experimental-UNRELEASED; urgency=low
       - 20xgethostname: does anyone care?
       - 30nfs*: NFS support has moved to nfs-utils, and removed from
         util-linux.  Add Depends: nfs-common until Lenny ships.
+        Closes: #417996
     - umounting usb sticks as a user no longer segfaults. Closes: #410031
   * Add LSB formatted dependency info in hwclock.sh.  Closes: #330227
   * Reflect Debian locations in getopt manpage.  Closes: #352221
-  * Conflict/Replaces/Provides: schedutils.  Closes: #322883
+  * Conflict/Replaces/Provides: schedutils.  Closes: #322883, #384045
   * README.Debian.hwclock needs a .gz in hwclock.sh.  Closes: #393539
+  * Deliver tailf.  Closes: #327906
+  * Deliver partx.  Closes: #296615
 
- -- LaMont Jones <lamont@debian.org>  Mon,  9 Jul 2007 12:14:07 -0600
+ -- LaMont Jones <lamont@debian.org>  Mon,  9 Jul 2007 14:58:50 -0600
 
 util-linux (2.12r-20) unstable-UNRELEASED; urgency=low
 
@@ -1720,3 +1723,4 @@ util-linux (2.5-1) unstable; urgency=low
  -- Guy Maor <maor@ece.utexas.edu>  Thu, 18 Apr 1996 04:32:22 -0500
 
 
+	partx/{addpart,delpart,partx}
