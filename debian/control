@@ -13,8 +13,9 @@ Priority: required
 Essential: yes
 Depends: lsb-base (>= 3.0-6), tzdata (>=2006c-2)
 Suggests: util-linux-locales, kbd | console-tools, dosfstools
-Replaces: miscutils, setterm, fdisk, ${util-linux:Conflicts}
-Conflicts: setterm, fdisk, kbd (<< 1.05-3), console-tools (<< 1:0.2.3-21), ${util-linux:Conflicts}
+Replaces: schedutils, miscutils, setterm, fdisk, ${util-linux:Conflicts}
+Conflicts: schedutils, setterm, fdisk, kbd (<< 1.05-3), console-tools (<< 1:0.2.3-21), ${util-linux:Conflicts}
+Provides: schedutils
 Description: Miscellaneous system utilities
  This package contains a number of important utilities, most of which
  are oriented towards maintenance of your system.  Some of the more
