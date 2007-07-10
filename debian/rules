@@ -38,10 +38,12 @@ CFDISK_PO_DIR=cfdisk-po
 CFDISK_POT=$(CFDISK_PO_DIR)/cfdisk.pot
 
 HISTORY=docs/v2.13-ReleaseNotes 
+CONFOPTS= --with-selinux --enable-raw --enable-rdev --enable-partx
+#CONFOPTS += --with-fsprobe=volume_id
 
 build: 
 	$(checkdir)
-	./configure --with-selinux --enable-raw	--enable-rdev # --with-fsprobe=volume_id
+	./configure $(CONFOPTS)
 	$(MAKE) all CPU=$(arch) arch=$(arch)
 	touch build
 
