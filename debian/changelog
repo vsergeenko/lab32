@@ -1,4 +1,4 @@
-util-linux (2.13~rc1-0) experimental-UNRELEASED; urgency=low
+util-linux (2.13~rc1-0) experimental; urgency=low
 
   * New upstream (util-linux-ng).  Closes: #431817, #355536
     - several patches were not ported forward from 2.12-19
@@ -17,7 +17,7 @@ util-linux (2.13~rc1-0) experimental-UNRELEASED; urgency=low
   * Deliver tailf.  Closes: #327906
   * Deliver partx.  Closes: #296615
 
- -- LaMont Jones <lamont@debian.org>  Mon,  9 Jul 2007 14:58:50 -0600
+ -- LaMont Jones <lamont@debian.org>  Tue, 10 Jul 2007 00:05:29 -0600
 
 util-linux (2.12r-20) unstable-UNRELEASED; urgency=low
 
