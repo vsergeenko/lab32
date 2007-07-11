@@ -1,3 +1,10 @@
+util-linux (2.13~rc1-1) experimental; urgency=low
+
+  * fix ionice build errors on several architectures.  Closes: #432603
+  * no libselinux on kfreebsd-i386
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 10 Jul 2007 22:30:59 -0600
+
 util-linux (2.13~rc1-0) experimental; urgency=low
 
   * New upstream (util-linux-ng).  Closes: #431817, #355536
