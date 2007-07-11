@@ -15,6 +15,7 @@
 #include <sys/syscall.h>
 #include <asm/unistd.h>
 
+#if 0
 #if defined(__i386__)
 #define __NR_ioprio_set		289
 #define __NR_ioprio_get		290
@@ -38,6 +39,7 @@
 #define __NR_ioprio_get		218
 #else
 #error "Unsupported arch"
+#endif
 #endif
 
 static inline int ioprio_set(int which, int who, int ioprio)
