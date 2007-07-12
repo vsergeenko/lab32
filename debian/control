@@ -11,7 +11,7 @@ Pre-Depends: ${util-linux:Depends}
 Section: utils
 Priority: required
 Essential: yes
-Depends: lsb-base (>= 3.0-6), tzdata (>=2006c-2), nfs-common (>=1:1.1.0-6)
+Depends: lsb-base (>= 3.0-6), tzdata (>=2006c-2)
 Suggests: util-linux-locales, kbd | console-tools, dosfstools
 Replaces: schedutils, miscutils, setterm, fdisk, ${util-linux:Conflicts}
 Conflicts: schedutils, setterm, fdisk, kbd (<< 1.05-3), console-tools (<< 1:0.2.3-21), ${util-linux:Conflicts}
@@ -40,6 +40,7 @@ Architecture: alpha amd64 arm armeb armel hppa i386 ia64 m68k mips mipsel powerp
 Essential: yes
 Section: admin
 Pre-Depends: ${mount:Depends}
+Depends: nfs-common (>=1:1.1.0-7)
 Description: Tools for mounting and manipulating filesystems
  This package provides the mount(8), umount(8), swapon(8),
  swapoff(8), and losetup(8) commands.
