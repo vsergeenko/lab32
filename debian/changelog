@@ -1,3 +1,9 @@
+util-linux (2.13~rc1-3) experimental-UNRELEASED; urgency=low
+
+  * drop libselinux-dev build-dep on kfreebsd-amd64
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 13 Jul 2007 08:51:04 -0600
+
 util-linux (2.13~rc1-2) experimental; urgency=low
 
   * A little more kfreebsd cleanup
