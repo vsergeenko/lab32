@@ -1,3 +1,10 @@
+util-linux (2.13~rc1-2) experimental; urgency=low
+
+  * A little more kfreebsd cleanup
+  * Fix nfs-common dependency
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 13 Jul 2007 08:22:01 -0600
+
 util-linux (2.13~rc1-1) experimental; urgency=low
 
   * fix ionice build errors on several architectures.  Closes: #432603
