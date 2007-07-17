@@ -8,8 +8,11 @@ arch \- print machine architecture
 .B arch
 .SH DESCRIPTION
 .B arch
-is equivalent to
-.BR "uname -m" .
+is deprecated command since release util-linux 2.13. Use
+.BR "uname -m"
+or use
+.BR arch
+from the coreutils package.
 
 On current Linux systems,
 .B arch
@@ -18,6 +21,9 @@ prints things such as "i386", "i486", "i586", "alpha", "sparc",
 .SH SEE ALSO
 .BR uname (1),
 .BR uname (2)
+.SH AVAILABILITY
+The arch command is part of the util-linux-ng package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux-ng/.
 .\"
 .\" Details:
 .\" arch prints the machine part of the system_utsname struct

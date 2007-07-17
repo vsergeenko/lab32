@@ -1,4 +1,4 @@
-AC_INIT(util-linux, 2.13-rc1, kzak@redhat.com)
+AC_INIT(util-linux, 2.13-rc2, kzak@redhat.com)
 
 AC_PREREQ(2.59)
 
@@ -246,13 +246,17 @@ UTIL_SET_ARCH(PPC, ppc*|powerpc*)
 UTIL_SET_ARCH(M68K, m68*)
 UTIL_SET_ARCH(MIPS, mips*)
 
+AC_ARG_ENABLE([arch],
+  AS_HELP_STRING([--enable-arch], [do build arch]),
+  [], enable_arch=no
+)
+AM_CONDITIONAL(BUILD_ARCH, test x$enable_arch = xyes)
 
 AC_ARG_ENABLE([agetty],
   AS_HELP_STRING([--disable-agetty], [do not build agetty]),
   [], enable_agetty=yes
 )
 AM_CONDITIONAL(BUILD_AGETTY, test x$enable_agetty = xyes)
-
 
 AC_ARG_ENABLE([cramfs],
   AS_HELP_STRING([--disable-cramfs], [do not build fsck.cramfs, mkfs.cramfs]),
