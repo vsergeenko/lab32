@@ -609,6 +609,15 @@ This option implies the options
 (unless overridden by subsequent options, as in the option line
 .BR group,dev,suid ).
 .TP
+.B encryption
+Specifies an encryption algorithm to use.  Used in conjunction with the
+.BR loop " option."
+.TP
+.B keybits
+Specifies the key size to use for an encryption algorithm. Used in conjunction
+with the 
+.BR loop " and " encryption " options."
+.TP
 .B mand
 Allow mandatory locks on this filesystem. See
 .BR fcntl (2).
@@ -1899,6 +1908,10 @@ This type of mount knows about three options, namely
 .BR loop ", " offset " and " encryption ,
 that are really options to
 .BR \%losetup (8).
+If the mount requires a passphrase, you will be prompted for one unless
+you specify a file descriptor to read from instead with the
+.BR \-\-pass-fd
+option.
 (These options can be used in addition to those specific
 to the filesystem type.)
 
