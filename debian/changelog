@@ -1,3 +1,9 @@
+util-linux (2.13~rc2-2) experimental-UNRELEASED; urgency=low
+
+  * arch is dealt with upstream now.
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 17 Jul 2007 17:31:52 -0600
+
 util-linux (2.13~rc2-1) experimental; urgency=low
 
   * New upstream version
