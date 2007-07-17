@@ -58,7 +58,7 @@ autopoint --force
 aclocal -I m4
 autoconf
 autoheader
-automake --add-missing
+automake --copy --add-missing
 
 cd $THEDIR
 
