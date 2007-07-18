@@ -1,4 +1,4 @@
-util-linux (2.13~rc2-2) experimental-UNRELEASED; urgency=low
+util-linux (2.13~rc2-2) experimental; urgency=low
 
   * arch is dealt with upstream now.
   * Mention hfsplus in mount.8.  Closes: #345106
