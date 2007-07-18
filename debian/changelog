@@ -1,8 +1,11 @@
 util-linux (2.13~rc2-2) experimental-UNRELEASED; urgency=low
 
   * arch is dealt with upstream now.
+  * Mention hfsplus in mount.8.  Closes: #345106
+  * Add m32r.  Closes: #413074
+  * use snprintf in logger.c.  Closes: #118784
 
- -- LaMont Jones <lamont@debian.org>  Tue, 17 Jul 2007 17:31:52 -0600
+ -- LaMont Jones <lamont@debian.org>  Tue, 17 Jul 2007 22:42:44 -0600
 
 util-linux (2.13~rc2-1) experimental; urgency=low
 
