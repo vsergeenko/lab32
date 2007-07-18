@@ -17,6 +17,11 @@ Upstream maintainers include:
 
 Copyright:
 
+A variety of people and entities, as befits the nature of the package.
+See the individual sources for exact copyright holder information.
+
+License:
+
 getopt, more, pg, wall, and whereis may be redistributed under the terms
 of the UCB BSD license found on Debian systems in the file
 /usr/share/common-licenses/BSD
