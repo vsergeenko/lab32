@@ -1,3 +1,9 @@
+util-linux (2.12r-11ubuntu2) edgy; urgency=low
+
+  * Drop PAGE_SIZE usage complete, and switch to sysconf(_SC_PAGESIZE).
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Fri, 13 Oct 2006 00:07:40 +1000
+
 util-linux (2.12r-11ubuntu1) edgy; urgency=low
 
   * Merge NFS fix from Debian.

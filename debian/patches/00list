@@ -17,3 +17,4 @@
 60_opt_O1
 65_llseek-syscall
 70libvolume_id-support
+99page_size
