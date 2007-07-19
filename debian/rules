@@ -43,7 +43,8 @@ ifeq ($(DEB_HOST_ARCH_OS),linux)
 CONFOPTS += --with-selinux
 endif
 
-#CONFOPTS += --with-fsprobe=volume_id
+# Ubuntu changes
+CONFOPTS += --with-fsprobe=volume_id
 
 build: 
 	$(checkdir)
