@@ -231,7 +231,7 @@ diff -urNad --exclude=CVS --exclude=.svn ./mount/nfs4mount.c /tmp/dpep-work.TJbh
 +	} \
 +} while(0);
 +
-+char *GSSDLCK = DEFAULT_DIR "/rpc.gssd";
++char *GSSDLCK = DEFAULT_DIR "/rpc.gssd.pid";
 +#define gssd_check() do { \
 +		if (access(GSSDLCK, F_OK)) { \
 +			printf(_("Warning: rpc.gssd appears not to be running.\n")); \

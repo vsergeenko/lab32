@@ -1,3 +1,17 @@
+util-linux (2.12r-11ubuntu1) edgy; urgency=low
+
+  * Merge NFS fix from Debian.
+
+ -- LaMont Jones <lamont@ubuntu.com>  Tue, 19 Sep 2006 14:04:00 -0600
+
+util-linux (2.12r-11) unstable; urgency=low
+
+  * typos in NFSv4 (GSSDLCK didn't have .pid, and the latest
+    nfs-common no longer creates the file at all.) Closes: #376931
+    - modified 30nfs4-fix.dpatch
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 19 Sep 2006 09:33:31 -0600
+
 util-linux (2.12r-10ubuntu3) edgy; urgency=low
 
   * Helps if I add a Build-Depend on libvolumeid
