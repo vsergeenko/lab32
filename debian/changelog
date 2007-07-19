@@ -1,3 +1,15 @@
+util-linux (2.12r-4ubuntu5) dapper; urgency=low
+
+  * Merge NFSv4 from debian (2.12r-9 versions 27-32)
+    - Leave hwclock.sh alone
+    - Turn on fixed nfsv4 patch.  Closes: #302420, #239031
+      - fix compiler warnings in said patch.
+      - Apply nfs4mount.c fix to (dropped) nfsv4 patch.  Closes: #354193
+      Closes: Ubuntu#43581, Ubuntu#27425
+      Thanks to Steinar H. Gunderson <sgunderson@bigfoot.com>
+
+ -- LaMont Jones <lamont@ubuntu.com>  Mon,  8 May 2006 13:37:50 -0600
+
 util-linux (2.12r-4ubuntu4) dapper; urgency=low
 
   * Rip out the log message code from the init script, as it's run in the
