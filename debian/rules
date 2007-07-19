@@ -13,6 +13,11 @@ ifndef DEB_HOST_GNU_SYSTEM
 DEB_HOST_GNU_SYSTEM := $(shell dpkg-architecture -qDEB_HOST_GNU_SYSTEM)
 endif
 
+ifndef DEB_HOST_ARCH_OS
+DEB_HOST_ARCH_OS := $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
+endif
+
+
 ifeq ($(DEB_HOST_GNU_SYSTEM),linux)
 # Take account of old dpkg-architecture output.
 DEB_HOST_GNU_SYSTEM := linux-gnu

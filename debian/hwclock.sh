@@ -26,6 +26,7 @@ hwclocksh()
     . /etc/default/rcS
 
     . /lib/lsb/init-functions
+    verbose_log_action_msg() { [ "$VERBOSE" = no ] || log_action_msg "$@"; }
 
     [ "$GMT" = "-u" ] && UTC="yes"
     case "$UTC" in
@@ -35,13 +36,13 @@ hwclocksh()
        yes)	GMT="--utc"
 		UTC="--utc"
 		;;
-       *)	return 1 ;;
+       *)	log_action_msg "Unknown UTC setting: \"$UTC\""; return 1 ;;
     esac
 
     case "$BADYEAR" in
        no|"")	BADYEAR="" ;;
        yes)	BADYEAR="--badyear" ;;
-       *)	return 1 ;;
+       *)	log_action_msg "unknown BADYEAR setting: \"$BADYEAR\""; return 1 ;;
     esac
 
     case "$1" in
@@ -74,16 +75,17 @@ hwclocksh()
 	    :
 
 	    if [ "$HWCLOCKACCESS" != no ]; then
+		log_action_msg "Setting the system clock."
+
 		# Copies Hardware Clock time to System Clock using the correct
 		# timezone for hardware clocks in local time, and sets kernel
 		# timezone. DO NOT REMOVE.
 		/sbin/hwclock --hctosys $GMT $HWCLOCKPARS $BADYEAR
 
-		if /sbin/hwclock --show $GMT $HWCLOCKPARS $BADYEAR 2>&1 > /dev/null |
-		    grep -q '^The Hardware Clock registers contain values that are either invalid'; then
-			echo "Invalid system date -- setting to 1/1/2002"
-			/sbin/hwclock --set --date '1/1/2002 00:00:00' $GMT $HWCLOCKPARS $BADYEAR
-		fi
+		#	Announce the local time.
+		verbose_log_action_msg "System Clock set. Local time: `date $UTC`"
+	    else
+		verbose_log_action_msg "Not setting System Clock"
 	    fi
 	    ;;
 	stop|restart|reload|force-reload)
@@ -95,10 +97,14 @@ hwclocksh()
 	    #          clock will not be carried across reboots.
 	    #
 	    if [ "$HWCLOCKACCESS" != no ]; then
+		log_action_msg "Saving the system clock."
 		if [ "$GMT" = "-u" ]; then
 		    GMT="--utc"
 		fi
 		/sbin/hwclock --systohc $GMT $HWCLOCKPARS $BADYEAR
+		verbose_log_action_msg "Hardware Clock updated to `date`"
+	    else
+		verbose_log_action_msg "Not saving System Clock"
 	    fi
 	    ;;
 	show)
@@ -115,4 +121,4 @@ hwclocksh()
     esac
 }
 
-hwclocksh "$@" &
+hwclocksh "$@"

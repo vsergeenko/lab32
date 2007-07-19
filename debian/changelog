@@ -1,3 +1,44 @@
+util-linux (2.12r-19ubuntu2) gutsy; urgency=low
+  
+  * Fix sparc disk label generation. This is required for LDOM
+    and parallel installations with Solaris 10.
+    Add patch: 80sparc-new-label
+
+    Many thanks to David S. Miller for the patch.
+
+    NOTE: users upgrading from older versions should re-run fdisk to
+          update the disk label.
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Mon, 02 Jul 2007 07:55:46 +0200
+
+util-linux (2.12r-19ubuntu1) gutsy; urgency=low
+
+  * Merge from debian unstable, remaining changes:
+    - Use volumeid instead of blkid to be able to access (mount/umount/swapon)
+      volumes by UUID and/or label:
+      + debian/control: libblkid-dev -> libvolume-id-dev build dependency
+      + debian/patches/70libvolume_id-support.dpatch: SuSE patch for using
+        libvolume-id.
+    - Add udev rule for calling /sbin/hwclock --hctosys dynamically:
+      + debian/hwclock.rules, debian/hwclock.udev: Rule and script.
+      + debian/rules: Install those.
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Mon, 14 May 2007 21:48:06 +0200
+
+util-linux (2.12r-19) unstable; urgency=low
+
+  * mips/mipsel buildds use sudo.  Fix install target so that mount.deb
+    builds.  Closes: #411893
+
+ -- LaMont Jones <lamont@debian.org>  Wed, 21 Feb 2007 10:39:26 -0700
+
+util-linux (2.12r-18) unstable; urgency=low
+
+  * Stop printing erroneous "rpc.idmapd appears to not be running" message.
+    Files: 30nfs4.dpatch. Closes: #385879
+
+ -- LaMont Jones <lamont@debian.org>  Mon,  5 Feb 2007 13:47:10 -0700
+
 util-linux (2.12r-17ubuntu2) feisty; urgency=low
 
   * debian/control: Update maintainer fields according to debian-
