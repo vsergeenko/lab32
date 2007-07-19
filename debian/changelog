@@ -1,3 +1,10 @@
+util-linux (2.12r-4ubuntu3) dapper; urgency=low
+
+  * Set the hardware clock via a udev rule as soon as /dev/rtc is available.
+    This fixes #33968 for people without /usr on a separate partition.
+
+ -- Scott James Remnant <scott@ubuntu.com>  Fri, 21 Apr 2006 11:30:48 +0100
+
 util-linux (2.12r-4ubuntu2) dapper; urgency=low
 
   * Move init script to S50 so it runs after /usr has definitely been

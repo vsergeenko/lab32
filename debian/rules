@@ -228,6 +228,12 @@ endif
 ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
 ifneq ($(arch),$(nohwclock))
 	install -m 644 debian/conffiles debian/tmp/DEBIAN/
+
+	install -d -m 755 debian/tmp/lib/udev
+	install -m 755 debian/hwclock.udev debian/tmp/lib/udev/set_hwclock
+
+	install -d -m 755 debian/tmp/etc/udev/rules.d
+	install -m 644 debian/hwclock.rules debian/tmp/etc/udev/rules.d/85-hwclock.rules
 endif
 endif
 	ls debian/tmp/{bin,sbin,usr/{bin,sbin}}/* | xargs dpkg-shlibdeps -putil-linux
