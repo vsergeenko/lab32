@@ -78,7 +78,7 @@ INITFILES = debian/hwclock.sh
 SBINFILES += hwclock/hwclock
 endif
 BINFILES  += sys-utils/dmesg
-SBINFILES += disk-utils/{blockdev,raw} mount/pivot_root login-utils/agetty
+SBINFILES += disk-utils/{blockdev,raw,isosize} mount/pivot_root login-utils/agetty
 UBINFILES += disk-utils/fdformat
 USBINFILES = sys-utils/readprofile disk-utils/elvtune # disk-utils/setfdprm
 endif
@@ -110,7 +110,7 @@ ifneq ($(arch),$(nohwclock))
 MAN8FILES += hwclock/hwclock.8
 endif
 MAN1FILES += sys-utils/readprofile.1
-MAN8FILES += login-utils/agetty.8 disk-utils/{blockdev.8,elvtune.8} \
+MAN8FILES += login-utils/agetty.8 disk-utils/{blockdev.8,elvtune.8,isosize.8} \
 	     sys-utils/dmesg.8 mount/pivot_root.8 \
 	     disk-utils/fdformat.8 disk-utils/raw.8 # disk-utils/setfdprm.8
 endif
@@ -269,12 +269,12 @@ ifeq ($(arch),$(fdisk_arch))
 		cp $(CFDISK_PO_DIR)/$$LANG.gmo debian/tmp-cfdisk-udeb/usr/share/locale/$$LANG/LC_MESSAGES/util-linux.mo ; \
 	done
 
-	ls debian/tmp-fdisk-udeb/usr/sbin/* | xargs dpkg-shlibdeps -pfdisk-udeb
+	ls debian/tmp-fdisk-udeb/usr/sbin/* | xargs dpkg-shlibdeps -pfdisk-udeb -tudeb
 	dpkg-gencontrol -isp -pfdisk-udeb -Pdebian/tmp-fdisk-udeb -fdebian/files~
 	dpkg-distaddfile fdisk-udeb_$(shell dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2)_$(arch).udeb debian-installer extra
 	dpkg --build debian/tmp-fdisk-udeb ../fdisk-udeb_$(shell dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2)_$(arch).udeb
 
-	ls debian/tmp-cfdisk-udeb/usr/sbin/* | xargs dpkg-shlibdeps -pcfdisk-udeb
+	ls debian/tmp-cfdisk-udeb/usr/sbin/* | xargs dpkg-shlibdeps -pcfdisk-udeb -tudeb
 	dpkg-gencontrol -isp -pcfdisk-udeb -Pdebian/tmp-cfdisk-udeb -fdebian/files~
 	dpkg-distaddfile cfdisk-udeb_$(shell dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2)_$(arch).udeb debian-installer extra
 	dpkg --build debian/tmp-cfdisk-udeb ../cfdisk-udeb_$(shell dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2)_$(arch).udeb

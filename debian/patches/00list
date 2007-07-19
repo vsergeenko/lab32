@@ -15,3 +15,5 @@
 #20xgethostname
 #50hurd
 60_opt_O1
+65_llseek-syscall
+70libvolume_id-support

@@ -1,3 +1,77 @@
+util-linux (2.12r-10ubuntu3) edgy; urgency=low
+
+  * Helps if I add a Build-Depend on libvolumeid
+
+ -- Scott James Remnant <scott@ubuntu.com>  Mon, 21 Aug 2006 19:26:53 +0200
+
+util-linux (2.12r-10ubuntu2) edgy; urgency=low
+
+  * Correct FTFBS on current edgy because _syscall5 went away.
+
+  * Steal the libvolume_id-support patch from SuSE and apply here so that
+    we use libvolume_id for accessing devices via UUID and/or LABEL instead
+    of the less-capable blkid.
+
+ -- Scott James Remnant <scott@ubuntu.com>  Mon, 21 Aug 2006 15:23:58 +0200
+
+util-linux (2.12r-10ubuntu1) edgy; urgency=low
+
+  [ Ubuntu Merge-o-Matic ]
+  * Merge from debian unstable.
+
+ -- Scott James Remnant <scott@ubuntu.com>  Thu, 29 Jun 2006 23:39:59 +0100
+
+util-linux (2.12r-10) unstable; urgency=low
+
+  * NFSv4 patch fixes for cfs.  Closes: #367049
+    Thanks to Trond Myklebust for the quick fix.
+    - modified 30nfs4-fix.dpatch
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 15 May 2006 18:12:24 -0600
+
+util-linux (2.12r-9) unstable; urgency=low
+
+  * Release NFSv4 support. Closes: #302420, #239031, #290873
+  * Deliver isosize. Closes: #354960
+  * Fix udeb dependencies.  Closes: #360352
+
+ -- LaMont Jones <lamont@debian.org>  Sat,  6 May 2006 21:53:12 -0600
+
+util-linux (2.12r-8.2nfs4) experimental; urgency=low
+
+  * Turn on fixed nfsv4 patch.  Closes: #302420, #239031
+    Thanks to Steinar H. Gunderson <sgunderson@bigfoot.com>
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 28 Apr 2006 11:04:39 -0600
+
+util-linux (2.12r-8) unstable; urgency=high
+
+  * Drop NFS v4 patch, since it breaks mounting things exported by
+    nfs-user-server.  It will be happily reapplied once someone fixes
+    the patch.  Closes: #354075.  Reopens: #302420, #239031
+    - fix compiler warnings in said patch.
+    - Apply nfs4mount.c fix to (dropped) nfsv4 patch.  Closes: #354193
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 24 Feb 2006 10:57:29 -0700
+
+util-linux (2.12r-7) unstable; urgency=low
+
+  * Add nfsv4 patch.  Closes: #302420, #239031
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 21 Feb 2006 11:01:21 -0700
+
+util-linux (2.12r-6) unstable; urgency=low
+
+  * make hwclock even more policy compilant.
+
+ -- LaMont Jones <lamont@debian.org>  Sat, 28 Jan 2006 08:57:45 -0700
+
+util-linux (2.12r-5) unstable; urgency=low
+
+  * make hwclock prettier.  Closes: #348718
+
+ -- LaMont Jones <lamont@debian.org>  Wed, 18 Jan 2006 11:44:06 -0700
+
 util-linux (2.12r-4ubuntu6) dapper; urgency=low
 
   * NFSv4 patch broke cfs.  Import fix from debian 2.12r-10
@@ -1612,5 +1686,4 @@ util-linux (2.5-1) unstable; urgency=low
   * Initial release
 
  -- Guy Maor <maor@ece.utexas.edu>  Thu, 18 Apr 1996 04:32:22 -0500
-
 

@@ -1,0 +1,520 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 70libvolume_id-support.dpatch by Scott James Remnant <scott@netsplit.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad util-linux-2.12r~/MCONFIG util-linux-2.12r/MCONFIG
+--- util-linux-2.12r~/MCONFIG	2006-08-21 15:34:23.000000000 +0200
++++ util-linux-2.12r/MCONFIG	2006-08-21 15:34:23.000000000 +0200
+@@ -147,7 +147,7 @@
+   endif
+ endif
+ 
+-WARNFLAGS = -Wall -Wmissing-prototypes -Wstrict-prototypes
++WARNFLAGS = -Wall -Wmissing-prototypes -Wstrict-prototypes -g
+ 
+ LIB=../lib
+ 
+diff -urNad util-linux-2.12r~/configure util-linux-2.12r/configure
+--- util-linux-2.12r~/configure	2006-08-21 15:34:23.000000000 +0200
++++ util-linux-2.12r/configure	2006-08-21 15:34:23.000000000 +0200
+@@ -747,3 +747,23 @@
+         echo "You don't have blkid"
+ fi
+ rm -f conftest conftest.c
++
++#
++# 16. For mount, do we have libvolume_id?
++#
++echo '
++#include <stdlib.h>
++#include <libvolume_id.h>
++int main(){ exit(0); volume_id_close(NULL); }
++' > conftest.c
++LIBS="-lvolume_id"
++eval $compile
++LIBS=
++if test -s conftest; then
++        echo "HAVE_VOLID=yes" >> make_include
++        echo "You have libvolume_id"
++else
++        echo "HAVE_VOLID=no" >> make_include
++        echo "You don't have libvolume_id"
++fi
++rm -f conftest conftest.c
+diff -urNad util-linux-2.12r~/mount/Makefile util-linux-2.12r/mount/Makefile
+--- util-linux-2.12r~/mount/Makefile	2006-08-21 15:34:23.000000000 +0200
++++ util-linux-2.12r/mount/Makefile	2006-08-21 15:40:48.000000000 +0200
+@@ -1,7 +1,7 @@
+ include ../make_include
+ include ../MCONFIG
+ 
+-DEFINES = -DHAVE_NFS $(BLKID_DEFINE)
++DEFINES = -DHAVE_NFS $(BLKID_DEFINE) $(VOLID_DEFINE)
+ 
+ RPCSVCDIR = rpcsvc
+ RPC_CFLAGS = -Wno-unused 
+@@ -25,6 +25,11 @@
+ BLKID_LIB = -lblkid -luuid
+ endif
+ 
++ifeq "$(HAVE_VOLID)" "yes"
++VOLID_DEFINE = -DHAVE_VOLID
++VOLID_LIB = -lvolume_id
++endif
++
+ PROGS = $(SUID_PROGS) $(NOSUID_PROGS)
+ 
+ MAYBE = pivot_root swapoff
+@@ -49,17 +54,18 @@
+ 
+ mount: mount.o fstab.o sundries.o xmalloc.o realpath.o mntent.o version.o \
+        get_label_uuid.o mount_by_label.o mount_blkid.o mount_guess_fstype.o \
++       mount_udev.o \
+        getusername.o $(LIB)/setproctitle.o $(LIB)/env.o $(NFS_OBJS) $(LO_OBJS)
+-	$(LINK) $^ -o $@ $(BLKID_LIB)
++	$(LINK) $^ -o $@ $(BLKID_LIB) $(VOLID_LIB)
+ 
+ umount: umount.o fstab.o sundries.o xmalloc.o realpath.o mntent.o \
+ 	getusername.o get_label_uuid.o mount_by_label.o mount_blkid.o \
+-	version.o  nfsmount.o nfsmount_xdr.o $(LIB)/env.o $(LO_OBJS)
+-	$(LINK) $^ -o $@ $(BLKID_LIB)
++	mount_udev.o version.o  nfsmount.o nfsmount_xdr.o $(LIB)/env.o $(LO_OBJS)
++	$(LINK) $^ -o $@ $(BLKID_LIB) $(VOLID_LIB)
+ 
+ swapon:	swapon.o version.o xmalloc.o \
+-	get_label_uuid.o mount_by_label.o mount_blkid.o
+-	$(LINK) $^ -o $@ $(BLKID_LIB)
++	get_label_uuid.o mount_by_label.o mount_blkid.o mount_udev.o
++	$(LINK) $^ -o $@ $(BLKID_LIB) $(VOLID_LIB)
+ 
+ main_losetup.o: lomount.c
+ 	$(COMPILE) -DMAIN lomount.c -o $@
+@@ -129,7 +135,7 @@
+ 
+ clean:
+ 	rm -f a.out core *~ *.o swapargs.h $(PROGS) $(MAYBE)
+-	rm -f nfs_mountversion.h
++	rm -f nfs_mountversion.h nfsmount_clnt.c nfsmount.h nfsmount_xdr.c
+ 
+ clobber distclean realclean: clean
+ 	rm -f $(GEN_FILES)
+diff -urNad util-linux-2.12r~/mount/fstab.c util-linux-2.12r/mount/fstab.c
+--- util-linux-2.12r~/mount/fstab.c	2006-08-21 15:34:22.000000000 +0200
++++ util-linux-2.12r/mount/fstab.c	2006-08-21 15:34:23.000000000 +0200
+@@ -305,6 +305,7 @@
+ /* Find the entry (SPEC,FILE) in fstab */
+ struct mntentchn *
+ getfsspecfile (const char *spec, const char *file) {
++	char *nspec;
+ 	struct mntentchn *mc, *mc0;
+ 
+ 	mc0 = fstab_head();
+@@ -316,11 +317,12 @@
+ 			return mc;
+ 
+ 	/* second attempt: names found after symlink resolution */
++	nspec = canonicalize(spec);
+ 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt)
+ 		if ((streq(mc->m.mnt_dir, file) ||
+ 		     streq(canonicalize(mc->m.mnt_dir), file))
+ 		    && (streq(mc->m.mnt_fsname, spec) ||
+-			streq(canonicalize(mc->m.mnt_fsname), spec)))
++			streq(canonicalize(mc->m.mnt_fsname), nspec)))
+ 			return mc;
+ 
+ 	/* third attempt: names found after LABEL= or UUID= resolution */
+@@ -357,11 +359,21 @@
+ struct mntentchn *
+ getfsspec (const char *spec) {
+ 	struct mntentchn *mc, *mc0;
++	const char *nspec, *fsname;
+ 
+ 	mc0 = fstab_head();
+-	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt)
+-		if (streq(mc->m.mnt_fsname, spec))
++	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt) {
++		if (!strncmp (mc->m.mnt_fsname, "LABEL=", 6)) {
++			fsname = mount_get_devname_by_label(mc->m.mnt_fsname + 6);
++		} else if (!strncmp(mc->m.mnt_fsname, "UUID=", 5)) {
++			fsname = mount_get_devname_by_uuid(mc->m.mnt_fsname + 5);
++		} else {
++			fsname = mc->m.mnt_fsname;
++		}
++		nspec = canonicalize(fsname);
++		if (streq(nspec, spec))
+ 			return mc;
++	}
+ 	return NULL;
+ }
+ 
+diff -urNad util-linux-2.12r~/mount/mount.c util-linux-2.12r/mount/mount.c
+--- util-linux-2.12r~/mount/mount.c	2006-08-21 15:34:23.000000000 +0200
++++ util-linux-2.12r/mount/mount.c	2006-08-21 15:34:23.000000000 +0200
+@@ -1631,7 +1631,7 @@
+ 			   use only for testing purposes -
+ 			   the guessing is not reliable at all */
+ 		    {
+-			char *fstype;
++			const char *fstype;
+ 			fstype = do_guess_fstype(optarg);
+ 			printf("%s\n", fstype ? fstype : "unknown");
+ 			exit(fstype ? 0 : EX_FAIL);
+@@ -1707,6 +1707,8 @@
+ 			if (mc == NULL)
+ 				mc = getfsspec (spec);
+ 			if (mc == NULL)
++				mc = getfsspec (canonicalize(spec));
++			if (mc == NULL)
+ 				die (EX_USAGE,
+ 				     _("mount: cannot find %s in %s"),
+ 				     spec, _PATH_FSTAB);
+diff -urNad util-linux-2.12r~/mount/mount_blkid.c util-linux-2.12r/mount/mount_blkid.c
+--- util-linux-2.12r~/mount/mount_blkid.c	2006-08-21 15:33:11.000000000 +0200
++++ util-linux-2.12r/mount/mount_blkid.c	2006-08-21 15:34:23.000000000 +0200
+@@ -1,6 +1,7 @@
+ #include <stdio.h>
+ #include "mount_blkid.h"
+ 
++#ifndef HAVE_VOLID
+ #ifdef HAVE_BLKID
+ 
+ blkid_cache blkid;
+@@ -119,3 +120,4 @@
+ 
+ 
+ #endif
++#endif
+diff -urNad util-linux-2.12r~/mount/mount_blkid.h util-linux-2.12r/mount/mount_blkid.h
+--- util-linux-2.12r~/mount/mount_blkid.h	2006-08-21 15:33:11.000000000 +0200
++++ util-linux-2.12r/mount/mount_blkid.h	2006-08-21 15:34:23.000000000 +0200
+@@ -11,3 +11,5 @@
+ extern const char *mount_get_volume_label_by_spec(const char *spec);
+ extern const char *mount_get_devname(const char *spec);
+ extern const char *mount_get_devname_for_mounting(const char *spec);
++
++extern const char *volume_id_get_tag(const char *spec, const char *token);
+diff -urNad util-linux-2.12r~/mount/mount_by_label.c util-linux-2.12r/mount/mount_by_label.c
+--- util-linux-2.12r~/mount/mount_by_label.c	2006-08-21 15:33:11.000000000 +0200
++++ util-linux-2.12r/mount/mount_by_label.c	2006-08-21 15:34:23.000000000 +0200
+@@ -1,4 +1,4 @@
+-#ifndef HAVE_BLKID
++#if (!defined HAVE_BLKID) && (!defined HAVE_VOLID)
+ /*
+  * mount_by_label.c - aeb
+  *
+diff -urNad util-linux-2.12r~/mount/mount_guess_fstype.c util-linux-2.12r/mount/mount_guess_fstype.c
+--- util-linux-2.12r~/mount/mount_guess_fstype.c	2006-08-21 15:33:11.000000000 +0200
++++ util-linux-2.12r/mount/mount_guess_fstype.c	2006-08-21 15:34:23.000000000 +0200
+@@ -46,9 +46,23 @@
+ #define ETC_FILESYSTEMS		"/etc/filesystems"
+ #define PROC_FILESYSTEMS	"/proc/filesystems"
+ 
++#ifdef HAVE_VOLID
++
++static int
++known_fstype(const char *fstype) {
++	return 0;
++}
++
++const char *
++do_guess_fstype(const char *spec)
++{
++	return volume_id_get_tag(spec, "TYPE");
++}
++
++#else
+ #ifdef HAVE_BLKID
+ 
+-char *
++const char *
+ do_guess_fstype(const char *device) 
+ {
+ 	return blkid_get_tag_value(blkid, "TYPE", device);
+@@ -200,7 +214,7 @@
+ 	return (sum == p[511]);
+ }
+ 
+-char *
++const char *
+ do_guess_fstype(const char *device) {
+     int fd;
+     char *type = NULL;
+@@ -492,7 +506,7 @@
+ }
+ 
+ #endif
+-
++#endif
+ static struct tried {
+ 	struct tried *next;
+ 	char *type;
+@@ -534,9 +548,9 @@
+ 	tried = NULL;
+ }
+ 
+-char *
++const char *
+ guess_fstype(const char *spec) {
+-	char *type = do_guess_fstype(spec);
++	const char *type = do_guess_fstype(spec);
+ 	if (verbose) {
+ 	    printf (_("mount: you didn't specify a filesystem type for %s\n"),
+ 		    spec);
+diff -urNad util-linux-2.12r~/mount/mount_guess_fstype.h util-linux-2.12r/mount/mount_guess_fstype.h
+--- util-linux-2.12r~/mount/mount_guess_fstype.h	2006-08-21 15:33:11.000000000 +0200
++++ util-linux-2.12r/mount/mount_guess_fstype.h	2006-08-21 15:34:23.000000000 +0200
+@@ -8,8 +8,8 @@
+ 
+ extern int verbose;
+ 
+-char *guess_fstype(const char *device);
+-char *do_guess_fstype(const char *device);
++const char *guess_fstype(const char *device);
++const char *do_guess_fstype(const char *device);
+ int procfsloop(int (*mount_fn)(struct mountargs *), struct mountargs *args,
+ 	       const char **type);
+ int is_in_procfs(const char *fstype);
+diff -urNad util-linux-2.12r~/mount/mount_udev.c util-linux-2.12r/mount/mount_udev.c
+--- util-linux-2.12r~/mount/mount_udev.c	1970-01-01 01:00:00.000000000 +0100
++++ util-linux-2.12r/mount/mount_udev.c	2006-08-21 15:34:23.000000000 +0200
+@@ -0,0 +1,237 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <string.h>
++#include <sys/mount.h>
++#include <sys/ioctl.h>
++#include <nls.h>
++#include <stddef.h>
++#include <libvolume_id.h>
++
++#include "mount_blkid.h"
++
++#ifdef HAVE_VOLID
++
++extern int verbose;
++
++struct volume_id_types_t {
++	int id;
++	char *token;
++	char *env;
++};
++
++enum {
++	VOLUME_ID_NONE=0,
++	VOLUME_ID_TYPE,
++	VOLUME_ID_LABEL,
++	VOLUME_ID_UUID
++};
++
++#define volume_id_offset(member) (unsigned long)offsetof(struct volume_id,member)
++
++struct volume_id_types_t volume_id_types[] = {
++	{ VOLUME_ID_TYPE, "TYPE", "ID_FS_TYPE" },
++	{ VOLUME_ID_LABEL, "LABEL", "ID_FS_LABEL" },
++	{ VOLUME_ID_UUID, "UUID",  "ID_FS_UUID" },
++	{ VOLUME_ID_NONE, NULL, NULL },
++};
++
++const char *
++volume_id_get_tag(const char *spec, const char *token)
++{
++	struct volume_id *vid;
++	uint64_t size;
++	struct volume_id_types_t *volume_id_ptr = volume_id_types;
++	char *var, *value;
++
++	value = calloc(1, VOLUME_ID_LABEL_SIZE);
++	if (!value)
++		return NULL;
++
++	if (!spec)
++		return NULL;
++
++	while (volume_id_ptr->token && strcmp(volume_id_ptr->token,token))
++		volume_id_ptr++;
++
++	if (!volume_id_ptr->token) {
++		free(value);
++		value = NULL;
++		goto out;
++	}
++
++	/* Quick exit if ID_FS_* variables are set */
++	if ((var = getenv(volume_id_ptr->env))) {
++		strncpy(value,var,VOLUME_ID_LABEL_SIZE - 1);
++		goto out;
++	}
++
++	vid = volume_id_open_node(spec);
++	if (!vid) {
++		free(value);
++		value = NULL;
++		goto out;
++	}
++
++	if (ioctl(vid->fd, BLKGETSIZE64, &size) != 0)
++		size = 0;
++
++	if (volume_id_probe_all(vid, 0, size) == 0) {
++		switch(volume_id_ptr->id) {
++		case VOLUME_ID_TYPE:
++			strcpy(value, vid->type);
++			break;
++		case VOLUME_ID_LABEL:
++			strcpy(value, vid->label);
++			break;
++		case VOLUME_ID_UUID:
++			strcpy(value, vid->uuid);
++			break;
++		default:
++			free(value);
++			value = NULL;
++			break;
++		}
++	} else
++		value = NULL;
++
++	volume_id_close(vid);
++
++ out:
++	return value;
++}
++
++void
++mount_blkid_get_cache(void) {}
++
++void
++mount_blkid_put_cache(void) {}
++
++const char *
++mount_get_volume_uuid_by_spec(const char *spec)
++{
++	return volume_id_get_tag(spec, "UUID");
++}
++
++const char *
++mount_get_volume_label_by_spec(const char *spec)
++{
++	return volume_id_get_tag(spec, "LABEL");
++}
++
++const char *
++mount_get_devname_by_uuid(const char *uuid) {
++	char *dev = NULL;
++
++	if (!uuid)
++		return NULL;
++
++	dev = malloc(19 + strlen(uuid));
++	if (dev) {
++		strcpy(dev,"/dev/disk/by-uuid/");
++		strcat(dev,uuid);
++	}
++
++	return dev;
++}
++
++const char *
++mount_get_devname_by_label(const char *label) {
++	char *dev = NULL;
++
++	if (!label)
++		return NULL;
++
++	dev = malloc(20 + strlen(label));
++	if (dev) {
++		strcpy(dev,"/dev/disk/by-label/");
++		strcat(dev,label);
++	}
++
++	return dev;
++}
++
++const char *
++mount_get_devname(const char *spec)
++{
++	char *token, *cp, *value;
++	const char *nspec = NULL;
++
++	if (!spec)
++		return NULL;
++
++	token = strdup(spec);
++	if (!token)
++		return NULL;
++
++	/* We have to return an allocated string */
++	if (!(cp = strchr(token, '=')))
++		return token;
++
++	value = token + (cp - token);
++	*value++ = '\0';
++
++	if (*value == '"' || *value == '\'') {
++		char c = *value++;
++		if (!(cp = strrchr(value, c)))
++			goto errout; /* missing closing quote */
++		*cp = '\0';
++	}
++
++	if (!strcmp(token,"LABEL")) {
++		nspec = mount_get_devname_by_label(value);
++	} else if (!strcmp(token,"UUID")) {
++		nspec = mount_get_devname_by_uuid(value);
++	}
++
++	free(token);
++
++ errout:
++	return nspec;
++}
++
++/* Also when no UUID= or LABEL= occur? No verbose? No warnings? */
++const char *
++mount_get_devname_for_mounting(const char *spec)
++{
++	char *token, *cp, *value;
++	const char *nspec = NULL;
++
++	if (!spec)
++		return NULL;
++
++	token = strdup(spec);
++	if (!token)
++		return NULL;
++
++	/* We have to return an allocated string */
++	if (!(cp = strchr(token, '=')))
++		return token;
++
++	value = token + (cp - token);
++	*value++ = '\0';
++
++	if (*value == '"' || *value == '\'') {
++		char c = *value++;
++		if (!(cp = strrchr(value, c)))
++			goto errout; /* missing closing quote */
++		*cp = '\0';
++	}
++
++	if (!strcmp(token,"LABEL")) {
++		nspec = mount_get_devname_by_label(value);
++		if (nspec && verbose > 1)
++			printf(_("mount: going to mount %s by LABEL\n"), spec);
++	} else if (!strcmp(token,"UUID")) {
++		nspec = mount_get_devname_by_uuid(value);
++		if (nspec && verbose > 1)
++			printf(_("mount: going to mount %s by UUID\n"), spec);
++	}
++
++	free(token);
++
++ errout:
++	return nspec;
++}
++
++#endif
