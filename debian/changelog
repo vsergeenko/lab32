@@ -1,3 +1,14 @@
+util-linux (2.13~rc2-2ubuntu1) gutsy; urgency=low
+
+  * Merge ubuntu changes:
+    - Add udev rule for calling /sbin/hwclock --hctosys dynamically:
+      + debian/hwclock.rules, debian/hwclock.udev: Rule and script.
+      + debian/rules: Install those.
+    - use libvolume-id instead of blkid.  This will be true for debian once a
+      current enough udev is available.
+
+ -- LaMont Jones <lamont@ubuntu.com>  Wed, 18 Jul 2007 21:09:57 -0600
+
 util-linux (2.13~rc2-2) experimental; urgency=low
 
   * arch is dealt with upstream now.
@@ -59,6 +70,33 @@ util-linux (2.12r-20) unstable-UNRELEASED; urgency=low
 
  -- LaMont Jones <lamont@debian.org>  Sun, 17 Jun 2007 06:01:46 -0600
 
+util-linux (2.12r-19ubuntu2) gutsy; urgency=low
+  
+  * Fix sparc disk label generation. This is required for LDOM
+    and parallel installations with Solaris 10.
+    Add patch: 80sparc-new-label
+
+    Many thanks to David S. Miller for the patch.
+
+    NOTE: users upgrading from older versions should re-run fdisk to
+          update the disk label.
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Mon, 02 Jul 2007 07:55:46 +0200
+
+util-linux (2.12r-19ubuntu1) gutsy; urgency=low
+
+  * Merge from debian unstable, remaining changes:
+    - Use volumeid instead of blkid to be able to access (mount/umount/swapon)
+      volumes by UUID and/or label:
+      + debian/control: libblkid-dev -> libvolume-id-dev build dependency
+      + debian/patches/70libvolume_id-support.dpatch: SuSE patch for using
+        libvolume-id.
+    - Add udev rule for calling /sbin/hwclock --hctosys dynamically:
+      + debian/hwclock.rules, debian/hwclock.udev: Rule and script.
+      + debian/rules: Install those.
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Mon, 14 May 2007 21:48:06 +0200
+
 util-linux (2.12r-19) unstable; urgency=low
 
   * mips/mipsel buildds use sudo.  Fix install target so that mount.deb
@@ -72,6 +110,21 @@ util-linux (2.12r-18) unstable; urgency=low
     Files: 30nfs4.dpatch. Closes: #385879
 
  -- LaMont Jones <lamont@debian.org>  Mon,  5 Feb 2007 13:47:10 -0700
+
+util-linux (2.12r-17ubuntu2) feisty; urgency=low
+
+  * debian/control: Update maintainer fields according to debian-
+    maintainer-field spec.
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Mon, 12 Mar 2007 14:58:14 +0000
+
+util-linux (2.12r-17ubuntu1) feisty; urgency=low
+
+  * Merge from Debian unstable.  Remaining changes:
+    - libvolume_id support patch from SuSE
+    - single ubuntuized hwclock script
+
+ -- LaMont Jones <lamont@ubuntu.com>  Fri,  2 Feb 2007 11:14:19 -0700
 
 util-linux (2.12r-17) unstable; urgency=low
 
