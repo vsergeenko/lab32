@@ -10,7 +10,7 @@
 diff -urNad --exclude=CVS --exclude=.svn ./mount/get_label_uuid.c /tmp/dpep-work.5ak7Cm/util-linux/mount/get_label_uuid.c
 --- ./mount/get_label_uuid.c	2004-12-22 08:44:32.000000000 -0700
 +++ /tmp/dpep-work.5ak7Cm/util-linux/mount/get_label_uuid.c	2005-12-06 11:54:33.000000000 -0700
-@@ -93,7 +93,24 @@
+@@ -93,7 +93,25 @@
  	}
  	return 0;
  }
@@ -25,7 +25,8 @@ diff -urNad --exclude=CVS --exclude=.svn ./mount/get_label_uuid.c /tmp/dpep-work
 +	if (lseek(fd, 0, SEEK_SET) == 0
 +	    && read(fd, buf, n) == n
 +	    && (strncmp(buf+n-10, "S1SUSPEND", 9)==0 || 
-+		    strncmp(buf+n-10, "S2SUSPEND", 9)==0)
++		    strncmp(buf+n-10, "S2SUSPEND", 9)==0 ||
++		    strncmp(buf+n-10, "ULSUSPEND", 9)==0)
 +	    && p->version == 1) {
 +		store_uuid(uuid, p->uuid);
 +		store_label(label, p->volume_name, 16);
@@ -66,7 +67,7 @@ diff -urNad --exclude=CVS --exclude=.svn ./mount/swapon.c /tmp/dpep-work.5ak7Cm/
  
  #define SWAPON_NEEDS_TWO_ARGS
  
-@@ -164,6 +168,84 @@
+@@ -164,6 +168,85 @@
         return 0 ;
  }
  
@@ -97,7 +98,8 @@ diff -urNad --exclude=CVS --exclude=.svn ./mount/swapon.c /tmp/dpep-work.5ak7Cm/
 +	if (lseek(fd, n, SEEK_SET) >= 0 &&
 +	    read(fd, buf, sizeof buf) == sizeof buf &&
 +	    (memcmp("S1SUSPEND", buf, 9)==0 ||
-+			memcmp("S2SUSPEND", buf, 9)==0))
++			memcmp("S2SUSPEND", buf, 9)==0 ||
++			memcmp("ULSUSPEND", buf, 9)==0))
 +		re = 0;
 +
 +	close(fd);

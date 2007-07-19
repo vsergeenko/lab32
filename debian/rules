@@ -21,7 +21,8 @@ endif
 export arch = $(DEB_HOST_ARCH)
 version := $(shell sed -e '1{;s|^util-linux (\(.*\))\ .*|\1|;q;}' debian/changelog)
 
-fdisk_arch = $(findstring $(arch),alpha i386 powerpc ppc64 arm mips mipsel hppa ia64 hurd-i386 amd64 s390)
+fdisk_arch = $(findstring $(arch),alpha i386 powerpc ppc64 arm armeb armel mips mipsel hppa ia64 hurd-i386 amd64 s390)
+rdev_arch = $(findstring $(arch),i386 amd64)
 sparc = $(findstring $(arch),sparc sparc64)
 nohwclock = $(findstring $(arch),s390)
 
@@ -32,13 +33,13 @@ endif
 ifeq ($(arch),$(sparc))
 SUBDIRS += fdisk
 endif
-ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
+ifeq ($(DEB_HOST_ARCH_OS),linux)
 ifneq ($(arch),$(nohwclock))
 SUBDIRS += hwclock 
 endif
 endif
 
-ifneq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
+ifneq ($(DEB_HOST_ARCH_OS),linux)
 util-linux_Conflicts = getty
 endif
 
@@ -72,7 +73,7 @@ UBINFILES = sys-utils/{ipcs,ipcrm,setsid} \
 	getopt/getopt text-utils/{rev,line,pg}
 SBINFILES = disk-utils/mkswap
 
-ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
+ifeq ($(DEB_HOST_ARCH_OS),linux)
 ifneq ($(arch),$(nohwclock))
 INITFILES = debian/hwclock.sh
 SBINFILES += hwclock/hwclock
@@ -85,7 +86,7 @@ endif
 
 UBINFILES2= misc-utils/chkdupexe # debian/fdformat # don't strip these
 
-ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
+ifeq ($(DEB_HOST_ARCH_OS),linux)
 MOUNTBINFILES  = mount/mount mount/umount
 MOUNTSBINFILES = mount/swapon mount/losetup
 endif
@@ -105,7 +106,7 @@ MAN1FILES = text-utils/{pg,more,line,rev}.1 misc-utils/{namei.1,mcookie.1} \
             misc-utils/{chkdupexe.1,setterm.1,whereis.1,ddate.1} \
 	    sys-utils/arch.1 getopt/getopt.1
 MAN8FILES = sys-utils/{ipcrm.8,ipcs.8,setsid.8} disk-utils/mkswap.8
-ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
+ifeq ($(DEB_HOST_ARCH_OS),linux)
 ifneq ($(arch),$(nohwclock))
 MAN8FILES += hwclock/hwclock.8
 endif
@@ -117,19 +118,19 @@ endif
 
 
 EXAMPLES = fdisk/sfdisk.examples getopt/getopt-{test,parse}.{ba,tc}sh
-ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
+ifeq ($(DEB_HOST_ARCH_OS),linux)
 EXAMPLES += debian/fstab.example2
 endif
 
 INFOFILES = sys-utils/ipc.info
-ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
+ifeq ($(DEB_HOST_ARCH_OS),linux)
 DOCFILES  = login-utils/{README.getty,README.modems-with-agetty,README.poeigl}
 ifneq ($(arch),$(nohwclock))
 DOCFILES += debian/README.Debian.hwclock
 endif
 endif
 
-ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
+ifeq ($(DEB_HOST_ARCH_OS),linux)
 MOUNTMAN5FILES = mount/fstab.5 mount/nfs.5
 MOUNTMAN8FILES = mount/losetup.8 mount/swapoff.8 mount/umount.8 \
 		 mount/mount.8 mount/swapon.8
@@ -144,7 +145,7 @@ ifeq ($(arch),$(fdisk_arch))
 SBINFILES := $(SBINFILES) fdisk/{cfdisk,fdisk,sfdisk}
 MAN8FILES := $(MAN8FILES) fdisk/{cfdisk.8,fdisk.8,sfdisk.8}
 DOCFILES  := $(DOCFILES) fdisk/README.{c,}fdisk
-ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
+ifeq ($(DEB_HOST_ARCH_OS),linux)
 USBINFILES:= $(USBINFILES) sys-utils/{tunelp,cytune}
 MAN8FILES := $(MAN8FILES) sys-utils/{tunelp.8,cytune.8}
 endif
@@ -154,7 +155,7 @@ SBINFILES := $(SBINFILES) fdisk/fdisk
 MAN8FILES := $(MAN8FILES) fdisk/fdisk.8
 DOCFILES  := $(DOCFILES) fdisk/README.fdisk
 endif
-ifeq ($(arch),i386)
+ifeq ($(arch),$(rdev_arch))
 USBINFILES:= $(USBINFILES) sys-utils/rdev
 MAN8FILES := $(MAN8FILES) sys-utils/{rdev.8,vidmode.8} \
 		sys-utils/{ramsize.8,rootflags.8}
@@ -178,7 +179,7 @@ binary-arch:	checkroot build $(INITFILES)
 	install    $(UBINFILES2) debian/tmp/usr/bin
 ifneq ($(USBINFILES),)
 	install -s $(USBINFILES) debian/tmp/usr/sbin
-ifeq ($(arch), i386)
+ifeq ($(arch),$(rdev_arch))
 	ln -s rdev debian/tmp/usr/sbin/ramsize
 	ln -s rdev debian/tmp/usr/sbin/vidmode
 	ln -s rdev debian/tmp/usr/sbin/rootflags
@@ -204,7 +205,7 @@ ifeq ($(DEB_HOST_GNU_SYSTEM),gnu)
 	(cd debian/tmp/sbin ; mv mkswap mkswap.linux)
 	(cd debian/tmp/usr/share/man/man8 ; mv mkswap.8 mkswap.linux.8)
 endif
-ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
+ifeq ($(DEB_HOST_ARCH_OS),linux)
 	(cd debian/tmp/sbin ; mv agetty getty)
 	(cd debian/tmp/usr/share/man/man8 ; mv agetty.8 getty.8)
 ifneq ($(arch), $(nohwclock))
@@ -225,7 +226,7 @@ endif
 	install -m 644 debian/mime.$(PACKAGE) debian/tmp/usr/lib/mime/packages/$(PACKAGE)
 	install -m 644 debian/copyright debian/tmp/usr/share/doc/$(PACKAGE)/copyright
 	install debian/{preinst,postinst,prerm,postrm} debian/tmp/DEBIAN/
-ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
+ifeq ($(DEB_HOST_ARCH_OS),linux)
 ifneq ($(arch),$(nohwclock))
 	install -m 644 debian/conffiles debian/tmp/DEBIAN/
 
@@ -293,7 +294,7 @@ ifeq ($(arch),$(sparc))
 	dpkg --build debian/tmp-fdisk-udeb ../fdisk-udeb_$(shell dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2)_$(arch).udeb
 endif
 
-ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
+ifeq ($(DEB_HOST_ARCH_OS),linux)
 	# Mount
 	install -d debian/tmp-mount/{DEBIAN,bin,sbin,usr/share/{man/{man8,man5},doc/mount/examples}}
 	install -m 4755 -o root -s $(MOUNTBINFILES) debian/tmp-mount/bin/.

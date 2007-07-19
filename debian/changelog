@@ -1,3 +1,87 @@
+util-linux (2.12r-17ubuntu2) feisty; urgency=low
+
+  * debian/control: Update maintainer fields according to debian-
+    maintainer-field spec.
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Mon, 12 Mar 2007 14:58:14 +0000
+
+util-linux (2.12r-17ubuntu1) feisty; urgency=low
+
+  * Merge from Debian unstable.  Remaining changes:
+    - libvolume_id support patch from SuSE
+    - single ubuntuized hwclock script
+
+ -- LaMont Jones <lamont@ubuntu.com>  Fri,  2 Feb 2007 11:14:19 -0700
+
+util-linux (2.12r-17) unstable; urgency=low
+
+  * Userspace software suspend fix.  Closes: #409365
+  * armel support.  Closes: #408816
+
+ -- LaMont Jones <lamont@debian.org>  Fri,  2 Feb 2007 11:08:04 -0700
+
+util-linux (2.12r-16) unstable; urgency=low
+
+  * actually apply 30swsusp-resume.  And support userspace sw susp too.
+    Closes: #406204
+  * Fix off-by-one issue in agetty -I.  Closes: #392445
+  * Drop extraneous "again" from hwclock.sh and remove references to
+    hwclockfirst.sh.  Closes: #396755
+  * Drop PAGE_SIZE usage completely, use sysconf(_SC_PAGESIZE).
+  * Make intr the default for NFS v2 & v3 mounts in addition to being the
+    default for NFS v4.  Thanks to Tollef Fog Heen for the idea.
+
+ -- LaMont Jones <lamont@debian.org>  Wed, 17 Jan 2007 11:57:35 -0700
+
+util-linux (2.12r-15ubuntu1) feisty; urgency=low
+
+  * Merge from debian unstable, remaining changes:
+    - libvolume_id support patch from SuSE
+    - Drop PAGE_SIZE usage complete, and switch to sysconf(_SC_PAGESIZE).
+    - single hwclock script
+
+ -- Scott James Remnant <scott@ubuntu.com>  Mon, 27 Nov 2006 12:22:16 +0000
+
+util-linux (2.12r-15) unstable; urgency=low
+
+  * New amd64 rdev patch.  Closes: #396842
+
+ -- LaMont Jones <lamont@debian.org>  Fri,  3 Nov 2006 20:44:05 -0700
+
+util-linux (2.12r-14) unstable; urgency=low
+
+  * Make that 11 for hwclock.sh, since we need / to be writable for the
+    adjfile.
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 31 Oct 2006 15:01:01 -0700
+
+util-linux (2.12r-13) unstable; urgency=low
+
+  * NFS seems to not like 127.0.0.1 as a client ID for everyone.
+    Closes: #394941
+    - 30nfs4-setclientid.dpatch by Steinar H. Gunderson <sesse@debian.org>
+  * Move hwclock.sh to 8 since localtime is now a file, not a symlink.
+    Adds Depends: tzdata (>=2006c-2)
+    Closes: #342887
+  * ship rdev on amd64.  Closes: #297789
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 31 Oct 2006 13:51:50 -0700
+
+util-linux (2.12r-12) unstable; urgency=low
+
+  * drop hwclockfirst.sh, and put hwclock.sh back at 50.  See #50572 and
+    Closes: #342887
+  * Deal with _syscall5 going away.  Patch imported from Ubuntu.
+    Closes: #392236
+
+ -- LaMont Jones <lamont@debian.org>  Thu, 19 Oct 2006 19:01:33 -0600
+
+util-linux (2.12r-11ubuntu3) feisty; urgency=low
+
+  * Change libvolumeid-dev build-dep to libvolume-id-dev.
+
+ -- Scott James Remnant <scott@ubuntu.com>  Thu, 23 Nov 2006 11:03:21 +0000
+
 util-linux (2.12r-11ubuntu2) edgy; urgency=low
 
   * Drop PAGE_SIZE usage complete, and switch to sysconf(_SC_PAGESIZE).
