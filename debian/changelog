@@ -1,3 +1,10 @@
+util-linux (2.12r-4ubuntu4) dapper; urgency=low
+
+  * Rip out the log message code from the init script, as it's run in the
+    background so upsets things anyway.
+
+ -- Scott James Remnant <scott@ubuntu.com>  Mon, 29 Aug 2005 10:53:26 +0100
+
 util-linux (2.12r-4ubuntu3) dapper; urgency=low
 
   * Set the hardware clock via a udev rule as soon as /dev/rtc is available.
