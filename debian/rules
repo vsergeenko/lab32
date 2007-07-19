@@ -61,7 +61,6 @@ clean: unpatch
 	find . -name '*.orig' -print0 | xargs -0r rm
 	find . -name '*.rej' -print0 | xargs -0r rm
 	rm -rf debian/tmp* debian/files* debian/substvars po/messages
-	rm -f debian/hwclockfirst.sh
 	rm -rf $(CFDISK_PO_DIR)
 
 # Architecture independant stuff
@@ -75,7 +74,7 @@ SBINFILES = disk-utils/mkswap
 
 ifeq ($(DEB_HOST_GNU_SYSTEM),linux-gnu)
 ifneq ($(arch),$(nohwclock))
-INITFILES = debian/hwclock.sh debian/hwclockfirst.sh
+INITFILES = debian/hwclock.sh
 SBINFILES += hwclock/hwclock
 endif
 BINFILES  += sys-utils/dmesg
@@ -162,9 +161,6 @@ MAN8FILES := $(MAN8FILES) sys-utils/{rdev.8,vidmode.8} \
 endif
 
 install:
-
-debian/hwclockfirst.sh: debian/hwclock.sh
-	sed '/^FIRST/s/no/yes/; s/hwclock\.sh/hwclockfirst.sh/g' debian/hwclock.sh > debian/hwclockfirst.sh
 
 binary-indep:	checkroot build binary-arch
 	$(checkdir)

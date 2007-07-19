@@ -1,3 +1,17 @@
+util-linux (2.12r-4ubuntu2) dapper; urgency=low
+
+  * Move init script to S50 so it runs after /usr has definitely been
+    mounted.
+
+ -- Scott James Remnant <scott@ubuntu.com>  Thu, 23 Feb 2006 15:32:56 +0000
+
+util-linux (2.12r-4ubuntu1) dapper; urgency=low
+
+  * Take out the duplicate hwclock init scripts, we'll just run this once.
+  * Make the hwclock script silent and run in the background by default
+
+ -- Scott James Remnant <scott@ubuntu.com>  Mon, 30 Jan 2006 14:50:07 +0000
+
 util-linux (2.12r-4) unstable; urgency=low
 
   * Stupid fat-fingers typo.  Closes: #348483
