@@ -1,8 +1,9 @@
-util-linux (2.13~rc2-3) experimental-UNRELASED; urgency=low
+util-linux (2.13~rc2-3) unstable-UNRELASED; urgency=low
 
   * add option for 8-bit chars in agetty.  Closes: #221290
+  * Merge upstream fixes
 
- -- LaMont Jones <lamont@debian.org>  Wed, 18 Jul 2007 21:36:56 -0600
+ -- LaMont Jones <lamont@debian.org>  Sat, 28 Jul 2007 22:34:53 -0600
 
 util-linux (2.13~rc2-2) experimental; urgency=low
 
