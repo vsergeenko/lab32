@@ -38,12 +38,10 @@ CFDISK_PO_DIR=cfdisk-po
 CFDISK_POT=$(CFDISK_PO_DIR)/cfdisk.pot
 HISTORY=docs/v2.13-ReleaseNotes 
 
-CONFOPTS= --enable-raw --enable-rdev --enable-partx
+CONFOPTS= --enable-raw --enable-rdev --enable-partx --with-fsprobe=volume_id
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 CONFOPTS += --with-selinux
 endif
-
-#CONFOPTS += --with-fsprobe=volume_id
 
 build: 
 	$(checkdir)
