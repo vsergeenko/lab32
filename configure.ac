@@ -69,7 +69,12 @@ AC_DEFUN([UTIL_CHECK_LIB], [
   AC_CHECK_LIB([$1], [$2], [], [have_$1=no])
   AM_CONDITIONAL(AS_TR_CPP(HAVE_$1), [test $have_$1 = yes])
 ])
+
 UTIL_CHECK_LIB(uuid, uuid_is_null)
+if test $have_uuid = no; then
+  AC_MSG_WARN([uuid library is not found; mkswap(8) will not generate UUIDs])
+fi
+
 UTIL_CHECK_LIB(util, openpty)
 UTIL_CHECK_LIB(termcap, tgetnum)
 
@@ -204,17 +209,10 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 ])
 
 
-AC_CHECK_HEADERS([asm/page.h sys/swap.h], [], [], [
-#ifdef HAVE_ASM_PAGE_H
-# include <asm/page.h>
-#endif
-])
+AC_CHECK_HEADERS([sys/swap.h])
 
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
 [[
-#ifdef HAVE_ASM_PAGE_H
-# include <asm/page.h>
-#endif
 #ifdef HAVE_SYS_SWAP_H
 # include <sys/swap.h>
 #endif
