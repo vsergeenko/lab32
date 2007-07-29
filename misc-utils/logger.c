@@ -89,10 +89,10 @@ mysyslog(int fd, int logflags, int pri, char *tag, char *msg) {
        time_t now;
 
        if (fd > -1) {
-               if (logflags & LOG_PID)
+               if (logflags & LOG_PID) {
                        snprintf (pid, sizeof(pid)-1, "[%d]", getpid());
 		       pid[sizeof(pid)-1]=0;
-	       else
+	       } else
 		       pid[0] = 0;
                if (tag)
 		       cp = tag;
