@@ -1,5 +1,21 @@
 #!/bin/bash
 
+#
+# Copyright (C) 2007 Karel Zak <kzak@redhat.com>
+#
+# This file is part of util-linux-ng.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This file is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+
 PAGE_SIZE=$($TS_HELPER_SYSINFO pagesize)
 
 # kernel files
@@ -22,9 +38,9 @@ IPCS_KERNEL_CMD=(
 
 # data from the ipcs command
 IPCS_CMD=(
-	"$TS_CMD_IPCS -m -l | gawk '/max number of segments/ { print \$6 }'"
-	"$TS_CMD_IPCS -m -l | gawk '/max total shared memory/ { print \$7 }'"
-	"$TS_CMD_IPCS -m -l | gawk '/max seg size/ { print \$6 }'"
+	"$TS_CMD_IPCS -m -l | $AWK '/max number of segments/ { print \$6 }'"
+	"$TS_CMD_IPCS -m -l | $AWK '/max total shared memory/ { print \$7 }'"
+	"$TS_CMD_IPCS -m -l | $AWK '/max seg size/ { print \$6 }'"
 )
 
 

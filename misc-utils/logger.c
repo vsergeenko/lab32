@@ -89,9 +89,10 @@ mysyslog(int fd, int logflags, int pri, char *tag, char *msg) {
        time_t now;
 
        if (fd > -1) {
-               if (logflags & LOG_PID)
+               if (logflags & LOG_PID) {
                        snprintf (pid, sizeof(pid)-1, "[%d]", getpid());
-	       else
+		       pid[sizeof(pid)-1]=0;
+	       } else
 		       pid[0] = 0;
                if (tag)
 		       cp = tag;
@@ -105,6 +106,7 @@ mysyslog(int fd, int logflags, int pri, char *tag, char *msg) {
 
                snprintf(buf, sizeof(buf)-1, "<%d>%.15s %.200s%s: %.400s",
 			pri, tp, cp, pid, msg);
+	       buf[sizeof(buf)-1]=0;
 
                if (write(fd, buf, strlen(buf)+1) < 0)
                        return; /* error */
