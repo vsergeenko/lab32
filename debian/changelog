@@ -1,3 +1,9 @@
+util-linux (2.13~rc2-5) unstable-UNRELEASED; urgency=low
+
+  * mount.preinst: check the right directory for mount.nfs.  Closes: #435307
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 30 Jul 2007 17:36:15 -0600
+
 util-linux (2.13~rc2-4) unstable; urgency=low
 
   * switch to using libvolume-id-dev
