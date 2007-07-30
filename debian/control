@@ -40,7 +40,7 @@ Architecture: alpha amd64 arm armeb armel hppa i386 ia64 m32r m68k mips mipsel p
 Essential: yes
 Section: admin
 Pre-Depends: ${mount:Depends}
-Depends: nfs-common (>=1:1.1.0-7)
+Recommends: nfs-common (>=1:1.1.0-7)
 Description: Tools for mounting and manipulating filesystems
  This package provides the mount(8), umount(8), swapon(8),
  swapoff(8), and losetup(8) commands.
