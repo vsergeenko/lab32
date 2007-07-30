@@ -63,7 +63,7 @@ clean:
 # Architecture independant stuff
 
 SUIDFILES = debian/tmp-mount/bin/{u,}mount
-BINFILES  = sys-utils/arch text-utils/{more,tailf}
+BINFILES  = text-utils/{more,tailf}
 UBINFILES = sys-utils/{ipcs,ipcrm,setsid} \
 	misc-utils/{namei,setterm,mcookie,whereis,ddate} \
 	getopt/getopt text-utils/{rev,line,pg} \
