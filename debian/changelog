@@ -1,11 +1,12 @@
-util-linux (2.13~rc2-4) unstable-UNRELEASED; urgency=low
+util-linux (2.13~rc2-4) unstable; urgency=low
 
   * switch to using libvolume-id-dev
   * Recommend: nfs-common so that portmap doesn't become defacto-Required.
     NFS mounts will not work unless nfs-common is upgraded to at least the
-    Recommended version.  See #435125.  Closes: #435204, #435223
+    Recommended version, so now mount.preinst will fail if there are NFS
+    mounts and no /usr/sbin/mount.nfs.  Closes: #435204, #435223, #435125
 
- -- LaMont Jones <lamont@debian.org>  Mon, 30 Jul 2007 01:01:08 -0600
+ -- LaMont Jones <lamont@debian.org>  Mon, 30 Jul 2007 08:07:37 -0600
 
 util-linux (2.13~rc2-3) unstable; urgency=low
 
