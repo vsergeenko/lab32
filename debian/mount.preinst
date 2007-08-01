@@ -22,8 +22,8 @@ case "$1" in
 	NFS_IN_USE=$(sed -n '/^[^ ]* [^ ]* nfs /p' /proc/mounts)
 	if [ -n "$NFS_IN_USE" ] && [ ! -x /sbin/mount.nfs ] ; then
 	    cat << EOF
-You have NFS mounts, and this version of mount requires that nfs-common
-be upgraded before NFS mounts will work.
+You have NFS mount points currently mounted, and this version of mount
+requires that nfs-common be upgraded before NFS mounts will work.
 
 Aborting install.
 EOF
