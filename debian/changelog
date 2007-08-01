@@ -1,11 +1,11 @@
-util-linux (2.13~rc2-5) unstable-UNRELEASED; urgency=low
+util-linux (2.13~rc2-5) unstable; urgency=low
 
   * mount.preinst:
     - check the right directory for mount.nfs.
       Closes: #435307, #435414, #435223
     - look for ' nfs ' mounts.  Closes: #435305
 
- -- LaMont Jones <lamont@debian.org>  Mon, 30 Jul 2007 17:36:15 -0600
+ -- LaMont Jones <lamont@debian.org>  Tue, 31 Jul 2007 22:34:08 -0600
 
 util-linux (2.13~rc2-4) unstable; urgency=low
 
