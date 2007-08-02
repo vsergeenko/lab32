@@ -1,3 +1,10 @@
+util-linux (2.13~rc2-6) unstable-UNRELEASED; urgency=low
+
+  * More fixes from upstream
+  * swapoff: handle UUID= and LABEL=.  Closes: #435555
+
+ -- LaMont Jones <lamont@debian.org>  Thu,  2 Aug 2007 08:35:32 -0600
+
 util-linux (2.13~rc2-5) unstable; urgency=low
 
   * mount.preinst:
