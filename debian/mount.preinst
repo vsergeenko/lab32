@@ -19,7 +19,11 @@ case "$1" in
 	version=$2
 	export LANG=C	# for the comparison of mail version...
 
-	NFS_IN_USE=$(sed -n '/^[^ ]* [^ ]* nfs /p' /proc/mounts)
+	if [ -f /proc/mounts ]; then
+	    NFS_IN_USE=$(sed -n '/^[^ ]* [^ ]* nfs /p' /proc/mounts)
+	else
+	    NFS_IN_USE=""
+	fi
 	if [ -n "$NFS_IN_USE" ] && [ ! -x /sbin/mount.nfs ] ; then
 	    cat << EOF
 You have NFS mount points currently mounted, and this version of mount
