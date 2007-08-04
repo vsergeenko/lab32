@@ -1,3 +1,30 @@
+util-linux (2.13~rc2-6) unstable-UNRELEASED; urgency=low
+
+  * More fixes from upstream
+  * swapoff: handle UUID= and LABEL=.  Closes: #435555
+  * mount.preinst: deal with no /proc/mounts.
+
+ -- LaMont Jones <lamont@debian.org>  Fri,  3 Aug 2007 09:56:43 -0600
+
+util-linux (2.13~rc2-5) unstable; urgency=low
+
+  * mount.preinst:
+    - check the right directory for mount.nfs.
+      Closes: #435307, #435414, #435223
+    - look for ' nfs ' mounts.  Closes: #435305
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 31 Jul 2007 22:34:08 -0600
+
+util-linux (2.13~rc2-4) unstable; urgency=low
+
+  * switch to using libvolume-id-dev
+  * Recommend: nfs-common so that portmap doesn't become defacto-Required.
+    NFS mounts will not work unless nfs-common is upgraded to at least the
+    Recommended version, so now mount.preinst will fail if there are NFS
+    mounts and no /usr/sbin/mount.nfs.  Closes: #435204, #435223, #435125
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 30 Jul 2007 08:07:37 -0600
+
 util-linux (2.13~rc2-3ubuntu1) gutsy; urgency=low
 
   * Merge ubuntu changes:

@@ -38,13 +38,10 @@ CFDISK_PO_DIR=cfdisk-po
 CFDISK_POT=$(CFDISK_PO_DIR)/cfdisk.pot
 HISTORY=docs/v2.13-ReleaseNotes 
 
-CONFOPTS= --enable-raw --enable-rdev --enable-partx
+CONFOPTS= --enable-raw --enable-rdev --enable-partx --with-fsprobe=volume_id
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 CONFOPTS += --with-selinux
 endif
-
-# Ubuntu changes
-CONFOPTS += --with-fsprobe=volume_id
 
 build: 
 	$(checkdir)
@@ -66,7 +63,7 @@ clean:
 # Architecture independant stuff
 
 SUIDFILES = debian/tmp-mount/bin/{u,}mount
-BINFILES  = sys-utils/arch text-utils/{more,tailf}
+BINFILES  = text-utils/{more,tailf}
 UBINFILES = sys-utils/{ipcs,ipcrm,setsid} \
 	misc-utils/{namei,setterm,mcookie,whereis,ddate} \
 	getopt/getopt text-utils/{rev,line,pg} \
@@ -315,8 +312,9 @@ ifeq ($(DEB_HOST_ARCH_OS),linux)
 	install -m 644 $(HISTORY) debian/tmp-mount/usr/share/doc/mount/changelog
 	find debian/tmp-mount/usr/share/{doc,man} -type f | xargs gzip -9
 	install -m 644 debian/copyright debian/tmp-mount/usr/share/doc/mount/copyright
-	install debian/mount.postinst debian/tmp-mount/DEBIAN/postinst
+	install debian/mount.preinst   debian/tmp-mount/DEBIAN/preinst
 	install debian/mount.prerm   debian/tmp-mount/DEBIAN/prerm
+	install debian/mount.postinst debian/tmp-mount/DEBIAN/postinst
 	ls debian/tmp-mount/{bin,sbin}/* | xargs dpkg-shlibdeps -pmount
 	dpkg-gencontrol -isp -pmount -Pdebian/tmp-mount
 	dpkg --build debian/tmp-mount ..
