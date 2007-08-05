@@ -1,10 +1,10 @@
-util-linux (2.13~rc2-6) unstable-UNRELEASED; urgency=low
+util-linux (2.13~rc2-6) unstable; urgency=low
 
   * More fixes from upstream
   * mount.preinst: deal with no /proc/mounts.  Closes: #436003
   * swapoff: handle UUID= and LABEL=.  Closes: #435555
 
- -- LaMont Jones <lamont@debian.org>  Sat,  4 Aug 2007 10:41:53 -0600
+ -- LaMont Jones <lamont@debian.org>  Sat,  4 Aug 2007 18:22:19 -0600
 
 util-linux (2.13~rc2-5) unstable; urgency=low
 
