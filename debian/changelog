@@ -1,3 +1,19 @@
+util-linux (2.13~rc2-7) unstable; urgency=low
+
+  * If nfs-common is not installed, skip nfs check
+  * More fixes from upstream:
+    - swapon: cleanup fsprobe_*() usage
+    - swapoff: correctly handle UUID= and LABEL= identifiers
+    - mount: fix incorrect behavior when more than one fs type is
+    - tests: add script(1) race condition test
+    - script: fix race conditions
+    - mkfs: remove nonsense from man page
+    - blockdev: use LU and LLU for BLKGETSIZE and BLKGETSIZE64
+    - blockdev: fix "blockdev --getsz" for large devices
+
+
+ -- LaMont Jones <lamont@debian.org>  Tue,  7 Aug 2007 10:42:56 -0600
+
 util-linux (2.13~rc2-6) unstable; urgency=low
 
   * More fixes from upstream
