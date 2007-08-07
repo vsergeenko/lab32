@@ -19,7 +19,7 @@ case "$1" in
 	version=$2
 	export LANG=C	# for the comparison of mail version...
 
-	if [ -f /proc/mounts ]; then
+	if [ -f /var/lib/dpkg/info/nfs-common.list ] && [ -f /proc/mounts ]; then
 	    NFS_IN_USE=$(sed -n '/^[^ ]* [^ ]* nfs /p' /proc/mounts)
 	else
 	    NFS_IN_USE=""
