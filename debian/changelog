@@ -1,16 +1,46 @@
+util-linux (2.13~rc3-1ubuntu1) gutsy; urgency=low
+
+  * Merge ubuntu changes into a new Debian version.  Remaining:
+    - Add udev rule for calling /sbin/hwclock --hctosys dynamically:
+      + debian/hwclock.rules, debian/hwclock.udev: Rule and script.
+      + debian/rules: Install those.
+
+ -- LaMont Jones <lamont@ubuntu.com>  Wed,  8 Aug 2007 11:57:03 -0600
+
+util-linux (2.13~rc3-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- LaMont Jones <lamont@debian.org>  Wed,  8 Aug 2007 11:51:16 -0600
+
+util-linux (2.13~rc2-7) unstable; urgency=low
+
+  * If nfs-common is not installed, skip nfs check
+  * More fixes from upstream:
+    - swapon: cleanup fsprobe_*() usage
+    - swapoff: correctly handle UUID= and LABEL= identifiers
+    - mount: fix incorrect behavior when more than one fs type is
+    - tests: add script(1) race condition test
+    - script: fix race conditions
+    - mkfs: remove nonsense from man page
+    - blockdev: use LU and LLU for BLKGETSIZE and BLKGETSIZE64
+    - blockdev: fix "blockdev --getsz" for large devices
+
+ -- LaMont Jones <lamont@debian.org>  Tue,  7 Aug 2007 10:42:56 -0600
+
 util-linux (2.13~rc2-6ubuntu1) gutsy; urgency=low
 
   * Merge ubuntu fixes into new Debian version.
 
  -- LaMont Jones <lamont@ubuntu.com>  Sat,  4 Aug 2007 12:33:57 -0600
 
-util-linux (2.13~rc2-6) unstable-UNRELEASED; urgency=low
+util-linux (2.13~rc2-6) unstable; urgency=low
 
   * More fixes from upstream
+  * mount.preinst: deal with no /proc/mounts.  Closes: #436003
   * swapoff: handle UUID= and LABEL=.  Closes: #435555
-  * mount.preinst: deal with no /proc/mounts.
 
- -- LaMont Jones <lamont@debian.org>  Fri,  3 Aug 2007 09:56:43 -0600
+ -- LaMont Jones <lamont@debian.org>  Sat,  4 Aug 2007 18:22:19 -0600
 
 util-linux (2.13~rc2-5) unstable; urgency=low
 
