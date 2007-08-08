@@ -1,3 +1,18 @@
+util-linux (2.13~rc3-2ubuntu1) gutsy; urgency=low
+
+  * New debian version.  Remaining ubuntu changes:
+    - Add udev rule for calling /sbin/hwclock --hctosys dynamically:
+      + debian/hwclock.rules, debian/hwclock.udev: Rule and script.
+      + debian/rules: Install those.
+
+ -- LaMont Jones <lamont@ubuntu.com>  Wed,  8 Aug 2007 13:22:04 -0600
+
+util-linux (2.13~rc3-2) unstable; urgency=low
+
+  * mount should Suggest nfs-common, not Recommend it.
+
+ -- LaMont Jones <lamont@debian.org>  Wed,  8 Aug 2007 13:17:42 -0600
+
 util-linux (2.13~rc3-1ubuntu1) gutsy; urgency=low
 
   * Merge ubuntu changes into a new Debian version.  Remaining:
