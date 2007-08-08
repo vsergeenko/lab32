@@ -1,3 +1,9 @@
+util-linux (2.13~rc3-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- LaMont Jones <lamont@debian.org>  Wed,  8 Aug 2007 11:51:16 -0600
+
 util-linux (2.13~rc2-7) unstable; urgency=low
 
   * If nfs-common is not installed, skip nfs check
@@ -10,7 +16,6 @@ util-linux (2.13~rc2-7) unstable; urgency=low
     - mkfs: remove nonsense from man page
     - blockdev: use LU and LLU for BLKGETSIZE and BLKGETSIZE64
     - blockdev: fix "blockdev --getsz" for large devices
-
 
  -- LaMont Jones <lamont@debian.org>  Tue,  7 Aug 2007 10:42:56 -0600
 
