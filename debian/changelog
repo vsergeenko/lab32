@@ -1,3 +1,11 @@
+util-linux (2.13~rc3-4) unstable-UNRELEASED; urgency=low
+
+  * mount: make the error message a little more clear
+    when a helper program is missing.
+  * hwclock.sh: only report hwclock updated if we did that.  Closes: #436873
+
+ -- LaMont Jones <lamont@debian.org>  Thu,  9 Aug 2007 13:48:23 -0600
+
 util-linux (2.13~rc3-3) unstable; urgency=low
 
   * Merge lpia support from ubuntu.
