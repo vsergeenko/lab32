@@ -1,8 +1,32 @@
+util-linux (2.13~rc3-4ubuntu1) gutsy-UNRELEASED; urgency=low
+
+  * Merge from Debian. (LP: #131367)
+  * Remaining Ubuntu changes:
+    - Add udev rule for calling /sbin/hwclock --hctosys dynamically:
+      + debian/hwclock.rules, debian/hwclock.udev: Rule and script.
+      + debian/rules: Install those.
+
+ -- LaMont Jones <lamont@ubuntu.com>  Thu,  9 Aug 2007 15:59:41 -0600
+
+util-linux (2.13~rc3-4) unstable-UNRELEASED; urgency=low
+
+  * mount: make the error message a little more clear
+    when a helper program is missing.
+  * hwclock.sh: only report hwclock updated if we did that.  Closes: #436873
+
+ -- LaMont Jones <lamont@debian.org>  Thu,  9 Aug 2007 13:48:23 -0600
+
+util-linux (2.13~rc3-3) unstable; urgency=low
+
+  * Merge lpia support from ubuntu.
+
+ -- LaMont Jones <lamont@debian.org>  Thu,  9 Aug 2007 08:50:42 -0600
+
 util-linux (2.13~rc3-2ubuntu2) gutsy; urgency=low
 
   * Add lpia support back in.  sorry.
 
- -- LaMont Jones <lamont@debian.org>  Thu,  9 Aug 2007 08:48:21 -0600
+ -- LaMont Jones <lamont@ubuntu.com>  Thu,  9 Aug 2007 08:48:21 -0600
 
 util-linux (2.13~rc3-2ubuntu1) gutsy; urgency=low
 

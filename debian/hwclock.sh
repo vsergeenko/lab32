@@ -109,8 +109,9 @@ hwclocksh()
 		if [ "$GMT" = "-u" ]; then
 		    GMT="--utc"
 		fi
-		/sbin/hwclock --systohc $GMT $HWCLOCKPARS $BADYEAR
-		verbose_log_action_msg "Hardware Clock updated to `date`"
+		if /sbin/hwclock --systohc $GMT $HWCLOCKPARS $BADYEAR; then
+		    verbose_log_action_msg "Hardware Clock updated to `date`"
+		fi
 	    else
 		verbose_log_action_msg "Not saving System Clock"
 	    fi
