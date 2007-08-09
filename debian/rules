@@ -25,8 +25,8 @@ endif
 export arch = $(DEB_HOST_ARCH)
 version := $(shell sed -e '1{;s|^util-linux (\(.*\))\ .*|\1|;q;}' debian/changelog)
 
-fdisk_arch = $(findstring $(arch),alpha i386 powerpc ppc64 arm armeb armel m32r mips mipsel hppa ia64 hurd-i386 amd64 s390)
-rdev_arch = $(findstring $(arch),i386 amd64)
+fdisk_arch = $(findstring $(arch),alpha i386 powerpc ppc64 arm armeb armel m32r mips mipsel hppa ia64 hurd-i386 amd64 s390 lpia)
+rdev_arch = $(findstring $(arch),i386 amd64 lpia)
 sparc = $(findstring $(arch),sparc sparc64)
 nohwclock = $(findstring $(arch),s390)
 

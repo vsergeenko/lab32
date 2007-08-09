@@ -1,3 +1,9 @@
+util-linux (2.13~rc3-2ubuntu2) gutsy; urgency=low
+
+  * Add lpia support back in.  sorry.
+
+ -- LaMont Jones <lamont@debian.org>  Thu,  9 Aug 2007 08:48:21 -0600
+
 util-linux (2.13~rc3-2ubuntu1) gutsy; urgency=low
 
   * New debian version.  Remaining ubuntu changes:

@@ -37,7 +37,7 @@ Description: Locales files for util-linux
  messages in other languages than English.
 
 Package: mount
-Architecture: alpha amd64 arm armeb armel hppa i386 ia64 m32r m68k mips mipsel powerpc ppc64 sh s390 sparc sparc64
+Architecture: alpha amd64 arm armeb armel hppa i386 ia64 lpia m32r m68k mips mipsel powerpc ppc64 sh s390 sparc sparc64
 Essential: yes
 Section: admin
 Pre-Depends: ${mount:Depends}
@@ -60,7 +60,7 @@ Description: Basic utilities from 4.4BSD-Lite
  Included are: logger, renice, replay, script, wall
 
 Package: fdisk-udeb
-Architecture: alpha amd64 arm armeb armel hppa i386 ia64 m32r mips mipsel powerpc ppc64 hurd-i386 sparc s390
+Architecture: alpha amd64 arm armeb armel hppa i386 ia64 lpia m32r mips mipsel powerpc ppc64 hurd-i386 sparc s390
 Priority: extra
 Section: debian-installer
 Depends: ${fdisk-udeb:Depends}
@@ -68,7 +68,7 @@ Description: Partition a hard drive (manual)
  fdisk package
 
 Package: cfdisk-udeb
-Architecture: alpha amd64 arm armeb armel hppa i386 ia64 m32r mips mipsel powerpc ppc64 hurd-i386 s390
+Architecture: alpha amd64 arm armeb armel hppa i386 ia64 lpia m32r mips mipsel powerpc ppc64 hurd-i386 s390
 Priority: extra
 Section: debian-installer
 Depends: ${cfdisk-udeb:Depends}
