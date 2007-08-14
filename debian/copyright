@@ -17,15 +17,24 @@ Upstream maintainers include:
 
 Copyright:
 
-A variety of people and entities, as befits the nature of the package.
-See the individual sources for exact copyright holder information.
+  A variety of people and entities, as befits the nature of the package.
+  See the individual sources for exact copyright holder information.
 
 License:
 
-getopt, more, pg, wall, and whereis may be redistributed under the terms
-of the UCB BSD license found on Debian systems in the file
-/usr/share/common-licenses/BSD
+  The project doesn't use same license for all code. There is code with:
 
-Everything else may be redistributed under the terms of the GNU GPL
-Version 2 or later found on Debian systems in the file
-/usr/share/common-licenses/GPL
+     * GPLv2+ (GNU General Public License version 2, or any later version)
+
+     * GPLv2 (GNU General Public License version 2)
+
+     * BSD License
+
+     * Public Domain
+
+  Please, check source code for more details. A license is usually at the start
+  of each source file.
+
+  Anything lacking an explicit license may be redistributed under the terms
+  of the GNU GPL Version 2 or later found on Debian systems in the file
+  /usr/share/common-licenses/GPL
