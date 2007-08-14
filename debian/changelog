@@ -1,11 +1,20 @@
 util-linux (2.13~rc3-4) unstable-UNRELEASED; urgency=low
 
-  * mount: make the error message a little more clear
-    when a helper program is missing.
-  * hwclock.sh: only report hwclock updated if we did that.  Closes: #436873
+  * Changes from upstream:
+    - po: gettextizing some overlooked messages.
+    - build-sys: add --disable-makeinstall-chown
+    - docs: add README.licensing
+    - tests: fix ULONG_MAX usage on 32bit machines
+    - chsh: don't use empty shell field in /etc/passwd
+    - more: fix underlining for multibyte chars
+    - login: replace /usr/spool/mail with /var/spool/main in man page
+  * mount: make the error message a little more clear when a helper
+    program is missing.
   * manpages: cleanup of chrt.1 and taskset.1.  Closes: #427267, #265479
+  * hwclock.sh: only report hwclock updated if we did that.  Closes: #436873
+  * update copyright to reflect README.licensing
 
- -- LaMont Jones <lamont@debian.org>  Tue, 14 Aug 2007 07:43:15 -0600
+ -- LaMont Jones <lamont@debian.org>  Tue, 14 Aug 2007 12:22:34 -0600
 
 util-linux (2.13~rc3-3) unstable; urgency=low
 
