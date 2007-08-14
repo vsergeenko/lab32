@@ -3,6 +3,8 @@
 SHELL = bash
 PACKAGE = util-linux
 
+DISTRO=$(shell lsb_release -is 2>/dev/null || echo Debian);
+
 ifndef DEB_HOST_ARCH
 DEB_BUILD_ARCH := $(shell dpkg --print-installation-architecture)
 DEB_HOST_ARCH = $(DEB_BUILD_ARCH)
@@ -230,11 +232,13 @@ ifeq ($(DEB_HOST_ARCH_OS),linux)
 ifneq ($(arch),$(nohwclock))
 	install -m 644 debian/conffiles debian/tmp/DEBIAN/
 
+ifneq ($(DISTRO),"Debian")
 	install -d -m 755 debian/tmp/lib/udev
 	install -m 755 debian/hwclock.udev debian/tmp/lib/udev/set_hwclock
 
 	install -d -m 755 debian/tmp/etc/udev/rules.d
 	install -m 644 debian/hwclock.rules debian/tmp/etc/udev/rules.d/85-hwclock.rules
+endif
 endif
 endif
 	ls debian/tmp/{bin,sbin,usr/{bin,sbin}}/* | xargs dpkg-shlibdeps -putil-linux
