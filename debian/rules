@@ -3,7 +3,7 @@
 SHELL = bash
 PACKAGE = util-linux
 
-DISTRO=$(shell lsb_release -is 2>/dev/null || echo Debian);
+DISTRO=$(shell lsb_release -is 2>/dev/null || echo Debian)
 
 ifndef DEB_HOST_ARCH
 DEB_BUILD_ARCH := $(shell dpkg --print-installation-architecture)
@@ -61,7 +61,7 @@ clean:
 	find . -name '*.rej' -print0 | xargs -0r rm
 	rm -rf debian/tmp* debian/files* debian/substvars po/messages
 	rm -rf $(CFDISK_PO_DIR)
-ifeq ($(DISTRO),"Debian")
+ifeq ($(DISTRO),Debian)
 	sed '/^Breaks:/d' debian/control.in > debian/control
 else
 	cp debian/control.in debian/control
@@ -237,7 +237,7 @@ ifeq ($(DEB_HOST_ARCH_OS),linux)
 ifneq ($(arch),$(nohwclock))
 	install -m 644 debian/conffiles debian/tmp/DEBIAN/
 
-ifneq ($(DISTRO),"Debian")
+ifneq ($(DISTRO),Debian)
 	install -d -m 755 debian/tmp/lib/udev
 	install -m 755 debian/hwclock.udev debian/tmp/lib/udev/set_hwclock
 
