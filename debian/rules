@@ -61,6 +61,11 @@ clean:
 	find . -name '*.rej' -print0 | xargs -0r rm
 	rm -rf debian/tmp* debian/files* debian/substvars po/messages
 	rm -rf $(CFDISK_PO_DIR)
+ifeq ($(DISTRO),"Debian")
+	sed '/^Breaks:/d' debian/control.in > debian/control
+else
+	cp debian/control.in debian/control
+endif
 
 # Architecture independant stuff
 
