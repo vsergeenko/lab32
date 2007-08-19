@@ -6,8 +6,10 @@ util-linux (2.13~rc3-6) unstable-UNRELEASED; urgency=low
     - man-pages: cleanup of chrt.1 and taskset.1
     - mount: improve error message when helper program not present
   * drop arch.1 man page.  Closes: #438668
+  * deliver the right file for scriptreplay.  Closes: #438771
+  * sfdisk: Allow drives over 2^31 sectors in size.  Closes: #314413
 
- -- LaMont Jones <lamont@debian.org>  Sun, 19 Aug 2007 10:04:23 -0600
+ -- LaMont Jones <lamont@debian.org>  Sun, 19 Aug 2007 12:27:14 -0600
 
 util-linux (2.13~rc3-5) unstable; urgency=low
 
