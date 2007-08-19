@@ -91,7 +91,7 @@ hwclocksh()
 		/sbin/hwclock --hctosys $GMT $HWCLOCKPARS $BADYEAR
 
 		#	Announce the local time.
-		verbose_log_action_msg "System Clock set. Local time: `date $UTC`"
+		verbose_log_action_msg "System Clock set to: `date $UTC`"
 	    else
 		verbose_log_action_msg "Not setting System Clock"
 	    fi
