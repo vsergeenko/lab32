@@ -1,12 +1,13 @@
-util-linux (2.13~rc3-6) unstable; urgency=low
+util-linux (2.13~rc3-6) unstable-UNRELEASED; urgency=low
 
   * more upstream changes
     - po: update de.po (from translationproject.org)
     - docs: add note about http://translationproject.org
     - man-pages: cleanup of chrt.1 and taskset.1
     - mount: improve error message when helper program not present
+  * drop arch.1 man page.  Closes: #438668
 
- -- LaMont Jones <lamont@debian.org>  Wed, 15 Aug 2007 14:20:42 -0600
+ -- LaMont Jones <lamont@debian.org>  Sun, 19 Aug 2007 10:04:23 -0600
 
 util-linux (2.13~rc3-5) unstable; urgency=low
 
