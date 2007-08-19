@@ -98,8 +98,7 @@ endif
 
 #BSDBINFILES = # misc-utils/kill
 BSDUBINFILES = misc-utils/script misc-utils/logger sys-utils/renice \
-               login-utils/wall
-               # misc-utils/scriptreplay is handled seperately
+               login-utils/wall misc-utils/scriptreplay
 BSDMAN1FILES = login-utils/wall.1 misc-utils/script.1 sys-utils/renice.1 \
                misc-utils/logger.1 misc-utils/scriptreplay.1 # misc-utils/kill.1
 BSDMAN8FILES =
@@ -333,8 +332,6 @@ endif
 	install -d debian/tmp-bsd/{DEBIAN,bin,usr/{bin,share/man/{man8,man1},share/doc/bsdutils}}
 	# install -m 755 -o root -s $(BSDBINFILES) debian/tmp-bsd/bin/.
 	install -m 755 -s $(BSDUBINFILES) debian/tmp-bsd/usr/bin/.
-	cp misc-utils/scriptreplay.pl debian/tmp-bsd/usr/bin/scriptreplay
-	chmod 755 debian/tmp-bsd/usr/bin/scriptreplay
 ifneq ($(BSDMAN8FILES),)
 	install -m 644 $(BSDMAN8FILES) debian/tmp-bsd/usr/share/man/man8
 	mv debian/tmp-bsd/usr/share/man/man8/renice.8 debian/tmp-bsd/usr/share/man/man1/renice.1
