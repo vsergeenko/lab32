@@ -109,7 +109,7 @@ BSDDOCFILES = debian/README.script
 
 MAN1FILES = text-utils/{pg,tailf,more,line,rev}.1 \
 	    misc-utils/{namei,mcookie,chkdupexe,setterm,whereis,ddate}.1 \
-	    sys-utils/{arch,ipcrm,ipcs,setsid}.1 getopt/getopt.1 \
+	    sys-utils/{ipcrm,ipcs,setsid}.1 getopt/getopt.1 \
 	    schedutils/{chrt,ionice,taskset}.1
 MAN8FILES = disk-utils/mkswap.8 partx/{addpart,delpart,partx}.8
 ifeq ($(DEB_HOST_ARCH_OS),linux)
