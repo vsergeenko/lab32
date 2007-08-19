@@ -71,7 +71,7 @@ endif
 
 SUIDFILES = debian/tmp-mount/bin/{u,}mount
 BINFILES  = text-utils/{more,tailf}
-UBINFILES = sys-utils/{ipcs,ipcrm,setsid} \
+UBINFILES = sys-utils/{flock,ipcs,ipcrm,setsid} \
 	misc-utils/{namei,setterm,mcookie,whereis,ddate} \
 	getopt/getopt text-utils/{rev,line,pg} \
 	schedutils/{chrt,ionice,taskset} \
@@ -98,7 +98,8 @@ endif
 
 #BSDBINFILES = # misc-utils/kill
 BSDUBINFILES = misc-utils/script misc-utils/logger sys-utils/renice \
-               login-utils/wall misc-utils/scriptreplay
+               login-utils/wall
+BSDUBINSCRIPT = misc-utils/scriptreplay
 BSDMAN1FILES = login-utils/wall.1 misc-utils/script.1 sys-utils/renice.1 \
                misc-utils/logger.1 misc-utils/scriptreplay.1 # misc-utils/kill.1
 BSDMAN8FILES =
@@ -108,7 +109,7 @@ BSDDOCFILES = debian/README.script
 
 MAN1FILES = text-utils/{pg,tailf,more,line,rev}.1 \
 	    misc-utils/{namei,mcookie,chkdupexe,setterm,whereis,ddate}.1 \
-	    sys-utils/{ipcrm,ipcs,setsid}.1 getopt/getopt.1 \
+	    sys-utils/{flock,ipcrm,ipcs,setsid}.1 getopt/getopt.1 \
 	    schedutils/{chrt,ionice,taskset}.1
 MAN8FILES = disk-utils/mkswap.8 partx/{addpart,delpart,partx}.8
 ifeq ($(DEB_HOST_ARCH_OS),linux)
@@ -332,6 +333,7 @@ endif
 	install -d debian/tmp-bsd/{DEBIAN,bin,usr/{bin,share/man/{man8,man1},share/doc/bsdutils}}
 	# install -m 755 -o root -s $(BSDBINFILES) debian/tmp-bsd/bin/.
 	install -m 755 -s $(BSDUBINFILES) debian/tmp-bsd/usr/bin/.
+	install -m 755 $(BSDUBINSCRIPT) debian/tmp-bsd/usr/bin/.
 ifneq ($(BSDMAN8FILES),)
 	install -m 644 $(BSDMAN8FILES) debian/tmp-bsd/usr/share/man/man8
 	mv debian/tmp-bsd/usr/share/man/man8/renice.8 debian/tmp-bsd/usr/share/man/man1/renice.1
