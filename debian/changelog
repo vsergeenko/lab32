@@ -9,8 +9,9 @@ util-linux (2.13~rc3-6) unstable-UNRELEASED; urgency=low
   * deliver the right file for scriptreplay.  Closes: #438771
   * sfdisk: Allow drives over 2^31 sectors in size.  Closes: #314413
   * Deliver flock and flock.1.  Closes: #435272
+  * hwclock.sh: Correct message. Closes: #424682
 
- -- LaMont Jones <lamont@debian.org>  Sun, 19 Aug 2007 12:27:14 -0600
+ -- LaMont Jones <lamont@debian.org>  Sun, 19 Aug 2007 12:50:04 -0600
 
 util-linux (2.13~rc3-5) unstable; urgency=low
 
