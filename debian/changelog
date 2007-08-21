@@ -1,4 +1,4 @@
-util-linux (2.13~rc3-6) unstable-UNRELEASED; urgency=low
+util-linux (2.13~rc3-6) unstable; urgency=low
 
   * more upstream changes
     - docs: add DEPRECATED to EXTRA_DIST
@@ -19,7 +19,7 @@ util-linux (2.13~rc3-6) unstable-UNRELEASED; urgency=low
   * setarch: add parisc/parisc64 support
   * deliver setarch
 
- -- LaMont Jones <lamont@debian.org>  Sun, 19 Aug 2007 13:11:19 -0600
+ -- LaMont Jones <lamont@debian.org>  Tue, 21 Aug 2007 11:10:51 -0600
 
 util-linux (2.13~rc3-5) unstable; urgency=low
 
