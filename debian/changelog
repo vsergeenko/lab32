@@ -1,16 +1,23 @@
 util-linux (2.13~rc3-6) unstable-UNRELEASED; urgency=low
 
   * more upstream changes
-    - po: update de.po (from translationproject.org)
+    - docs: add DEPRECATED to EXTRA_DIST
+    - docs: update AUTHORS file
     - docs: add note about http://translationproject.org
     - man-pages: cleanup of chrt.1 and taskset.1
     - mount: improve error message when helper program not present
+    - setarch: cleanup licensing note
+    - setarch: add sparc32bash alias to keep compatibility with sparc32
+    - setarch: add __alpha__ support
+    - po: update de.po, vi.po, nl.po (from translationproject.org)
   * drop arch.1 man page.  Closes: #438668
   * deliver the right file for scriptreplay.  Closes: #438771
   * sfdisk: Allow drives over 2^31 sectors in size.  Closes: #314413
   * Deliver flock and flock.1.  Closes: #435272
   * hwclock.sh: Correct message. Closes: #424682
   * cfdisk: switch back to slang2
+  * setarch: add parisc/parisc64 support
+  * deliver setarch
 
  -- LaMont Jones <lamont@debian.org>  Sun, 19 Aug 2007 13:11:19 -0600
 
