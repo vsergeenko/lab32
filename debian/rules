@@ -71,7 +71,7 @@ endif
 
 SUIDFILES = debian/tmp-mount/bin/{u,}mount
 BINFILES  = text-utils/{more,tailf}
-UBINFILES = sys-utils/{flock,ipcs,ipcrm,setsid} \
+UBINFILES = sys-utils/{flock,ipcs,ipcrm,setsid,setarch} \
 	misc-utils/{namei,setterm,mcookie,whereis,ddate} \
 	getopt/getopt text-utils/{rev,line,pg} \
 	schedutils/{chrt,ionice,taskset} \
@@ -111,7 +111,7 @@ MAN1FILES = text-utils/{pg,tailf,more,line,rev}.1 \
 	    misc-utils/{namei,mcookie,chkdupexe,setterm,whereis,ddate}.1 \
 	    sys-utils/{flock,ipcrm,ipcs,setsid}.1 getopt/getopt.1 \
 	    schedutils/{chrt,ionice,taskset}.1
-MAN8FILES = disk-utils/mkswap.8 partx/{addpart,delpart,partx}.8
+MAN8FILES = disk-utils/mkswap.8 partx/{addpart,delpart,partx}.8 sys-utils/setarch.8
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 ifneq ($(arch),$(nohwclock))
 MAN8FILES += hwclock/hwclock.8
