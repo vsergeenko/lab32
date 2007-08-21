@@ -1,5 +1,18 @@
-/* Copyright (C) 2003-2006 Red Hat, Inc.
- * Licensed under the terms of the GPL
+/*
+ * Copyright (C) 2003-2007 Red Hat, Inc.
+ *
+ * This file is part of util-linux-ng.
+ *
+ * This file is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This file is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
  *
  * Written by Elliot Lee <sopwith@redhat.com>
  * New personality options & code added by Jindrich Novy <jnovy@redhat.com>
@@ -114,6 +127,7 @@ int set_arch(const char *pers, unsigned long options)
 #endif
 #if defined(__sparc64__) || defined(__sparc__)
     {PER_LINUX32, "sparc", "sparc"},
+    {PER_LINUX32, "sparc32bash", "sparc"},
     {PER_LINUX32, "sparc32", "sparc"},
     {PER_LINUX, "sparc64", "sparc64"},
 #endif
@@ -121,6 +135,9 @@ int set_arch(const char *pers, unsigned long options)
     {PER_LINUX32, "mips32", "mips"},
     {PER_LINUX32, "mips", "mips"},
     {PER_LINUX, "mips64", "mips64"},
+#endif
+#if defined(__alpha__)
+    {PER_LINUX, "alpha", "alpha"},
 #endif
     {-1, NULL, NULL}
   };
@@ -175,6 +192,14 @@ int main(int argc, char *argv[])
     if (!strcmp(p, "-h") || !strcmp(p, "--help"))
       show_help();
   }
+  #if defined(__sparc64__) || defined(__sparc__)
+   if (!strcmp(p, "sparc32bash")) {
+       if (set_arch(p, NULL))
+         error(EXIT_FAILURE, errno, "Failed to set personality to %s", p);
+       execl("/bin/bash", NULL);
+       error(EXIT_FAILURE, errno, "/bin/bash");
+   }
+  #endif
   for (argv++, argc--; argc && argv[0][0] == '-'; argv++, argc--) {
     int n, unknown = 1;
     const char *arg = argv[0];
