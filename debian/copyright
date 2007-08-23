@@ -5,6 +5,7 @@ maintained by Sean 'Shaleh' Perry <shaleh@debian.org>, and Adrian Bunk
 <bunk@stusta.de>.
 
 The current maintainer is LaMont Jones <lamont@debian.org>.
+See also: git://git.debian.org/~lamont/util-linux.git
 
 It was downloaded from:
     ftp://ftp.us.kernel.org/pub/linux/utils/util-linux-ng/
