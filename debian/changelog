@@ -1,3 +1,12 @@
+util-linux (2.13~rc3-7) unstable-UNRELEASED; urgency=low
+
+  * Document git repository location
+  * cytune.8: make the oneliner more specific the cyclades hw in question
+    Closes: #375150
+  * control: Extend package descriptions.  Closes: #384072
+
+ -- LaMont Jones <lamont@debian.org>  Thu, 23 Aug 2007 08:12:59 -0600
+
 util-linux (2.13~rc3-6) unstable; urgency=low
 
   * more upstream changes
