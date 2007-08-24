@@ -17,10 +17,59 @@ Replaces: schedutils, miscutils, setterm, fdisk, ${util-linux:Conflicts}
 Conflicts: schedutils, setterm, fdisk, kbd (<< 1.05-3), console-tools (<< 1:0.2.3-21), ${util-linux:Conflicts}
 Provides: schedutils
 Description: Miscellaneous system utilities
- This package contains a number of important utilities, most of which
- are oriented towards maintenance of your system.  Some of the more
- important utilities included in this package allow you to partition
- your hard disk, view kernel messages, and create new filesystems.
+ This package contains a number of important utilities, most of which are
+ oriented towards maintenance of your system.  Some of the more important
+ utilities included in this package allow you to partition your hard disk,
+ view kernel messages, and create new filesystems.
+ .
+ The following programs are included in this package:
+  * arch - print machine architecture
+  * blockdev - call block device ioctl()s from the command line (*)
+  * cfdisk - manipulate partition tables using a curses-based interface (*)
+  * chkdupexe - find duplicate executables
+  * cytune - tune Linux Cyclades driver parameters
+  * ddate - convert Gregorian dates to Discordian dates
+  * fdisk - manipulate partition tables interactively
+  * dmesg - print or control kernel ring buffer (*)
+  * elvtune - tune Linux I/O elevator (*)
+  * fdformat - perform low-level format of a floppy diskette (*)
+  * fsck.cramfs - check consistency of compressed ROM filesystems
+  * fsck.minix - check consistency of Minix filesystems
+  * getopt - parse command-line arguments
+  * getty - prompt for login on a TTY port
+  * hwclock - query and set the hardware real-time clock (RTC) (*)
+  * ipcrm - remove an IPC message queue, semaphore set, or shared memory ID
+  * ipcs - provide information on IPC facilities
+  * isosize  - output the length of an ISO 9660 filesystem (*)
+  * line - read one line
+  * mcookie - generate magic cookies for xauth
+  * mkfs - build a Linux filesystem
+  * mkswap - set up a Linux swap area
+  * more - browse pagewise through text files
+  * namei - follow a pathname until a terminal point is found
+  * pg - browse pagewise through text files
+  * pivot_root - change the root filesystem
+  * raw - bind a Linux raw character device to a block device (*)
+  * readprofile - read Linux kernel profiling information (*)
+  * rdev, ramsize, rootflags, vidmode - query/set image root device, RAM disk
+      size, or video mode (*)
+  * rev - reverse lines of a file
+  * setsid - run a program in a new session
+  * setterm - set terminal attributes
+  * sfdisk - manipulate partition tables (*)
+  * tunelp - set various parameters for the lp device
+  * whereis - locate the binary, source, and manual page files for a command
+ .
+ Programs marked with a an asterisk in parentheses (*) are not available on
+ all Debian platforms, because they are utilities for manipulating hardware or
+ kernel interfaces that do not exist on some systems.
+ .
+ Futhermore, some of the above programs are installed with different names on
+ certain Debian platforms.
+ * "fdisk" is called "ddisk" on PowerPC (and PPC64) systems to emphasize its
+   nature as an editor for DOS parition tables.
+ * "mkfs" is called "mkfs.linux" on GNU/Hurd systems.
+ * "getty" is called "agetty" on GNU/Hurd systems.
 
 Package: util-linux-locales
 Architecture: all
@@ -43,8 +92,16 @@ Depends: ${mount:Depends}
 Suggests: nfs-common (>=1:1.1.0-13)
 Breaks: nfs-common (<<1:1.1.0-7)
 Description: Tools for mounting and manipulating filesystems
- This package provides the mount(8), umount(8), swapon(8),
- swapoff(8), and losetup(8) commands.
+ This package provides the following commands:
+  * mount - mount a filesystem
+  * umount - unmount a filesystem (*)
+  * swapon - enable devices and files for paging and swapping
+  * swapoff - disable devices and files for paging and swapping
+  * losetup - set up and control loop devices (*)
+ .
+ Programs marked with a an asterisk in parentheses (*) are not available on
+ all Debian platforms, because they are utilities for manipulating hardware or
+ kernel interfaces that do not exist on some systems.
 
 Package: bsdutils
 Architecture: any
@@ -53,11 +110,16 @@ Section: utils
 Depends: ${bsdutils:Depends}
 Recommends: bsdmainutils
 Description: Basic utilities from 4.4BSD-Lite
- This package contains the bare minimum number of BSD utilities needed
- to boot a Debian system.  You should probably also install
- bsdmainutils to get the remaining standard BSD utilities.
+ This package contains the bare minimum number of BSD utilities needed to boot
+ a Debian system.  You should probably also install bsdmainutils to get the
+ remaining standard BSD utilities.
  .
- Included are: logger, renice, replay, script, wall
+ This package provides the following commands:
+  * logger - make entries in the system log
+  * renice - alter priority of running processes
+  * script - make typescript of terminal session
+  * scriptreplay - play back typescripts using timing information
+  * wall - write a message to users
 
 Package: fdisk-udeb
 Architecture: alpha amd64 arm armeb armel hppa i386 ia64 lpia m32r mips mipsel powerpc ppc64 hurd-i386 sparc s390
