@@ -6,7 +6,7 @@ util-linux (2.13~rc3-7) unstable; urgency=low
   * control: Extend package descriptions.  Closes: #384072
   * Switch to debhelper, clean up delivery of binaries.
   * bsdutils: deliver more stuff that we build.  Now partly
-    Replaces: bsdmainutils.
+    Replaces: bsdmainutils and completely Replaces: linux32.
 
  -- LaMont Jones <lamont@debian.org>  Fri, 24 Aug 2007 23:27:19 -0600
 

@@ -84,6 +84,9 @@ endif
 	mv debian/util-linux/usr/bin/tailf debian/util-linux/bin
 	mv debian/util-linux/usr/bin/isosize debian/util-linux/sbin
 	mv debian/util-linux/usr/bin/cytune debian/util-linux/usr/sbin
+	mv debian/util-linux/usr/share/man/man8/linux32.8 debian/util-linux/usr/share/man/man1/linux32.1
+	mv debian/util-linux/usr/share/man/man8/linux64.8 debian/util-linux/usr/share/man/man1/linux64.1
+	# the version in bsdmainutils seems newer.
 	rm -f debian/bsdutils/usr/bin/look debian/bsdutils/usr/share/man/man1/look.1
 	#
 	#
