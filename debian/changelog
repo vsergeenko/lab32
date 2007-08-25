@@ -1,11 +1,14 @@
-util-linux (2.13~rc3-7) unstable-UNRELEASED; urgency=low
+util-linux (2.13~rc3-7) unstable; urgency=low
 
   * Document git repository location
   * cytune.8: make the oneliner more specific the cyclades hw in question
     Closes: #375150
   * control: Extend package descriptions.  Closes: #384072
+  * Switch to debhelper, clean up delivery of binaries.
+  * bsdutils: deliver more stuff that we build.  Now partly
+    Replaces: bsdmainutils.
 
- -- LaMont Jones <lamont@debian.org>  Thu, 23 Aug 2007 08:12:59 -0600
+ -- LaMont Jones <lamont@debian.org>  Fri, 24 Aug 2007 23:27:19 -0600
 
 util-linux (2.13~rc3-6) unstable; urgency=low
 

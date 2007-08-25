@@ -38,3 +38,5 @@ fi
 if [ -L /usr/doc/util-linux ] ; then
     rm -f /usr/doc/util-linux
 fi
+
+#DEBHELPER#

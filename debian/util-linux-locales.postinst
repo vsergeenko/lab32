@@ -3,3 +3,5 @@
 if [ -L /usr/doc/util-linux-locales ] ; then
     rm -f /usr/doc/util-linux-locales
 fi
+
+#DEBHELPER#

@@ -11,3 +11,5 @@ dpkg --assert-support-predepends ||
 #
 #EOF
 
+
+#DEBHELPER#
