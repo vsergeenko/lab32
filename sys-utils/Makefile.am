@@ -75,4 +75,5 @@ install-exec-hook:
 	done
 	for I in $(SETARCH_LINKS); do \
 		cd $(DESTDIR)$(usrbinexecdir) && ln -sf setarch $$I ; \
+		cd $(DESTDIR)$(man8dir) && ln -sf ../man8/setarch.8 $${I}.8; \
 	done
