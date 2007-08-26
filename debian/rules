@@ -5,7 +5,7 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-DISTRO=$(shell lsb_release -is 2>/dev/null || echo Debian)
+DISTRO :=$(shell lsb_release -is 2>/dev/null || echo Debian)
 
 ifndef DEB_HOST_ARCH
 DEB_BUILD_ARCH := $(shell dpkg --print-installation-architecture)
@@ -24,7 +24,7 @@ CONFOPTS= --enable-raw --enable-rdev --enable-partx --with-slang
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 CONFOPTS += --with-selinux
 endif
-ifneq($(DISTRO),Debian)
+ifneq ($(DISTRO),Debian)
 CONFOPTS += --with-fsprobe=volume_id 
 endif
 
