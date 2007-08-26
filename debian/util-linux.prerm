@@ -8,6 +8,7 @@ case "$1" in
 	remove)
 		update-alternatives --remove pager /bin/more
 		update-alternatives --remove pager /usr/bin/pg
+		update-alternatives --remove rename /usr/bin/rename.ul
 		;;
 	upgrade|failed-upgrade|deconfigure)
 		;;
