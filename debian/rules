@@ -20,12 +20,13 @@ export arch = $(DEB_HOST_ARCH)
 version := $(shell sed -e '1{;s|^util-linux (\(.*\))\ .*|\1|;q;}' debian/changelog)
 Upstream := $(shell sed 's/^.*(\(.*\)-.*).*/\1/; q' debian/changelog)
 
-CONFOPTS= --enable-raw --enable-rdev --enable-partx --with-fsprobe=volume_id --with-slang
+CONFOPTS= --enable-raw --enable-rdev --enable-partx --with-slang
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 CONFOPTS += --with-selinux
 endif
-
-HISTORY=docs/v2.13-ReleaseNotes 
+ifneq($(DISTRO),Debian)
+CONFOPTS += --with-fsprobe=volume_id 
+endif
 
 configure: configure-stamp
 configure-stamp:
@@ -53,11 +54,6 @@ clean-preunpatch:
 clean: clean-preunpatch
 	find . -name \*.o -exec rm {} \;
 	rm -f build-stamp configure-stamp
-ifeq ($(DISTRO),Debian)
-	sed '/^Breaks:/d' debian/control.in > debian/control
-else
-	cp debian/control.in debian/control
-endif
 
 install: build
 	dh_testdir
@@ -76,7 +72,7 @@ endif
 	dh_installmenu -i -a
 	dh_installcron -i -a
 	dh_installinfo -i -a
-	dh_installchangelogs $(HISTORY) -i -a
+	dh_installchangelogs docs/v*-ReleaseNotes -i -a
 	dh_movefiles --sourcedir=debian/util-linux -i -a
 	#
 	# XXX - push things to where debian has always(?) had them...
