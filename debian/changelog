@@ -1,3 +1,11 @@
+util-linux (2.13~rc3-8) unstable; urgency=low
+
+  * taskset: Don't deliver taskset on m68k.
+  * umount: only call update_mtab if mtab_is_writable().  Closes: #338803
+  * build: switch back to libblkid-dev for Debian.  Closes: #439617
+
+ -- LaMont Jones <lamont@debian.org>  Sat, 25 Aug 2007 21:38:17 -0600
+
 util-linux (2.13~rc3-7) unstable; urgency=low
 
   * Document git repository location
