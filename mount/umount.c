@@ -243,7 +243,7 @@ umount_one (const char *spec, const char *node, const char *type,
 			remnt.mnt_type = remnt.mnt_fsname = NULL;
 			remnt.mnt_dir = xstrdup(node);
 			remnt.mnt_opts = xstrdup("ro");
-			if (!nomtab && mtab_is_writable())
+			if (!nomtab)
 				update_mtab(node, &remnt);
 			return 0;
 		} else if (errno != EBUSY) { 	/* hmm ... */
@@ -297,7 +297,7 @@ umount_one (const char *spec, const char *node, const char *type,
 		del_loop(loopdev);
 
  writemtab:
-	if (!nomtab && mtab_is_writable() &&
+	if (!nomtab &&
 	    (umnt_err == 0 || umnt_err == EINVAL || umnt_err == ENOENT)) {
 		update_mtab (node, NULL);
 	}
