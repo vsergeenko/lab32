@@ -1,6 +1,17 @@
-util-linux (2.13~rc3-10) unstable-UNSTABLE; urgency=low
+util-linux (2.13~rc3-10) unstable; urgency=low
 
-  * START NEW VERSION
+  * Changes from upstream:
+    - docs: update AUTHORS file
+    - Revert "mount: improve error message when helper program not present"
+      for translation freeze (reopens LP #131367)  Will be fixed in 2.13.1
+      and 2.14.
+    - po: update cs.po, sv.po (from translationproject.org)
+    - taskset: check for existence of sched_getaffinity
+    - setarch: add parisc/parisc64 support
+    - mount: free loop device on failure
+    - mount: avoid duplicates for root fs in mtab
+  * Revert "umount: only call update_mtab if mtab_is_writable().", since the
+    fix is already present in a different way.
 
  -- LaMont Jones <lamont@debian.org>  Mon, 27 Aug 2007 03:39:49 -0600
 
