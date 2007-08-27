@@ -550,7 +550,7 @@ create_mtab (void) {
 		char *extra_opts;
 		parse_opts (fstab->m.mnt_opts, &flags, &extra_opts);
 		mnt.mnt_dir = "/";
-		mnt.mnt_fsname = canonicalize (fstab->m.mnt_fsname);
+		mnt.mnt_fsname = fsprobe_get_devname(fstab->m.mnt_fsname);
 		mnt.mnt_type = fstab->m.mnt_type;
 		mnt.mnt_opts = fix_opts_string (flags, extra_opts, NULL);
 		mnt.mnt_freq = mnt.mnt_passno = 0;
@@ -1189,7 +1189,7 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
 	error (_("mount: %s not mounted already, or bad option"), node);
       } else {
 	error (_("mount: wrong fs type, bad option, bad superblock on %s,\n"
-	       "       missing codepage or helper program, or other error"),
+	       "       missing codepage or other error"),
 	       spec);
 
 	if (stat(spec, &statbuf) == 0 && S_ISBLK(statbuf.st_mode)
