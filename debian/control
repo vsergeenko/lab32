@@ -59,7 +59,8 @@ Description: Basic utilities from 4.4BSD-Lite
  to boot a Debian system.  You should probably also install
  bsdmainutils to get the remaining standard BSD utilities.
  .
- Included are: logger, renice, replay, script, wall
+ Included are: cal, col, colcrt, colrm, column, logger, renice,
+ script, scriptreplay, ul, wall
 
 Package: fdisk-udeb
 Architecture: alpha amd64 arm armeb armel hppa i386 ia64 lpia m32r mips mipsel powerpc ppc64 hurd-i386 sparc s390
