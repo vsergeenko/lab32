@@ -65,19 +65,19 @@ install: build
 	dh_clean -k
 	dh_installdirs
 	$(MAKE) install DESTDIR=`pwd`/debian/util-linux
-	dh_installdocs -i -a
+	dh_installdocs -i -s
 	install -m 644 login-utils/README.modems-with-agetty debian/util-linux/usr/share/doc/util-linux/README.modems-with-getty
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 	perl -pi.bak -e 's/agetty/getty/g' debian/util-linux/usr/share/man/man8/getty.8 \
 		  debian/util-linux/usr/share/doc/util-linux/README.*
 	rm `find debian/util-linux/usr -name \*.bak`
 endif
-	dh_installexamples -i -a
-	dh_installmenu -i -a
-	dh_installcron -i -a
-	dh_installinfo -i -a
-	dh_installchangelogs docs/v*-ReleaseNotes -i -a
-	dh_movefiles --sourcedir=debian/util-linux -i -a
+	dh_installexamples -i -s
+	dh_installmenu -i -s
+	dh_installcron -i -s
+	dh_installinfo -i -s
+	dh_installchangelogs docs/v*-ReleaseNotes -i -s
+	dh_movefiles --sourcedir=debian/util-linux -i -s
 	#
 	# XXX - push things to where debian has always(?) had them...
 	mv debian/util-linux/usr/sbin/*part* debian/util-linux/usr/bin
@@ -126,10 +126,10 @@ ifeq ($(DEB_HOST_GNU_SYSTEM),gnu)
 	cd debian/util-linux/sbin ; mv mkswap mkswap.linux
 	cd debian/util-linux/usr/share/man/man8 ; mv mkswap.8 mkswap.linux.8
 endif
-	dh_compress -i -a
-	dh_fixperms -i -a -Xusr/bin/wall -Xbin/mount -Xbin/umount
+	dh_compress -i -s
+	dh_fixperms -i -s -Xusr/bin/wall -Xbin/mount -Xbin/umount
 	rm -rf debian/*-udeb/usr/share/doc
-	dh_link -i -a
+	dh_link -i -s
 
 
 # Build architecture-independent files here.
@@ -143,21 +143,21 @@ binary-indep: build install
 
 # Build architecture-dependent files here.
 binary-arch: build install
-	dh_testdir -a
-	dh_testroot -a
-	dh_installinit -a -- defaults 15 85
-	[ -n "$(STRIP)" ] || dh_strip -a
-	dh_makeshlibs -a
-	dh_installdeb -a
-	dh_shlibdeps -a
+	dh_testdir -s
+	dh_testroot -s
+	dh_installinit -s -- defaults 15 85
+	[ -n "$(STRIP)" ] || dh_strip -s
+	dh_makeshlibs -s
+	dh_installdeb -s
+	dh_shlibdeps -s
 ifneq ($(DEB_HOST_ARCH_OS),linux)
 	echo util-linux:Conflicts=getty >> debian/util-linux.substvars
 endif
-	dh_gencontrol -a -Xbsdutils
+	dh_gencontrol -s -Xbsdutils
 	dh_gencontrol -pbsdutils -u-v1:$(version)
-	dh_md5sums -a
+	dh_md5sums -s
 	rm -f debian/*-udeb/DEBIAN/md5sums
-	dh_builddeb -a
+	dh_builddeb -s
 
 
 binary: binary-indep binary-arch
