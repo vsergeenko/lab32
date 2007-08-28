@@ -88,7 +88,8 @@ endif
 	mv debian/util-linux/usr/share/man/man8/linux64.8 debian/util-linux/usr/share/man/man1/linux64.1
 	# the version in bsdmainutils seems newer.
 	rm -f debian/bsdutils/usr/bin/look debian/bsdutils/usr/share/man/man1/look.1
-	# Alternatives
+	rm -f debian/bsdutils/usr/bin/hexdump debian/bsdutils/usr/share/man/man1/hexdump.1
+	# perl gets to do rename, not us.
 	mv debian/util-linux/usr/bin/rename debian/util-linux/usr/bin/rename.ul
 	mv debian/util-linux/usr/share/man/man1/rename.1 debian/util-linux/usr/share/man/man1/rename.ul.1
 	#
