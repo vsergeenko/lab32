@@ -2010,6 +2010,3 @@ util-linux (2.5-1) unstable; urgency=low
   * Initial release
 
  -- Guy Maor <maor@ece.utexas.edu>  Thu, 18 Apr 1996 04:32:22 -0500
-
-
-	partx/{addpart,delpart,partx}
