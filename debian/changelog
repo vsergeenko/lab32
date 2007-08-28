@@ -1,3 +1,11 @@
+util-linux (2.13-2) unstable; urgency=low
+
+  * Don't make rename.ul an alternative for rename.  Closes: #439935.
+  * Don't deliver hexdump (bsdmainutils is newer).  Closes: #439905
+  * Update bsdutils description.  Closes: #439907
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 28 Aug 2007 17:12:29 -0600
+
 util-linux (2.13-1) unstable; urgency=low
 
   * Changes from upstream:
