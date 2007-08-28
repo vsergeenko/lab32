@@ -10,8 +10,6 @@ update-alternatives --install /usr/bin/pager pager /bin/more 50 \
   --slave /usr/share/man/man1/pager.1.gz pager.1.gz /usr/share/man/man1/more.1.gz
 update-alternatives --install /usr/bin/pager pager /usr/bin/pg 10 \
   --slave /usr/share/man/man1/pager.1.gz pager.1.gz /usr/share/man/man1/pg.1.gz
-update-alternatives --install /usr/bin/rename rename /usr/bin/rename.ul 20 \
-  --slave /usr/share/man/man1/rename.1.gz rename.1.gz /usr/share/man/man1/rename.ul.1.gz
 
 #
 #	Check if links to hwclock.sh are present in runlevel "6".
