@@ -66,7 +66,7 @@ if ARCH_IA64
 SETARCH_LINKS += i386 ia64
 endif
 if ARCH_HPPA
-SETARCH_LINKS += parisc parisc64
+SETARCH_LINKS += parisc parisc64 parisc32
 endif
 
 install-exec-hook:

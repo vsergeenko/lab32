@@ -122,6 +122,7 @@ int set_arch(const char *pers, unsigned long options)
     {PER_LINUX, "ia64", "ia64"},
 #endif
 #if defined(__hppa__)
+    {PER_LINUX32, "parisc32", "parisc"},
     {PER_LINUX32, "parisc", "parisc"},
     {PER_LINUX, "parisc64", "parisc64"},
 #endif
@@ -211,10 +212,13 @@ int main(int argc, char *argv[])
     if (!strcmp(arg, "--help"))
       show_help();
 
+    /* compatibitity with an old Debian setarch implementation
+     * TODO: add long options for all flags
+     */
     if (!strcmp(arg, "--3gb"))
       arg="-3";
     else if (!strcmp(arg, "--4gb"))
-      continue;		/* just ignore this one */
+      continue;				/* just ignore this one */
 
     for (n = 1; arg[n]; n++) {
       int f;
