@@ -1,19 +1,27 @@
-util-linux (2.13~rc3-10) unstable; urgency=low
+util-linux (2.13-1) unstable; urgency=low
 
   * Changes from upstream:
     - docs: update AUTHORS file
     - Revert "mount: improve error message when helper program not present"
       for translation freeze (reopens LP #131367)  Will be fixed in 2.13.1
       and 2.14.
-    - po: update cs.po, sv.po (from translationproject.org)
     - taskset: check for existence of sched_getaffinity
     - setarch: add parisc/parisc64 support
     - mount: free loop device on failure
     - mount: avoid duplicates for root fs in mtab
+    - build-sys: release++
+    - docs: update ReleaseNotes, update and sort AUTHORS file
+    - po: update po/ stuff
+    - ionice: clean up error handling
+    - cytune: make the oneliner more specific the cyclades hw in question
+    - docs: update TODO
+    - setarch: add --3gb option for compatibility with Debian linux{32,64} command
   * Revert "umount: only call update_mtab if mtab_is_writable().", since the
     fix is already present in a different way.
+  * Have debian/rules deal with architectures that don't get packages.
+    Closes: #439830
 
- -- LaMont Jones <lamont@debian.org>  Mon, 27 Aug 2007 03:39:49 -0600
+ -- LaMont Jones <lamont@debian.org>  Mon, 27 Aug 2007 21:59:00 -0600
 
 util-linux (2.13~rc3-9) unstable; urgency=low
 
