@@ -1,3 +1,9 @@
+util-linux (2.13-3) unstable-UNRELEASED; urgency=low
+
+  * flock.1: typo in man page.  Closes: #440011
+
+ -- LaMont Jones <lamont@debian.org>  Wed, 29 Aug 2007 07:09:06 -0600
+
 util-linux (2.13-2) unstable; urgency=low
 
   * Don't make rename.ul an alternative for rename.  Closes: #439935.
