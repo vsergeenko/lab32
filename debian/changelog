@@ -1,8 +1,9 @@
-util-linux (2.13-3) unstable-UNRELEASED; urgency=low
+util-linux (2.13-3) unstable; urgency=low
 
   * flock.1: typo in man page.  Closes: #440011
   * mount: chain of symlinks to fstab causes use of pointer after free
     Closes: #440562
+  * Replaces: sparc-utils (for sparc{32,64}.  Closes: #440966
 
  -- LaMont Jones <lamont@debian.org>  Wed, 29 Aug 2007 07:09:06 -0600
 
