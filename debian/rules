@@ -107,7 +107,7 @@ ifneq ($(DISTRO),Debian)
 	    install -m 644 debian/hwclock.rules debian/util-linux/etc/udev/rules.d/85-hwclock.rules; \
 	fi
 endif
-	cd debian; if [ -f util-linux/bin/fdisk ]; then \
+	cd debian; if [ -f util-linux/sbin/fdisk ]; then \
 	    ln util-linux/sbin/*fdisk fdisk-udeb/usr/sbin; \
 	    mv fdisk-udeb/usr/sbin/cfdisk cfdisk-udeb/usr/sbin; \
 	fi
