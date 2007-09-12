@@ -4,6 +4,12 @@ util-linux (2.14~a0-0) experimental-UNRELEASED; urgency=low
 
  -- LaMont Jones <lamont@debian.org>  Fri, 07 Sep 2007 08:52:55 -0600
 
+util-linux (2.13-4) unstable; urgency=low
+
+  * build: look for fdisk in the right place.  Closes: LP#138040
+
+ -- LaMont Jones <lamont@debian.org>  Wed, 12 Sep 2007 06:30:18 -0600
+
 util-linux (2.13-3) unstable; urgency=low
 
   * flock.1: typo in man page.  Closes: #440011
