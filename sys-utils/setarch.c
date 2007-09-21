@@ -196,6 +196,10 @@ int main(int argc, char *argv[])
     p = argv[0];
     if (!strcmp(p, "-h") || !strcmp(p, "--help"))
       show_help();
+  #if defined(__sparc64__) || defined(__sparc__)
+  } else if (!strcmp(p,"sparc64")) {
+      options |= ADDR_LIMIT_32BIT;
+  #endif
   }
   #if defined(__sparc64__) || defined(__sparc__)
    if (!strcmp(p, "sparc32bash")) {
