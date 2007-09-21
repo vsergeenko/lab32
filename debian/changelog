@@ -1,3 +1,9 @@
+util-linux (2.13-6) unstable; urgency=low
+
+  * sparc-utils 'sparc64' binary sets ADDR_LIMIT_32BIT.  Closes: LP#141524
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 21 Sep 2007 10:36:39 -0600
+
 util-linux (2.13-5) unstable; urgency=low
 
   * build: cfdisk doesn't exist on some architectures.
