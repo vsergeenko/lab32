@@ -4,6 +4,24 @@ util-linux (2.14~a0-0) experimental-UNRELEASED; urgency=low
 
  -- LaMont Jones <lamont@debian.org>  Fri, 07 Sep 2007 08:52:55 -0600
 
+FILLER (2.14~a0-0) UNRELEASED; urgency=low
+
+  * FILLER
+
+ -- FILLER Jones <lamont@debian.org>  Fri, 07 Sep 2007 08:52:55 -0600
+
+util-linux (2.13-6) unstable; urgency=low
+
+  * sparc-utils 'sparc64' binary sets ADDR_LIMIT_32BIT.  Closes: LP#141524
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 21 Sep 2007 10:36:39 -0600
+
+util-linux (2.13-5) unstable; urgency=low
+
+  * build: cfdisk doesn't exist on some architectures.
+
+ -- LaMont Jones <lamont@debian.org>  Wed, 12 Sep 2007 10:33:06 -0600
+
 util-linux (2.13-4) unstable; urgency=low
 
   * build: look for fdisk in the right place.  Closes: LP#138040

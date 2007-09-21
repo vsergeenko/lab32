@@ -109,7 +109,7 @@ ifneq ($(DISTRO),Debian)
 endif
 	cd debian; if [ -f util-linux/sbin/fdisk ]; then \
 	    ln util-linux/sbin/*fdisk fdisk-udeb/usr/sbin; \
-	    mv fdisk-udeb/usr/sbin/cfdisk cfdisk-udeb/usr/sbin; \
+	    S=fdisk-udeb/usr/sbin/cfdisk; if [ -f $$S ]; then mv $$S cfdisk-udeb/usr/sbin; fi; \
 	fi
 	cd debian/util-linux-locales && find usr/share/locale -type f | while read x; do ln $$x ../cfdisk-udeb/$$x; done
 ifeq ($(DEB_HOST_ARCH_OS),linux)
