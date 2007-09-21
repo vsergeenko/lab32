@@ -1,3 +1,10 @@
+util-linux (2.13-7) unstable-UNRELEASED; urgency=low
+
+  * Start new release
+  * DO NOT EDIT: changelog is built from commit messages
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 21 Sep 2007 13:23:33 -0600
+
 util-linux (2.13-6) unstable; urgency=low
 
   * sparc-utils 'sparc64' binary sets ADDR_LIMIT_32BIT.  Closes: LP#141524
