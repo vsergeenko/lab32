@@ -1,9 +1,11 @@
-util-linux (2.13-7) unstable-UNRELEASED; urgency=low
+util-linux (2.13-7) unstable; urgency=low
 
-  * Start new release
-  * DO NOT EDIT: changelog is built from commit messages
+  * cfdisk.8: mention slang next to curses.  Closes: #295487
+  * util-linux.postrm: remove /etc/adjtime on purge.  Closes: #245236
+  * hwclock: Reintroduce hwclockfirst.sh on Debian machines.  Closes: #443487
+  * mount.preinst: chroot-check was broken.  Closes: #443466
 
- -- LaMont Jones <lamont@debian.org>  Fri, 21 Sep 2007 13:23:33 -0600
+ -- LaMont Jones <lamont@debian.org>  Fri, 21 Sep 2007 22:10:20 -0600
 
 util-linux (2.13-6) unstable; urgency=low
 
