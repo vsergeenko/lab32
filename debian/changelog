@@ -4,11 +4,14 @@ util-linux (2.14~a0-0) experimental-UNRELEASED; urgency=low
 
  -- LaMont Jones <lamont@debian.org>  Fri, 07 Sep 2007 08:52:55 -0600
 
-FILLER (2.14~a0-0) UNRELEASED; urgency=low
+util-linux (2.13-7) unstable; urgency=low
 
-  * FILLER
+  * cfdisk.8: mention slang next to curses.  Closes: #295487
+  * util-linux.postrm: remove /etc/adjtime on purge.  Closes: #245236
+  * hwclock: Reintroduce hwclockfirst.sh on Debian machines.  Closes: #443487
+  * mount.preinst: chroot-check was broken.  Closes: #443466
 
- -- FILLER Jones <lamont@debian.org>  Fri, 07 Sep 2007 08:52:55 -0600
+ -- LaMont Jones <lamont@debian.org>  Fri, 21 Sep 2007 22:10:20 -0600
 
 util-linux (2.13-6) unstable; urgency=low
 

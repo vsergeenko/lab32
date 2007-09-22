@@ -12,7 +12,7 @@
 #		 - Added comments to alert users of hwclock issues
 #		   and discourage tampering without proper doc reading.
 
-# WARNING:	Please read /usr/share/doc/util-linux/README.Debian.hwclock.gz
+# WARNING:	Please read /usr/share/doc/util-linux/README.Debian.hwclock
 #		or /usr/share/doc/util-linux/README.Debian.hwclock
 #		before changing this file. You risk serious clock
 #		misbehaviour otherwise.
@@ -24,6 +24,8 @@
 # Default-Start:     S
 # Default-Stop:      0 6
 ### END INIT INFO
+
+FIRST=no	# debian/rules sets this to 'yes' when creating hwclockfirst.sh
 
 # Set this to any options you might need to give to hwclock, such
 # as machine hardware clock type for Alphas.
@@ -41,6 +43,12 @@ hwclocksh()
     case "$UTC" in
        no|"")	GMT="--localtime"
 		UTC=""
+		if [ "X$FIRST" = "Xyes" ] && [ ! -r /etc/localtime ]; then
+		    if [ -z "$TZ" ]; then
+			log_action_msg "System clock was not updated at this time"
+			return 1
+		    fi
+		fi
 		;;
        yes)	GMT="--utc"
 		UTC="--utc"
@@ -56,32 +64,40 @@ hwclocksh()
 
     case "$1" in
 	start)
-	    if [ ! -f /etc/adjtime ] && [ ! -e /etc/adjtime ]; then
+	    if [ -w /etc ] && [ ! -f /etc/adjtime ] && [ ! -e /etc/adjtime ]; then
 		echo "0.0 0 0.0" > /etc/adjtime
 	    fi
 
-	    # Uncomment the hwclock --adjust line below if you want
-	    # hwclock to try to correct systematic drift errors in the
-	    # Hardware Clock.
-	    #
-	    # WARNING: If you uncomment this option, you must either make
-	    # sure *nothing* changes the Hardware Clock other than
-	    # hwclock --systohc, or you must delete /etc/adjtime
-	    # every time someone else modifies the Hardware Clock.
-	    #
-	    # Common "vilains" are: ntp, MS Windows, the BIOS Setup
-	    # program.
-	    #
-	    # WARNING: You must remember to invalidate (delete)
-	    # /etc/adjtime if you ever need to set the system clock
-	    # to a very different value and hwclock --adjust is being
-	    # used.
-	    #
-	    # Please read /usr/share/doc/util-linux/README.Debian.hwclock.gz
-	    # before enablig hwclock --adjust.
+	    if [ ! -w /etc/adjtime ]; then
+		NOADJ="--noadjfile"
+	    else
+	    	NOADJ=""
+	    fi
 
-	    #hwclock --adjust $GMT $BADYEAR
-	    :
+	    if [ "$FIRST" != yes ]; then
+		# Uncomment the hwclock --adjust line below if you want
+		# hwclock to try to correct systematic drift errors in the
+		# Hardware Clock.
+		#
+		# WARNING: If you uncomment this option, you must either make
+		# sure *nothing* changes the Hardware Clock other than
+		# hwclock --systohc, or you must delete /etc/adjtime
+		# every time someone else modifies the Hardware Clock.
+		#
+		# Common "vilains" are: ntp, MS Windows, the BIOS Setup
+		# program.
+		#
+		# WARNING: You must remember to invalidate (delete)
+		# /etc/adjtime if you ever need to set the system clock
+		# to a very different value and hwclock --adjust is being
+		# used.
+		#
+		# Please read /usr/share/doc/util-linux/README.Debian.hwclock
+		# before enablig hwclock --adjust.
+
+		#hwclock --adjust $GMT $BADYEAR
+		:
+	    fi
 
 	    if [ "$HWCLOCKACCESS" != no ]; then
 		log_action_msg "Setting the system clock."
@@ -89,7 +105,7 @@ hwclocksh()
 		# Copies Hardware Clock time to System Clock using the correct
 		# timezone for hardware clocks in local time, and sets kernel
 		# timezone. DO NOT REMOVE.
-		/sbin/hwclock --hctosys $GMT $HWCLOCKPARS $BADYEAR
+		/sbin/hwclock --hctosys $GMT $HWCLOCKPARS $BADYEAR $NOADJ
 
 		#	Announce the local time.
 		verbose_log_action_msg "System Clock set to: `date $UTC`"

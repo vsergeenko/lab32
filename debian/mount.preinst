@@ -3,25 +3,25 @@
 # Debian mount preinst
 # LaMont Jones <lamont@debian.org>
 
-### do we have debconf?
-##if [ -f /usr/share/debconf/confmodule ]; then
-##    . /usr/share/debconf/confmodule
-##    DEBCONF=true
-##else
-##    DEBCONF=
-##fi
+chrooted() {
+  if [ "$(stat -c %d/%i /)" = "$(stat -Lc %d/%i /proc/1/root 2>/dev/null)" ]; then
+      # the devicenumber/inode pair of / is the same as that of /sbin/init's
+      # root, so we're *not* in a chroot and hence return false.
+      return 1
+  fi
+  return 0
+}
 
-DISTRO=$(lsb_release -is 2>/dev/null || echo Debian);
 case "$1" in
     install)
 	;;
 
     upgrade)
 	version=$2
-	export LANG=C	# for the comparison of mail version...
+	DISTRO=$(lsb_release -is 2>/dev/null || echo Debian);
 
 	if [ Debian = "$DISTRO" ]; then
-	  if [ -f /var/lib/dpkg/info/nfs-common.list ] && [ -f /proc/mounts ]; then
+	  if [ -f /proc/mounts ] && ! chrooted; then
 	      NFS_IN_USE=$(sed -n '/^[^ ]* [^ ]* nfs /p' /proc/mounts)
 	  else
 	      NFS_IN_USE=""

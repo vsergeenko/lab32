@@ -101,7 +101,12 @@ endif
 	if [ -f debian/util-linux/sbin/hwclock ] ; then \
 	    install -m 755 debian/hwclock.sh debian/util-linux/etc/init.d/hwclock.sh; \
 	fi
-ifneq ($(DISTRO),Debian)
+ifeq ($(DISTRO),Debian)
+	if [ -f debian/util-linux/sbin/hwclock ] ; then \
+	    install -m 755 debian/hwclock.sh debian/util-linux/etc/init.d/hwclockfirst.sh; \
+	    sed -i '/^FIRST=/s/no/yes/' debian/util-linux/etc/init.d/hwclockfirst.sh; \
+	fi
+else
 	if [ -f debian/util-linux/sbin/hwclock ] ; then \
 	    install -m 755 debian/hwclock.udev debian/util-linux/lib/udev/set_hwclock && \
 	    install -m 644 debian/hwclock.rules debian/util-linux/etc/udev/rules.d/85-hwclock.rules; \
