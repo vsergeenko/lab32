@@ -6,6 +6,7 @@ case "$1" in
         purge)
                 update-rc.d hwclock.sh remove >/dev/null
 		update-rc.d hwclockfirst.sh remove >/dev/null
+		rm -f /etc/adjtime
                 ;;
 	*)
 		;;
