@@ -64,7 +64,7 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-	$(MAKE) install DESTDIR=`pwd`/debian/util-linux
+	$(MAKE) install DESTDIR=`pwd`/debian/util-linux INSTALL_STRIP_FLAG=""
 	dh_installdocs -i -s
 	install -m 644 login-utils/README.modems-with-agetty debian/util-linux/usr/share/doc/util-linux/README.modems-with-getty
 ifeq ($(DEB_HOST_ARCH_OS),linux)
