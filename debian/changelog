@@ -4,6 +4,21 @@ util-linux (2.14~a0-0) experimental-UNRELEASED; urgency=low
 
  -- LaMont Jones <lamont@debian.org>  Fri, 07 Sep 2007 08:52:55 -0600
 
+util-linux (2.13-8) unstable; urgency=low
+
+  * Upstream git:
+    - po: update sv.po (from translationproject.org)
+    - mount: doesn't drop privileges properly when calling helpers
+    - hwclock: fix --rtc option.  Closes: #444924
+    - setarch: fix compiler warning
+    - login: login segfaults on EOF (rh#298461)
+    - build-sys: nls/locale handling in util-linux-ng general
+    - blockdev: add missing description about option --report in manpage
+  * fix messages in "hwclock.sh start".  Closes: #436873
+  * Honor DEB_BUILD_OPTIONS=nostrip.  Closes: #443853
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 01 Oct 2007 21:57:41 -0600
+
 util-linux (2.13-7) unstable; urgency=low
 
   * cfdisk.8: mention slang next to curses.  Closes: #295487

@@ -100,15 +100,17 @@ hwclocksh()
 	    fi
 
 	    if [ "$HWCLOCKACCESS" != no ]; then
-		log_action_msg "Setting the system clock."
+		log_action_msg "Setting the system clock"
 
 		# Copies Hardware Clock time to System Clock using the correct
 		# timezone for hardware clocks in local time, and sets kernel
 		# timezone. DO NOT REMOVE.
-		/sbin/hwclock --hctosys $GMT $HWCLOCKPARS $BADYEAR $NOADJ
-
-		#	Announce the local time.
-		verbose_log_action_msg "System Clock set to: `date $UTC`"
+		if /sbin/hwclock --hctosys $GMT $HWCLOCKPARS $BADYEAR $NOADJ; then
+		    #	Announce the local time.
+		    verbose_log_action_msg "System Clock set to: `date $UTC`"
+		else
+		    log_warning_msg "Unable to set System Clock to: `date $UTC`"
+		fi
 	    else
 		verbose_log_action_msg "Not setting System Clock"
 	    fi
@@ -122,7 +124,7 @@ hwclocksh()
 	    #          clock will not be carried across reboots.
 	    #
 	    if [ "$HWCLOCKACCESS" != no ]; then
-		log_action_msg "Saving the system clock."
+		log_action_msg "Saving the system clock"
 		if [ "$GMT" = "-u" ]; then
 		    GMT="--utc"
 		fi
