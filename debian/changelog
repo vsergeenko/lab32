@@ -10,6 +10,7 @@ util-linux (2.13-8) unstable; urgency=low
   * Upstream git:
     - po: update sv.po (from translationproject.org)
     - mount: doesn't drop privileges properly when calling helpers
+      CVE-2007-5191
     - hwclock: fix --rtc option.  Closes: #444924
     - setarch: fix compiler warning
     - login: login segfaults on EOF (rh#298461)
