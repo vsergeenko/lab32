@@ -30,8 +30,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <malloc.h>
+#include <errno.h>
+#include <string.h>
 #include <sys/stat.h>
+#include <ctype.h>
+#include "errs.h"
 #include "nls.h"
+
+#define DEFAULT_LINES  10
 
 static size_t filesize(const char *filename)
 {
@@ -50,8 +56,8 @@ static void tailf(const char *filename, int lines)
     int  i;
 
     if (!(str = fopen(filename, "r"))) {
-	fprintf(stderr, _("Cannot open \"%s\" for read\n"), filename);
-	perror("");
+	fprintf(stderr, _("Cannot open \"%s\" for read: %s\n"),
+			filename, strerror(errno));
 	exit(1);
     }
 
@@ -83,32 +89,54 @@ int main(int argc, char **argv)
     size_t     osize, nsize;
     FILE       *str;
     const char *filename;
-    int        count;
+    int        count, wcount;
+    int        lines = DEFAULT_LINES;
 
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE);
 
-    if (argc != 2) {
-	fprintf(stderr, _("Usage: tailf logfile\n"));
-	exit(1);
+    argc--;
+    argv++;
+
+    for (; argc > 0 && argv[0][0] == '-'; argc--, argv++) {
+	if (!strcmp(*argv, "-n") || !strcmp(*argv, "--lines")) {
+	    argc--;
+	    argv++;
+	    if (argc > 0 && (lines = atoi(argv[0])) <= 0)
+		errx(EXIT_FAILURE, _("Invalid number of lines"));
+	}
+	else if (isdigit(argv[0][1])) {
+	    if ((lines = atoi(*argv + 1)) <= 0)
+		errx(EXIT_FAILURE, _("Invalid number of lines"));
+	}
+	else
+		errx(EXIT_FAILURE, _("Invalid option"));
     }
 
-    filename = argv[1];
+    if (argc != 1) {
+	fprintf(stderr, _("Usage: tailf [-n N | -N] logfile\n"));
+	exit(EXIT_FAILURE);
+    }
 
-    tailf(filename, 10);
+    filename = argv[0];
+    tailf(filename, lines);
 
     for (osize = filesize(filename);;) {
 	nsize = filesize(filename);
 	if (nsize != osize) {
 	    if (!(str = fopen(filename, "r"))) {
-		fprintf(stderr, _("Cannot open \"%s\" for read\n"), filename);
-		perror(argv[0]);
+		fprintf(stderr, _("Cannot open \"%s\" for read: %s\n"),
+				filename, strerror(errno));
 		exit(1);
 	    }
 	    if (!fseek(str, osize, SEEK_SET))
-                while ((count = fread(buffer, 1, sizeof(buffer), str)) > 0)
-                    fwrite(buffer, 1, count, stdout);
+                while ((count = fread(buffer, 1, sizeof(buffer), str)) > 0) {
+                    wcount = fwrite(buffer, 1, count, stdout);
+                    if (wcount != count)
+			fprintf (stderr, _("Incomplete write to \"%s\" (written %d, expected %d)\n"),
+				filename, wcount, count);
+		}
 	    fflush(stdout);
 	    fclose(str);
 	    osize = nsize;
