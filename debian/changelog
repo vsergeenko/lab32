@@ -5,12 +5,44 @@ util-linux (2.14~a0-0) experimental-UNRELEASED; urgency=low
 
  -- LaMont Jones <lamont@debian.org>  Thu, 11 Oct 2007 21:01:08 -0600
 
-util-linux (2.13-9) unstable-UNRELEASED; urgency=low
+util-linux (2.13-9) unstable; urgency=low
 
-  * Start new release
-  * DO NOT EDIT: changelog is built from commit messages
+  [LaMont Jones]
 
- -- LaMont Jones <lamont@debian.org>  Thu, 04 Oct 2007 14:34:37 -0600
+  * deliver hwclockfirst.sh on ubuntu as well.  LP: #63175
+  * build: don't deliver (emtpy) /usr/share/util-linux.  Closes: #445908
+  * mount.8:  Make package references be the actual binary package name
+    in the distro.  LP: #154399
+
+  [Michael Piefel]
+
+  * po: update de.po (from translationproject.org)
+
+  [Yu Zhiguo]
+
+  * chsh: should use pam_end function to terminate the PAM transaction
+
+  [Benno Schulenberg]
+
+  * po: update nl.po (from translationproject.org)
+
+  [Rajeev V. Pillai]
+
+  * pg: fix segfault on search
+
+  [Karel Zak]
+
+  * mount: -L|-U segfault when label or uuid doesn't exist
+  * tests: fix blkid cache usage
+  * script: dies on SIGWINCH.  Closes: #445956
+  * chfn: add pam_end() call and cleanup PAM code
+  * ionice: add a note about permissions to ionice.1
+  * script: dies on SIGWINCH
+  * po: fix typo in de.po
+  * po: update po files
+  * setarch: generate groff links in a better way
+
+ -- LaMont Jones <lamont@debian.org>  Sat, 20 Oct 2007 20:59:12 -0600
 
 util-linux (2.13-8) unstable; urgency=low
 
