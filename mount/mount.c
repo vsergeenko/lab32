@@ -42,15 +42,13 @@
 #include "mount_paths.h"
 #include "env.h"
 #include "nls.h"
+#include "realpath.h"
 
 #define DO_PS_FIDDLING
 
 #ifdef DO_PS_FIDDLING
 #include "setproctitle.h"
 #endif
-
-/* Quiet mode */
-int mount_quiet = 0;
 
 /* True for fake mount (-f).  */
 static int fake = 0;
@@ -71,13 +69,13 @@ int verbose = 0;
 int hash_pass = 1;
 
 /* Nonzero for sloppy (-s).  */
-int sloppy = 0;
+static int sloppy = 0;
 
 /* True for explicit read/write (-w).  */
 static int readwrite = 0;
 
 /* True for all mount (-a).  */
-int mount_all = 0;
+static int mount_all = 0;
 
 /* True for fork() during all mount (-F).  */
 static int optfork = 0;
@@ -86,7 +84,7 @@ static int optfork = 0;
 static int list_with_volumelabel = 0;
 
 /* Nonzero for mount {--bind|--replace|--before|--after|--over|--move|
- * 		       make-shared|make-private|make-unbindable|make-slave}
+ *		       make-shared|make-private|make-unbindable|make-slave}
  */
 static int mounttype = 0;
 
@@ -840,9 +838,51 @@ suid_check(const char *spec, const char *node, int *flags, char **user) {
   *flags &= ~(MS_OWNER | MS_GROUP);
 }
 
+/* Check, if there already exists a mounted loop device on the mountpoint node
+ * with the same parameters.
+ */
+static int
+is_mounted_same_loopfile(const char *node0, const char *loopfile, unsigned long long offset)
+{
+	struct mntentchn *mnt = NULL;
+	char *node;
+	int res = 0;
+
+	node = canonicalize_mountpoint(node0);
+
+	/* Search for mountpoint node in mtab,
+	 * procceed if any of these has the loop option set or
+	 * the device is a loop device
+	 */
+	mnt = getmntdirbackward(node, mnt);
+	if (!mnt) {
+		free(node);
+		return 0;
+	}
+	for(; mnt && res == 0; mnt = getmntdirbackward(node, mnt)) {
+		char *p;
+
+		if (strncmp(mnt->m.mnt_fsname, "/dev/loop", 9) == 0)
+			res = loopfile_used_with((char *) mnt->m.mnt_fsname,
+					loopfile, offset);
+
+		else if ((p = strstr(mnt->m.mnt_opts, "loop="))) {
+			char *dev = xstrdup(p+5);
+			if ((p = strchr(dev, ',')))
+				*p = '\0';
+			res = loopfile_used_with(dev, loopfile, offset);
+			free(dev);
+		}
+	}
+
+	free(node);
+	return res;
+}
+
 static int
 loop_check(const char **spec, const char **type, int *flags,
-	   int *loop, const char **loopdev, const char **loopfile) {
+	   int *loop, const char **loopdev, const char **loopfile,
+	   const char *node) {
   int looptype;
   unsigned long long offset;
 
@@ -882,6 +922,11 @@ loop_check(const char **spec, const char **type, int *flags,
       int res;
 
       offset = opt_offset ? strtoull(opt_offset, NULL, 0) : 0;
+
+      if (is_mounted_same_loopfile(node, *loopfile, offset)) {
+        error(_("mount: according to mtab %s is already mounted on %s as loop"), *loopfile, node);
+        return EX_FAIL;
+      }
 
       do {
         if (!*loopdev || !**loopdev)
@@ -938,7 +983,7 @@ update_mtab_entry(const char *spec, const char *node, const char *type,
 	struct my_mntent mnt;
 
 	mnt.mnt_fsname = canonicalize (spec);
-	mnt.mnt_dir = canonicalize (node);
+	mnt.mnt_dir = canonicalize_mountpoint (node);
 	mnt.mnt_type = type;
 	mnt.mnt_opts = opts;
 	mnt.mnt_freq = freq;
@@ -1071,7 +1116,7 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
        * stale assignments of files to loop devices. Nasty when used for
        * encryption.
        */
-      res = loop_check(&spec, &types, &flags, &loop, &loopdev, &loopfile);
+      res = loop_check(&spec, &types, &flags, &loop, &loopdev, &loopfile, node);
       if (res)
 	  goto out;
   }
@@ -1463,7 +1508,7 @@ mounted (const char *spec0, const char *node0) {
 		return ret;
 
 	spec = canonicalize(spec0);
-	node = canonicalize(node0);
+	node = canonicalize_mountpoint(node0);
 
 	mc0 = mtab_head();
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt)
@@ -1788,8 +1833,6 @@ getfs(const char *spec, const char *uuid, const char *label)
 	return mc;
 }
 
-char *progname;
-
 int
 main(int argc, char *argv[]) {
 	int c, result = 0, specseen;
@@ -1996,6 +2039,7 @@ main(int argc, char *argv[]) {
 
 	if (keysize && sscanf(keysize,"%d",&keysz) != 1)
 		die (EX_USAGE, _("mount: argument to --keybits or -k must be a number"));
+	atexit(unlock_mtab);
 
 	switch (argc+specseen) {
 	case 0:

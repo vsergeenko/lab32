@@ -686,9 +686,9 @@ main(int argc, char ** argv) {
 			if (!sum) {
 				fprintf(stderr, _("\
 %s: Device '%s' contains a valid Sun disklabel.\n\
-This probably means creating v0 swap would destroy your partition table\n\
-No swap created. If you really want to create swap v0 on that device, use\n\
-the -f option to force it.\n"),
+This probably means creating v0 swap would destroy your partition table.\n\
+No swap was created. If you really want to create v0 swap on that device,\n\
+use the -f option to force it.\n"),
 					program_name, device_name);
 				exit(1);
 			}
@@ -738,12 +738,15 @@ the -f option to force it.\n"),
 		security_context_t oldcontext;
 		context_t newcontext;
 
-		if ((fgetfilecon(DEV, &oldcontext) < 0) &&
-		    (errno != ENODATA)) {
-			fprintf(stderr, _("%s: %s: unable to obtain selinux file label: %s\n"),
-					program_name, device_name,
-					strerror(errno));
-			exit(1);
+		if (fgetfilecon(DEV, &oldcontext) < 0) {
+			if (errno != ENODATA) {
+				fprintf(stderr, _("%s: %s: unable to obtain selinux file label: %s\n"),
+						program_name, device_name,
+						strerror(errno));
+				exit(1);
+			}
+			if (matchpathcon(device_name, statbuf.st_mode, &oldcontext))
+				die(_("unable to matchpathcon()"));
 		}
 		if (!(newcontext = context_new(oldcontext)))
 			die(_("unable to create new selinux context"));

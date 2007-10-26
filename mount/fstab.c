@@ -18,6 +18,7 @@
 #include "fsprobe.h"
 #include "mount_paths.h"
 #include "nls.h"
+#include "realpath.h"
 
 #define streq(s, t)	(strcmp ((s), (t)) == 0)
 
@@ -325,7 +326,7 @@ getfs_by_specdir (const char *spec, const char *dir) {
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt) {
 		/* dir */
 		if (!streq(mc->m.mnt_dir, dir)) {
-			char *dr = canonicalize(mc->m.mnt_dir);
+			char *dr = canonicalize_mountpoint(mc->m.mnt_dir);
 			int ok = 0;
 
 			if (streq(dr, dir))
@@ -371,7 +372,7 @@ getfs_by_dir (const char *dir) {
 		if (streq(mc->m.mnt_dir, dir))
 			return mc;
 
-	cdir = canonicalize(dir);
+	cdir = canonicalize_mountpoint(dir);
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt) {
 		if (streq(mc->m.mnt_dir, cdir)) {
 			free(cdir);
@@ -534,8 +535,6 @@ lock_mtab (void) {
 	struct timespec waittime;
 	struct timeval maxtime;
 	char linktargetfile[MOUNTLOCK_LINKTARGET_LTH];
-
-	at_die = unlock_mtab;
 
 	if (!signals_have_been_setup) {
 		int sig = 0;
@@ -811,19 +810,16 @@ update_mtab (const char *dir, struct my_mntent *instead) {
  *  The test is very simple -- it reads a number from locked file, increments the
  *  number and writes the number back to the file.
  */
-
 /* dummy */
-int verbose;
-int mount_quiet;
-char *progname;
-
 const char *fsprobe_get_label_by_devname(const char *spec) { return NULL; }
 const char *fsprobe_get_uuid_by_devname(const char *spec) { return NULL; }
 struct my_mntent *my_getmntent (mntFILE *mfp) { return NULL; }
 mntFILE *my_setmntent (const char *file, char *mode) { return NULL; }
 void my_endmntent (mntFILE *mfp) { }
 int my_addmntent (mntFILE *mfp, struct my_mntent *mnt) { return 0; }
-char *myrealpath(const char *path, char *resolved_path, int m) { return NULL; }
+
+char *canonicalize (const char *path) {  return NULL; }
+char *canonicalize_mountpoint (const char *path) { return NULL; }
 
 int
 main(int argc, char **argv)

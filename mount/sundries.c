@@ -18,6 +18,10 @@
 #include "xmalloc.h"
 #include "nls.h"
 
+int mount_quiet;
+int verbose;
+char *progname;
+
 char *
 xstrndup (const char *s, int n) {
      char *t;
@@ -106,6 +110,19 @@ error (const char *fmt, ...) {
      vfprintf (stderr, fmt, args);
      va_end (args);
      fputc('\n', stderr);
+}
+
+/* Fatal error.  Print message and exit.  */
+void
+die(int err, const char *fmt, ...) {
+	va_list args;
+
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	fprintf(stderr, "\n");
+	va_end(args);
+
+	exit(err);
 }
 
 /* True if fstypes match.  Null *TYPES means match anything,
@@ -223,31 +240,6 @@ matching_opts (const char *options, const char *test_opts) {
      /* no match failures in list means success */
      return 1;
 }
-
-/* Make a canonical pathname from PATH.  Returns a freshly malloced string.
-   It is up the *caller* to ensure that the PATH is sensible.  i.e.
-   canonicalize ("/dev/fd0/.") returns "/dev/fd0" even though ``/dev/fd0/.''
-   is not a legal pathname for ``/dev/fd0''.  Anything we cannot parse
-   we return unmodified.   */
-char *
-canonicalize (const char *path) {
-	char canonical[PATH_MAX+2];
-
-	if (path == NULL)
-		return NULL;
-
-#if 1
-	if (streq(path, "none") ||
-	    streq(path, "proc") ||
-	    streq(path, "devpts"))
-		return xstrdup(path);
-#endif
-	if (myrealpath (path, canonical, PATH_MAX+1))
-		return xstrdup(canonical);
-
-	return xstrdup(path);
-}
-
 
 /*
  * Parses NAME=value, returns -1 on parse error, 0 success. The success is also

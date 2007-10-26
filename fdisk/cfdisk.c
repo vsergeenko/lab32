@@ -391,7 +391,7 @@ partition_type_text(int i) {
 	 else
 	      return _("NTFS");
     } else
-	 return partition_type_name(p_info[i].id);
+	 return _(partition_type_name(p_info[i].id));
 }
 
 static void
@@ -1209,7 +1209,7 @@ menuSelect( int y, int x, struct MenuItem *menuItems, int itemLength,
     int i, ylast = y, key = 0, current = menuDefault;
 
     if( !( menuType & ( MENU_HORIZ | MENU_VERT ) ) ) {
-        print_warning(_("Menu without direction. Defaulting horizontal."));
+        print_warning(_("Menu without direction. Defaulting to horizontal."));
         menuType |= MENU_HORIZ;
     }
 
@@ -2067,7 +2067,7 @@ print_p_info_entry(FILE *fp, partition_info *p) {
     else if (p->id == FREE_SPACE)
 	sprintf(part_str, "%.15s", _("Free Space"));
     else if (partition_type_name(p->id))
-	sprintf(part_str, "%.15s (%02X)", partition_type_name(p->id), p->id);
+	sprintf(part_str, "%.15s (%02X)", _(partition_type_name(p->id)), p->id);
     else
 	sprintf(part_str, "%.15s (%02X)", _("Unknown"), p->id);
     fp_printf(fp, "%-20.20s", part_str);
@@ -2483,7 +2483,7 @@ change_id(int i) {
 		move(row, ((j-1)/num_down)*COL_ID_WIDTH + 1);
 		printw("%02X %-20.20s",
 		       i386_sys_types[j].type,
-		       i386_sys_types[j].name);
+		       _(i386_sys_types[j].name));
 	    }
 	    if (row > row_max)
 		needmore = 1;
@@ -2766,15 +2766,15 @@ do_curses_fdisk(void) {
 
 	if (p_info[cur_part].id == FREE_SPACE) {
 	    s = ((opentype == O_RDWR) ? "hnpquW" : "hnpqu");
-	    command = menuSelect(COMMAND_LINE_Y, COMMAND_LINE_X, menuMain, 8,
+	    command = menuSelect(COMMAND_LINE_Y, COMMAND_LINE_X, menuMain, 10,
 	        s, MENU_HORIZ | MENU_BUTTON | MENU_ACCEPT_OTHERS, 0);
 	} else if (p_info[cur_part].id > 0) {
 	    s = ((opentype == O_RDWR) ? "bdhmpqtuW" : "bdhmpqtu");
-	    command = menuSelect(COMMAND_LINE_Y, COMMAND_LINE_X, menuMain, 8,
+	    command = menuSelect(COMMAND_LINE_Y, COMMAND_LINE_X, menuMain, 10,
 	        s, MENU_HORIZ | MENU_BUTTON | MENU_ACCEPT_OTHERS, 0);
 	} else {
 	    s = ((opentype == O_RDWR) ? "hpquW" : "hpqu");
-	    command = menuSelect(COMMAND_LINE_Y, COMMAND_LINE_X, menuMain, 8,
+	    command = menuSelect(COMMAND_LINE_Y, COMMAND_LINE_X, menuMain, 10,
 	        s, MENU_HORIZ | MENU_BUTTON | MENU_ACCEPT_OTHERS, 0);
 	}
 	switch ( command ) {

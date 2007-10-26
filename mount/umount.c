@@ -19,6 +19,7 @@
 #include "fstab.h"
 #include "env.h"
 #include "nls.h"
+#include "realpath.h"
 
 #if defined(MNT_FORCE)
 /* Interesting ... it seems libc knows about MNT_FORCE and presumably
@@ -72,9 +73,6 @@ int nomtab = 0;
 
 /* Call losetup -d for each unmounted loop device. */
 int delloop = 0;
-
-/* Nonzero for chatty (-v). */
-int verbose = 0;
 
 /* True if ruid != euid.  */
 int suid = 0;
@@ -399,8 +397,6 @@ usage (FILE *fp, int n)
   exit (n);
 }
 
-int mount_quiet = 0;
-
 /*
  * Look for an option in a comma-separated list
  */
@@ -557,8 +553,6 @@ umount_file (char *arg) {
 		return umount_one (arg, arg, arg, arg, NULL);
 }
 
-char *progname;
-
 int
 main (int argc, char *argv[]) {
 	int c;
@@ -632,6 +626,8 @@ main (int argc, char *argv[]) {
 
 	argc -= optind;
 	argv += optind;
+
+	atexit(unlock_mtab);
 
 	if (all) {
 		/* nodev stuff: sysfs, usbfs, oprofilefs, ... */

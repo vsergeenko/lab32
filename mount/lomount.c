@@ -23,11 +23,9 @@
 #include "rmd160.h"
 #include "xstrncpy.h"
 #include "nls.h"
-
-extern int verbose;
-extern char *progname;
-extern char *xstrdup (const char *s);	/* not: #include "sundries.h" */
-extern void error (const char *fmt, ...);	/* idem */
+#include "sundries.h"
+#include "xmalloc.h"
+#include "realpath.h"
 
 #define SIZE(a) (sizeof(a)/sizeof(a[0]))
 
@@ -142,7 +140,7 @@ show_used_loop_devices (void) {
 
 	for (j = 0; j < SIZE(loop_formats); j++) {
 	    for(i = 0; i < 256; i++) {
-		sprintf(dev, loop_formats[j], i);
+		snprintf(dev, sizeof(dev), loop_formats[j], i);
 		if (stat (dev, &statbuf) == 0 && S_ISBLK(statbuf.st_mode)) {
 			fd = open (dev, O_RDONLY);
 			if (fd >= 0) {
@@ -167,6 +165,102 @@ show_used_loop_devices (void) {
 
 
 #endif
+
+/* check if the loopfile is already associated with the same given
+ * parameters.
+ *
+ * returns: -1 error
+ *           0 unused
+ *           1 loop device already used
+ */
+static int
+is_associated(int dev, struct stat *file, unsigned long long offset)
+{
+	struct loop_info64 linfo64;
+	struct loop_info64 linfo;
+	int ret = 0;
+
+	if (ioctl(dev, LOOP_GET_STATUS64, &linfo64) == 0) {
+		if (file->st_dev == linfo64.lo_device &&
+	            file->st_ino == linfo64.lo_inode &&
+		    offset == linfo64.lo_offset)
+			ret = 1;
+		return ret;
+	}
+	if (ioctl(dev, LOOP_GET_STATUS, &linfo) == 0) {
+		if (file->st_dev == linfo.lo_device &&
+	            file->st_ino == linfo.lo_inode &&
+		    offset == linfo.lo_offset)
+			ret = 1;
+		return ret;
+	}
+
+	return errno == ENXIO ? 0 : -1;
+}
+
+/* check if the loop file is already used with the same given
+ * parameters. We check for device no, inode and offset.
+ * returns: associated devname or NULL
+ */
+char *
+loopfile_used (const char *filename, unsigned long long offset) {
+	char dev[20];
+	char *loop_formats[] = { "/dev/loop%d", "/dev/loop/%d" };
+	int i, j, fd;
+	struct stat devstat, filestat;
+	struct loop_info loopinfo;
+
+	if (stat(filename, &filestat) == -1) {
+		perror(filename);
+		return NULL;
+	}
+
+	for (j = 0; j < SIZE(loop_formats); j++) {
+	    for(i = 0; i < 256; i++) {
+		snprintf(dev, sizeof(dev), loop_formats[j], i);
+		if (stat (dev, &devstat) == 0 && S_ISBLK(devstat.st_mode)) {
+			fd = open (dev, O_RDONLY);
+			if (fd >= 0) {
+				int res = 0;
+
+				if(ioctl (fd, LOOP_GET_STATUS, &loopinfo) == 0)
+					res = is_associated(fd, &filestat, offset);
+				close (fd);
+				if (res == 1)
+					return xstrdup(dev);
+			}
+			continue; /* continue trying as long as devices exist */
+		}
+		break;
+	    }
+	}
+	return NULL;
+}
+
+int
+loopfile_used_with(char *devname, const char *filename, unsigned long long offset)
+{
+	struct stat statbuf;
+	int fd, ret;
+
+	if (!is_loop_device(devname))
+		return 0;
+
+	if (stat(filename, &statbuf) == -1) {
+		perror(filename);
+		return -1;
+	}
+
+	fd = open(devname, O_RDONLY);
+	if (fd == -1) {
+		perror(devname);
+		return -1;
+	}
+	ret = is_associated(fd, &statbuf, offset);
+
+	close(fd);
+	return ret;
+}
 
 int
 is_loop_device (const char *device) {
@@ -280,6 +374,17 @@ set_loop(const char *device, const char *file, unsigned long long offset,
 	struct loop_info64 loopinfo64;
 	int fd, ffd, mode, i;
 	char *pass;
+	char *filename;
+
+	if (verbose) {
+		char *xdev = loopfile_used(file, offset);
+
+		if (xdev) {
+			printf(_("warning: %s is already associated with %s\n"),
+					file, xdev);
+			free(xdev);
+		}
+	}
 
 	mode = (*loopro ? O_RDONLY : O_RDWR);
 	if ((ffd = open(file, mode)) < 0) {
@@ -298,7 +403,9 @@ set_loop(const char *device, const char *file, unsigned long long offset,
 
 	memset(&loopinfo64, 0, sizeof(loopinfo64));
 
-	xstrncpy((char *)loopinfo64.lo_file_name, file, LO_NAME_SIZE);
+	if (!(filename = canonicalize(file)))
+		filename = (char *) file;
+	xstrncpy((char *)loopinfo64.lo_file_name, filename, LO_NAME_SIZE);
 
 	if (encryption && *encryption) {
 		if (digits_only(encryption)) {
@@ -410,16 +517,21 @@ set_loop(const char *device, const char *file, unsigned long long offset,
 	}
 
 	if (ioctl(fd, LOOP_SET_FD, ffd) < 0) {
-		close(fd);
-		close(ffd);
+		int rc = 1;
+
 		if (errno == EBUSY) {
 			if (verbose)
-				printf(_("ioctl LOOP_SET_FD failed: %s\n"), strerror(errno));
-			return 2;
-		} else {
+				printf(_("ioctl LOOP_SET_FD failed: %s\n"),
+							strerror(errno));
+			rc = 2;
+		} else
 			perror("ioctl: LOOP_SET_FD");
-			return 1;
-		}
+
+		close(fd);
+		close(ffd);
+		if (file != filename)
+			free(filename);
+		return rc;
 	}
 	close (ffd);
 
@@ -444,17 +556,21 @@ set_loop(const char *device, const char *file, unsigned long long offset,
 	if (i) {
 		ioctl (fd, LOOP_CLR_FD, 0);
 		close (fd);
+		if (file != filename)
+			free(filename);
 		return 1;
 	}
 	close (fd);
 
 	if (verbose > 1)
 		printf(_("set_loop(%s,%s,%llu): success\n"),
-		       device, file, offset);
+		       device, filename, offset);
+	if (file != filename)
+		free(filename);
 	return 0;
 }
 
-int 
+int
 del_loop (const char *device) {
 	int fd;
 
@@ -511,9 +627,6 @@ find_unused_loop_device (void) {
 #include <getopt.h>
 #include <stdarg.h>
 
-int verbose = 0;
-char *progname;
-
 static void
 usage(void) {
 	fprintf(stderr, _("\nUsage:\n"
@@ -539,34 +652,6 @@ usage(void) {
 		progname);
 	exit(1);
  }
-
-char *
-xstrdup (const char *s) {
-	char *t;
-
-	if (s == NULL)
-		return NULL;
-
-	t = strdup (s);
-
-	if (t == NULL) {
-		fprintf(stderr, _("not enough memory"));
-		exit(1);
-	}
-
-	return t;
-}
-
-void
-error (const char *fmt, ...) {
-	va_list args;
-
-	va_start (args, fmt);
-	vfprintf (stderr, fmt, args);
-	va_end (args);
-	fprintf (stderr, "\n");
-}
-
 
 int
 main(int argc, char **argv) {
