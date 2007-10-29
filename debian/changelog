@@ -1,3 +1,19 @@
+util-linux (2.13-10) unstable; urgency=low
+
+  [KaiGai Kohei]
+
+  * mkswap: possible to crash with SELinux relabeling support
+
+  [Karel Zak]
+
+  * docs: add info about .bugfix releases and branches
+
+  [LaMont Jones]
+
+  * build: don't deliver col* and ul as part of bsdutils for now.  Closes: #446939
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 29 Oct 2007 14:29:49 -0600
+
 util-linux (2.13-9) unstable; urgency=low
 
   [LaMont Jones]
