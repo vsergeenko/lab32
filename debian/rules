@@ -89,6 +89,9 @@ endif
 	# the version in bsdmainutils seems newer.
 	rm -f debian/bsdutils/usr/bin/look debian/bsdutils/usr/share/man/man1/look.1
 	rm -f debian/bsdutils/usr/bin/hexdump debian/bsdutils/usr/share/man/man1/hexdump.1
+	# and it's less pain to just let bsmainutils deliver col for now.
+	rm -f debian/bsdutils/usr/bin/col* debian/bsdutils/usr/share/man/man1/col*.1
+	rm -f debian/bsdutils/usr/bin/ul debian/bsdutils/usr/share/man/man1/ul*.1
 	# perl gets to do rename, not us.
 	mv debian/util-linux/usr/bin/rename debian/util-linux/usr/bin/rename.ul
 	mv debian/util-linux/usr/share/man/man1/rename.1 debian/util-linux/usr/share/man/man1/rename.ul.1
