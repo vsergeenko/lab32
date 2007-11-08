@@ -48,6 +48,8 @@
 #include <sys/utsname.h>
 #include <linux/unistd.h>	/* _syscall */
 #include "nls.h"
+#include "blkdev.h"
+#include "linux_version.h"
 #include "common.h"
 
 #include "gpt.h"
@@ -246,7 +248,7 @@ get_sector(char *dev, int fd, unsigned long sno) {
 
 static int
 msdos_signature (struct sector *s) {
-    unsigned char *data = s->data;
+    unsigned char *data = (unsigned char *)s->data;
     if (data[510] == 0x55 && data[511] == 0xaa)
 	    return 1;
     error(_("ERROR: sector %lu does not have an msdos signature\n"),
@@ -381,7 +383,7 @@ restore_sectors(char *dev) {
     ss0 = ss;
     ct = statbuf.st_size/516;
     while(ct--) {
-	sno = chars_to_ulong(ss);
+	sno = chars_to_ulong((unsigned char *) ss);
 	if (!sseek(dev, fdout, sno))
 	  goto err;
 	if (write(fdout, ss+4, 512) != 512) {
@@ -458,7 +460,7 @@ get_geometry(char *dev, int fd, int silent) {
     R.cylinders = 0;
     R.total_size = 0;
 
-    if (disksize(fd, &sectors)) {
+    if (blkdev_get_sectors(fd, &sectors) == -1) {
 	/* maybe an ordinary file */
 	struct stat s;
 
@@ -716,8 +718,8 @@ copy_to_part(char *cp, struct partition *p) {
     p->end_chs.h = *cp++;
     p->end_chs.s = *cp++;
     p->end_chs.c = *cp++;
-    p->start_sect = copy_to_int(cp);
-    p->nr_sects = copy_to_int(cp+4);
+    p->start_sect = copy_to_int((unsigned char *) cp);
+    p->nr_sects = copy_to_int((unsigned char *) cp+4);
 }
 
 static void
@@ -1499,22 +1501,6 @@ bsd_partition(char *dev, int fd, struct part_desc *ep, struct disk_desc *z) {
 	z->partno = pno;
 }
 
-#define MAKE_VERSION(p,q,r)     (65536*(p) + 256*(q) + (r))
-
-static int
-linux_version_code(void) {
-        struct utsname my_utsname;
-        int p, q, r;
-
-        if (uname(&my_utsname) == 0) {
-                p = atoi(strtok(my_utsname.release, "."));
-                q = atoi(strtok(NULL, "."));
-                r = atoi(strtok(NULL, "."));
-                return MAKE_VERSION(p,q,r);
-        }
-        return 0;
-}
-
 static int
 msdos_partition(char *dev, int fd, unsigned long start, struct disk_desc *z) {
     int i;
@@ -1523,7 +1509,7 @@ msdos_partition(char *dev, int fd, unsigned long start, struct disk_desc *z) {
     struct sector *s;
     struct part_desc *partitions = &(z->partitions[0]);
     int pno = z->partno;
-    int bsd_later = (linux_version_code() >= MAKE_VERSION(2,3,40));
+    int bsd_later = (get_linux_version() >= KERNEL_VERSION(2,3,40));
 
     if (!(s = get_sector(dev, fd, start)))
 	return 0;
@@ -1711,8 +1697,8 @@ struct dumpfld {
 #define RD_CMD (-2)
 
 static int
-read_stdin(unsigned char **fields, unsigned char *line, int fieldssize, int linesize) {
-    unsigned char *lp, *ip;
+read_stdin(char **fields, char *line, int fieldssize, int linesize) {
+    char *lp, *ip;
     int c, fno;
 
     /* boolean true and empty string at start */
@@ -2007,8 +1993,8 @@ build_surrounding_extended(struct part_desc *p, struct part_desc *ep,
 static int
 read_line(int pno, struct part_desc *ep, char *dev, int interactive,
 	  struct disk_desc *z) {
-    unsigned char line[1000];
-    unsigned char *fields[11];
+    char line[1000];
+    char *fields[11];
     int fno, pct = pno%4;
     struct part_desc p, *orig;
     unsigned long ff, ff1, ul, ml, ml1, def;
@@ -2811,7 +2797,7 @@ do_size (char *dev, int silent) {
     if (fd < 0)
 	return;
 
-    if (disksize(fd, &size)) {
+    if (blkdev_get_sectors(fd, &size) == -1) {
 	if (!silent) {
 	    perror(dev);
 	    fatal(_("Cannot get size of %s\n"), dev);

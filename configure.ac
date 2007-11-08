@@ -46,7 +46,8 @@ AC_CHECK_HEADERS(
 	rpcsvc/nfs_prot.h \
 	sys/io.h \
 	pty.h \
-	err.h])
+	err.h \
+	linux/version.h])
 AC_CHECK_HEADERS([linux/raw.h],
 		 [AM_CONDITIONAL([HAVE_RAW], [true])],
 		 [AM_CONDITIONAL([HAVE_RAW], [false])])
@@ -291,6 +292,14 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
 [AC_MSG_NOTICE([Your libc thinks that swapon has 1 arg only.])
 ])
 
+case ${host_os} in
+  *linux*)
+    AM_CONDITIONAL([LINUX], [true])
+    ;;
+  *)
+    AM_CONDITIONAL([LINUX], [false])
+    ;;
+esac
 
 dnl UTIL_SET_ARCH(ARCHNAME, PATTERN)
 dnl ---------------------------------

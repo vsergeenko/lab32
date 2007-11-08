@@ -46,20 +46,14 @@
 #include <selinux/context.h>
 #endif
 
+#include "linux_version.h"
 #include "swapheader.h"
 #include "xstrncpy.h"
 #include "nls.h"
+#include "blkdev.h"
 
 #ifdef HAVE_LIBUUID
 #include <uuid/uuid.h>
-#endif
-
-#ifndef _IO
-/* pre-1.3.45 */
-#define BLKGETSIZE 0x1260
-#else
-/* same on i386, m68k, arm; different on alpha, mips, sparc, ppc */
-#define BLKGETSIZE _IO(0x12,96)
 #endif
 
 static char * program_name = "mkswap";
@@ -70,23 +64,7 @@ static unsigned long badpages = 0;
 static int check = 0;
 static int version = -1;
 
-#define MAKE_VERSION(p,q,r)	(65536*(p) + 256*(q) + (r))
-
 #define SELINUX_SWAPFILE_TYPE	"swapfile_t"
-
-static int
-linux_version_code(void) {
-	struct utsname my_utsname;
-	int p, q, r;
-
-	if (uname(&my_utsname) == 0) {
-		p = atoi(strtok(my_utsname.release, "."));
-		q = atoi(strtok(NULL, "."));
-		r = atoi(strtok(NULL, "."));
-		return MAKE_VERSION(p,q,r);
-	}
-	return 0;
-}
 
 #ifdef __sparc__
 # ifdef __arch64__
@@ -443,19 +421,18 @@ find_size (int fd) {
 static unsigned long
 get_size(const char  *file) {
 	int	fd;
-	unsigned long	size;
+	unsigned long long size;
 
 	fd = open(file, O_RDONLY);
 	if (fd < 0) {
 		perror(file);
 		exit(1);
 	}
-	if (ioctl(fd, BLKGETSIZE, &size) >= 0) {
-		int sectors_per_page = pagesize/512;
-		size /= sectors_per_page;
-	} else {
+	if (blkdev_get_size(fd, &size) == 0)
+		size /= pagesize;
+	else
 		size = find_size(fd) / pagesize;
-	}
+
 	close(fd);
 	return size;
 }
@@ -585,7 +562,7 @@ main(int argc, char ** argv) {
 	} else if (PAGES > sz && !force) {
 		fprintf(stderr,
 			_("%s: error: "
-			  "size %lu is larger than device size %lu\n"),
+			  "size %lu KiB is larger than device size %lu KiB\n"),
 			program_name,
 			PAGES*(pagesize/1024), sz*(pagesize/1024));
 		exit(1);
@@ -597,7 +574,7 @@ main(int argc, char ** argv) {
 			version = 1;
 		else
 		/* use version 1 as default, if possible */
-		if (linux_version_code() < MAKE_VERSION(2,1,117))
+		if (get_linux_version() < KERNEL_VERSION(2,1,117))
 			version = 0;
 		else if (pagesize < 2048)
 			version = 0;
@@ -612,16 +589,16 @@ main(int argc, char ** argv) {
 
 	if (PAGES < 10) {
 		fprintf(stderr,
-			_("%s: error: swap area needs to be at least %ldkB\n"),
-			program_name, (long)(10 * pagesize / 1000));
+			_("%s: error: swap area needs to be at least %ld KiB\n"),
+			program_name, (long)(10 * pagesize/1024));
 		usage();
 	}
 
 	if (version == 0)
 		maxpages = V0_MAX_PAGES;
-	else if (linux_version_code() >= MAKE_VERSION(2,3,4))
+	else if (get_linux_version() >= KERNEL_VERSION(2,3,4))
 		maxpages = PAGES;
-	else if (linux_version_code() >= MAKE_VERSION(2,2,1))
+	else if (get_linux_version() >= KERNEL_VERSION(2,2,1))
 		maxpages = V1_MAX_PAGES;
 	else
 		maxpages = V1_OLD_MAX_PAGES;
@@ -629,8 +606,8 @@ main(int argc, char ** argv) {
 	if (PAGES > maxpages) {
 		PAGES = maxpages;
 		fprintf(stderr,
-			_("%s: warning: truncating swap area to %ldkB\n"),
-			program_name, PAGES * pagesize / 1000);
+			_("%s: warning: truncating swap area to %ld KiB\n"),
+			program_name, PAGES * pagesize / 1024);
 	}
 
 	if (opt_label && version == 0) {
@@ -709,8 +686,8 @@ use the -f option to force it.\n"),
 	goodpages = PAGES - badpages - 1;
 	if ((long) goodpages <= 0)
 		die(_("Unable to set up swap-space: unreadable"));
-	printf(_("Setting up swapspace version %d, size = %llu kB\n"),
-		version, (unsigned long long)goodpages * pagesize / 1000);
+	printf(_("Setting up swapspace version %d, size = %llu KiB\n"),
+		version, (unsigned long long)goodpages * pagesize / 1024);
 	write_signature((version == 0) ? "SWAP-SPACE" : "SWAPSPACE2");
 
 	if (version == 1)
