@@ -1,7 +1,25 @@
-util-linux (2.13-11) unstable-UNRELEASED; urgency=low
+util-linux (2.13-11) unstable; urgency=low
 
-  * Start new release
-  * DO NOT EDIT: changelog is built from commit messages
+  [LaMont Jones]
+
+  * cal comes from bsdmainutils as well.  Drops Replaces: completely.
+
+  [Pascal Terjan]
+
+  * docs: fix ChangeLog URL
+
+  [Gabor Kelemen]
+
+  * po: update hu.po (from translationproject.org)
+
+  [Karel Zak]
+
+  * losetup: fix errno usage
+  * po: update po files
+
+  [Lauri Nurmi]
+
+  * po: update fi.po (from translationproject.org)
 
  -- LaMont Jones <lamont@debian.org>  Wed, 14 Nov 2007 22:24:36 -0700
 
