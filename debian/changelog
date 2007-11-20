@@ -1,3 +1,9 @@
+util-linux (2.13-12) unstable; urgency=low
+
+  * meta: drop Conflicts: bsdmainutils too
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 19 Nov 2007 19:30:23 -0700
+
 util-linux (2.13-11) unstable; urgency=low
 
   [LaMont Jones]
