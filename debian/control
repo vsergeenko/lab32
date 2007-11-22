@@ -53,7 +53,6 @@ Essential: yes
 Section: utils
 Depends: ${shlibs:Depends}
 Recommends: bsdmainutils
-Replaces: bsdmainutils
 Description: Basic utilities from 4.4BSD-Lite
  This package contains the bare minimum number of BSD utilities needed
  to boot a Debian system.  You should probably also install
