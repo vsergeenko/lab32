@@ -22,13 +22,13 @@
 #include <sys/mount.h>
 
 #include <mntent.h>
-#include <paths.h>
 
 #ifdef HAVE_LIBSELINUX
 #include <selinux/selinux.h>
 #include <selinux/context.h>
 #endif
 
+#include "pathnames.h"
 #include "fsprobe.h"
 #include "mount_constants.h"
 #include "sundries.h"
@@ -38,7 +38,6 @@
 #include "lomount.h"
 #include "loop.h"
 #include "getusername.h"
-#include "mount_paths.h"
 #include "env.h"
 #include "nls.h"
 #include "blkdev.h"
@@ -536,11 +535,11 @@ create_mtab (void) {
 
 	lock_mtab();
 
-	mfp = my_setmntent (MOUNTED, "a+");
+	mfp = my_setmntent (_PATH_MOUNTED, "a+");
 	if (mfp == NULL || mfp->mntent_fp == NULL) {
 		int errsv = errno;
 		die (EX_FILEIO, _("mount: can't open %s for writing: %s"),
-		     MOUNTED, strerror (errsv));
+		     _PATH_MOUNTED, strerror (errsv));
 	}
 
 	/* Find the root entry by looking it up in fstab */
@@ -557,7 +556,7 @@ create_mtab (void) {
 		if (my_addmntent (mfp, &mnt) == 1) {
 			int errsv = errno;
 			die (EX_FILEIO, _("mount: error writing %s: %s"),
-			     MOUNTED, strerror (errsv));
+			     _PATH_MOUNTED, strerror (errsv));
 		}
 	}
 	if (fchmod (fileno (mfp->mntent_fp), 0644) < 0)
@@ -565,7 +564,7 @@ create_mtab (void) {
 			int errsv = errno;
 			die (EX_FILEIO,
 			     _("mount: error changing mode of %s: %s"),
-			     MOUNTED, strerror (errsv));
+			     _PATH_MOUNTED, strerror (errsv));
 		}
 	my_endmntent (mfp);
 
@@ -705,8 +704,8 @@ guess_fstype_by_devname(const char *devname)
 
       if (!type)
          printf (_("       I will try all types mentioned in %s or %s\n"),
-		      ETC_FILESYSTEMS, PROC_FILESYSTEMS);
-      else if (!strcmp(type, "swap"))
+		      _PATH_FILESYSTEMS, _PATH_PROC_FILESYSTEMS);
+      else if (!strcmp(type, MNTTYPE_SWAP))
          printf (_("       and it looks like this is swapspace\n"));
       else
          printf (_("       I will try type %s\n"), type);
@@ -735,7 +734,7 @@ guess_fstype_and_mount(const char *spec, const char *node, const char **types,
    if (!*types && !(flags & MS_REMOUNT)) {
       *types = guess_fstype_by_devname(spec);
       if (*types) {
-	  if (!strcmp(*types, "swap")) {
+	  if (!strcmp(*types, MNTTYPE_SWAP)) {
 	      error(_("%s looks like swapspace - not mounted"), spec);
 	      *types = NULL;
 	      return 1;
@@ -1003,16 +1002,16 @@ update_mtab_entry(const char *spec, const char *node, const char *type,
 			mntFILE *mfp;
 
 			lock_mtab();
-			mfp = my_setmntent(MOUNTED, "a+");
+			mfp = my_setmntent(_PATH_MOUNTED, "a+");
 			if (mfp == NULL || mfp->mntent_fp == NULL) {
 				int errsv = errno;
-				error(_("mount: can't open %s: %s"), MOUNTED,
+				error(_("mount: can't open %s: %s"), _PATH_MOUNTED,
 				      strerror (errsv));
 			} else {
 				if ((my_addmntent (mfp, &mnt)) == 1) {
 					int errsv = errno;
 					error(_("mount: error writing %s: %s"),
-					      MOUNTED, strerror (errsv));
+					      _PATH_MOUNTED, strerror (errsv));
 				}
 			}
 			my_endmntent(mfp);
@@ -1979,9 +1978,10 @@ main(int argc, char *argv[]) {
 	}
 
 	if (verbose > 2) {
-		printf("mount: fstab path: \"%s\"\n", _PATH_FSTAB);
-		printf("mount: lock path:  \"%s\"\n", MOUNTED_LOCK);
-		printf("mount: temp path:  \"%s\"\n", MOUNTED_TEMP);
+		printf("mount: fstab path: \"%s\"\n", _PATH_MNTTAB);
+		printf("mount: mtab path:  \"%s\"\n", _PATH_MOUNTED);
+		printf("mount: lock path:  \"%s\"\n", _PATH_MOUNTED_LOCK);
+		printf("mount: temp path:  \"%s\"\n", _PATH_MOUNTED_TMP);
 	}
 
 	argc -= optind;
@@ -2005,7 +2005,7 @@ main(int argc, char *argv[]) {
 	if (!nomtab && mtab_does_not_exist()) {
 		if (verbose > 1)
 			printf(_("mount: no %s found - creating it..\n"),
-			       MOUNTED);
+			       _PATH_MOUNTED);
 		create_mtab ();
 	}
 
@@ -2040,7 +2040,7 @@ main(int argc, char *argv[]) {
 
 			die (EX_USAGE,
 			     _("mount: can't find %s in %s or %s"),
-			     *argv, _PATH_FSTAB, MOUNTED);
+			     *argv, _PATH_MNTTAB, _PATH_MOUNTED);
 		}
 
 		result = mount_one (xstrdup (mc->m.mnt_fsname),

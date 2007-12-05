@@ -13,7 +13,6 @@
 #		   and discourage tampering without proper doc reading.
 
 # WARNING:	Please read /usr/share/doc/util-linux/README.Debian.hwclock
-#		or /usr/share/doc/util-linux/README.Debian.hwclock
 #		before changing this file. You risk serious clock
 #		misbehaviour otherwise.
 
