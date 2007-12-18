@@ -5,6 +5,35 @@ util-linux (2.14~a0-0) experimental-UNRELEASED; urgency=low
 
  -- LaMont Jones <lamont@debian.org>  Thu, 11 Oct 2007 21:01:08 -0600
 
+util-linux (2.13-13) unstable; urgency=low
+
+  [David Woodhouse]
+
+  * hwclock: check for ENODEV
+
+  [Matthias Koenig]
+
+  * mount: fix fd leak
+
+  [LaMont Jones]
+
+  * sys-utils: Drop duplicate install of setarch manpage links.
+  * agetty: drop useless and unused diff from upstream
+  * hwclock.sh: drop redundant file pointer.  Closes: #453333
+
+  [Frédéric Bothamy]
+
+  * sys-utils: correct setarch.8 manpage link creation.  Closes: #453245
+
+  [Karel Zak]
+
+  * build-sys: remove hardcoded _GNU_SOURCE
+  * mount: don't call canonicalize(SPEC) for cifs, smbfs and nfs.
+    Closes: #446175
+  * blockdev: add --getsz to blockdev.8
+
+ -- LaMont Jones <lamont@debian.org>  Wed, 05 Dec 2007 21:34:36 -0700
+
 util-linux (2.13-12) unstable; urgency=low
 
   * meta: drop Conflicts: bsdmainutils too
