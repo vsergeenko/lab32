@@ -23,7 +23,7 @@ endif
 
 tunelp_SOURCES = tunelp.c lp.h
 
-man_MANS = flock.1 readprofile.1 \
+dist_man_MANS = flock.1 readprofile.1 \
 	ctrlaltdel.8 cytune.8 dmesg.1 ipcrm.1 ipcs.1 renice.1 \
 	setsid.1 tunelp.8 setarch.8 rtcwake.8
 
@@ -31,25 +31,15 @@ info_TEXINFOS = ipc.texi
 
 if BUILD_ARCH
 bin_PROGRAMS += arch
-man_MANS += arch.1
+dist_man_MANS += arch.1
 endif
 
 
+RDEV_LINKS =
 if BUILD_RDEV
-rdev_common_mans = rdev.8 ramsize.8 rootflags.8 vidmode.8
-rdev_common_links = ramsize vidmode rootflags
-
-if ARCH_I86
 usrsbinexec_PROGRAMS += rdev
-man_MANS += $(rdev_common_mans)
-RDEV_LINKS = $(rdev_common_links)
-endif
-if ARCH_86_64
-usrsbinexec_PROGRAMS += rdev
-man_MANS += $(rdev_common_mans)
-RDEV_LINKS = $(rdev_common_links)
-endif
-
+RDEV_LINKS += ramsize vidmode rootflags
+dist_man_MANS += rdev.8
 endif
 
 
@@ -80,9 +70,13 @@ if ARCH_HPPA
 SETARCH_LINKS += parisc parisc64 parisc32
 endif
 
-SETARCH_MAN_LINKS = $(addsuffix .8, $(SETARCH_LINKS))
-man_MANS += $(SETARCH_MAN_LINKS)
-CLEANFILES=$(SETARCH_MAN_LINKS)
+RDEV_MAN_LINKS = $(RDEV_LINKS:=.8)
+SETARCH_MAN_LINKS = $(SETARCH_LINKS:=.8)
+man_MANS = $(RDEV_MAN_LINKS) $(SETARCH_MAN_LINKS)
+CLEANFILES = $(man_MANS)
+
+$(RDEV_MAN_LINKS): rdev.8
+	echo ".so rdev.8" > $@
 
 $(SETARCH_MAN_LINKS): setarch.8
 	echo ".so man8/setarch.8" > $@
