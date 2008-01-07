@@ -94,7 +94,7 @@ hwclocksh()
 		# Please read /usr/share/doc/util-linux/README.Debian.hwclock
 		# before enablig hwclock --adjust.
 
-		#hwclock --adjust $GMT $BADYEAR
+		#/sbin/hwclock --adjust $GMT $BADYEAR
 		:
 	    fi
 
