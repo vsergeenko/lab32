@@ -48,6 +48,12 @@
 
 int donice(int,int,int);
 
+void usage(void)
+{
+	fprintf(stderr, _("usage: renice priority [ [ -p ] pids ] "
+			  "[ [ -g ] pgrps ] [ [ -u ] users ]\n"));
+	exit(1);
+}
 /*
  * Change the priority (nice) of processes
  * or groups of processes which are already
@@ -58,6 +64,7 @@ main(int argc, char **argv)
 {
 	int which = PRIO_PROCESS;
 	int who = 0, prio, errs = 0;
+	char *endptr=NULL;
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
@@ -65,11 +72,12 @@ main(int argc, char **argv)
 
 	argc--, argv++;
 	if (argc < 2) {
-		fprintf(stderr, _("usage: renice priority [ [ -p ] pids ] "
-				  "[ [ -g ] pgrps ] [ [ -u ] users ]\n"));
-		exit(1);
+		usage();
 	}
-	prio = atoi(*argv);
+	prio = strtol(*argv,&endptr,10);
+	if (*endptr) {
+		usage();
+	}
 	argc--, argv++;
 #if 0
 	if (prio > PRIO_MAX)
@@ -100,8 +108,8 @@ main(int argc, char **argv)
 			}
 			who = pwd->pw_uid;
 		} else {
-			who = atoi(*argv);
-			if (who < 0) {
+			who = strtol(*argv,&endptr,10);
+			if (who < 0 || *endptr) {
 				fprintf(stderr, _("renice: %s: bad value\n"),
 					*argv);
 				continue;
