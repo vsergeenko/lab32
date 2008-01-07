@@ -9,10 +9,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: util-linux 2.13-pre1\n"
+"Project-Id-Version: util-linux 2.13-pre7\n"
 "Report-Msgid-Bugs-To: Karel Zak <kzak@redhat.com>\n"
-"POT-Creation-Date: 2007-11-12 12:18+0100\n"
-"PO-Revision-Date: 2006-02-04 08:30+0700\n"
+"POT-Creation-Date: 2008-01-02 14:15+0100\n"
+"PO-Revision-Date: 2006-03-07 14:30+0700\n"
 "Last-Translator: Arif E. Nugroho <arif_endro@yahoo.com>\n"
 "Language-Team: Indonesian <translation-team-id@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -185,9 +185,9 @@ msgstr "penggunaan: %s [ -n ] perangkat\n"
 #: disk-utils/mkfs.cramfs.c:784 disk-utils/mkfs.minix.c:626
 #: disk-utils/mkswap.c:518 misc-utils/ddate.c:179 misc-utils/rename.c:79
 #: misc-utils/script.c:147 sys-utils/readprofile.c:197
-#, fuzzy, c-format
+#, c-format
 msgid "%s (%s)\n"
-msgstr "%s: %s (%s)\n"
+msgstr "%s (%s)\n"
 
 #: disk-utils/fdformat.c:130
 #, c-format
@@ -211,7 +211,7 @@ msgstr "Rangkap"
 msgid "Single"
 msgstr "Satu"
 
-#: disk-utils/fsck.cramfs.c:118
+#: disk-utils/fsck.cramfs.c:117
 #, c-format
 msgid ""
 "usage: %s [-hv] [-x dir] file\n"
@@ -773,12 +773,12 @@ msgid "%s: Out of memory!\n"
 msgstr "%s: Kehabisan memori!\n"
 
 #: disk-utils/mkfs.c:103
-#, fuzzy, c-format
+#, c-format
 msgid "mkfs (%s)\n"
-msgstr "Versi mkfs %s (%s)\n"
+msgstr "mkfs (%s)\n"
 
 #: disk-utils/mkfs.cramfs.c:125
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "usage: %s [-h] [-v] [-b blksize] [-e edition] [-i file] [-n name] dirname "
 "outfile\n"
@@ -795,13 +795,13 @@ msgid ""
 " dirname    root of the filesystem to be compressed\n"
 " outfile    output file\n"
 msgstr ""
-"penggunaan: %s [-h] [-v] [-b blksz] [-e edition] [-i file] [-n name] dirname "
-"outfile\n"
+"penggunaan: %s [-h] [-v] [-b blksize] [-e edition] [-i file] [-n name] "
+"dirname outfile\n"
 " -h         tampilkan bantuan ini\n"
 " -v         menjadi lebih verbose\n"
 " -E         membuat semua peringatan menjadi errors (status exit yang tidak "
 "nol)\n"
-" -b blksz   menggunakan ukuran blksz, harus sama dengan ukuran page\n"
+" -b blksize menggunakan ukuran blksz, harus sama dengan ukuran page\n"
 " -e edition menset nomor edisi (bagian dari fsid)\n"
 " -i file    memasukkan file image kedalam filesystem (butuh kernel >= "
 "2.4.0)\n"
@@ -1460,11 +1460,10 @@ msgid "Warning!!  This may destroy data on your disk!"
 msgstr "Peringatan!! Ini mungkin akan menghancurkan data di disk anda!"
 
 #: fdisk/cfdisk.c:1866
-#, fuzzy
 msgid ""
 "Are you sure you want to write the partition table to disk? (yes or no): "
 msgstr ""
-"Apakah anda yakin ingin menulis tabel partisi di disk? (ya atau tidak): "
+"Apakah anda yakin ingin menulis tabel partisi ke disk? (ya atau tidak): "
 
 #: fdisk/cfdisk.c:1872
 msgid "no"
@@ -3306,7 +3305,7 @@ msgstr "Disk %s tidak memiliki sebuah tabel partisi yang valid\n"
 msgid "Cannot open %s\n"
 msgstr "Tidak dapat membuka %s\n"
 
-#: fdisk/fdisk.c:2538 fdisk/sfdisk.c:2423
+#: fdisk/fdisk.c:2538 fdisk/sfdisk.c:2424
 #, c-format
 msgid "cannot open %s\n"
 msgstr "tidak dapat membuka %s\n"
@@ -4872,63 +4871,63 @@ msgstr "nomor terlalu besar\n"
 msgid "trailing junk after number\n"
 msgstr "trailing junk sesudah nomor\n"
 
-#: fdisk/sfdisk.c:1933
+#: fdisk/sfdisk.c:1934
 msgid "no room for partition descriptor\n"
 msgstr "tidak ada ruang untuk partisi deskripsi\n"
 
-#: fdisk/sfdisk.c:1966
+#: fdisk/sfdisk.c:1967
 msgid "cannot build surrounding extended partition\n"
 msgstr "tidak dapat membuat extended partisi disekitarnya\n"
 
-#: fdisk/sfdisk.c:2017
+#: fdisk/sfdisk.c:2018
 msgid "too many input fields\n"
 msgstr "terlalu banya input\n"
 
-#: fdisk/sfdisk.c:2051
+#: fdisk/sfdisk.c:2052
 msgid "No room for more\n"
 msgstr "Tidak ada ruang lagi\n"
 
-#: fdisk/sfdisk.c:2070
+#: fdisk/sfdisk.c:2071
 msgid "Illegal type\n"
 msgstr "Tipe ilegal\n"
 
-#: fdisk/sfdisk.c:2102
+#: fdisk/sfdisk.c:2103
 #, c-format
 msgid "Warning: given size (%lu) exceeds max allowable size (%lu)\n"
 msgstr ""
 "Peringatan: diberikan ukuran (%lu) melebihi ukuran maksimal yang diijinkan (%"
 "lu)\n"
 
-#: fdisk/sfdisk.c:2108
+#: fdisk/sfdisk.c:2109
 msgid "Warning: empty partition\n"
 msgstr "Peringatan: partisi kosong\n"
 
-#: fdisk/sfdisk.c:2122
+#: fdisk/sfdisk.c:2123
 #, c-format
 msgid "Warning: bad partition start (earliest %lu)\n"
 msgstr "Peringatan: partisi memiliki awal yang buruk (terlalu awal %lu)\n"
 
-#: fdisk/sfdisk.c:2135
+#: fdisk/sfdisk.c:2136
 msgid "unrecognized bootable flag - choose - or *\n"
 msgstr "tanda bootable tidak diketahui - pilih - atau *\n"
 
-#: fdisk/sfdisk.c:2152 fdisk/sfdisk.c:2165
+#: fdisk/sfdisk.c:2153 fdisk/sfdisk.c:2166
 msgid "partial c,h,s specification?\n"
 msgstr "partial c,h,s spesifikasi?\n"
 
-#: fdisk/sfdisk.c:2176
+#: fdisk/sfdisk.c:2177
 msgid "Extended partition not where expected\n"
 msgstr "Extended partisi tidak diperkirakan\n"
 
-#: fdisk/sfdisk.c:2208
+#: fdisk/sfdisk.c:2209
 msgid "bad input\n"
 msgstr "input tidak baik\n"
 
-#: fdisk/sfdisk.c:2230
+#: fdisk/sfdisk.c:2231
 msgid "too many partitions\n"
 msgstr "terlalu banyak partisi\n"
 
-#: fdisk/sfdisk.c:2263
+#: fdisk/sfdisk.c:2264
 msgid ""
 "Input in the following format; absent fields get a default value.\n"
 "<start> <size> <type [E,S,L,X,hex]> <bootable [-,*]> <c,h,s> <c,h,s>\n"
@@ -4940,43 +4939,43 @@ msgstr ""
 "<c,h,s> biasanya anda hanya perlu untuk menspesikan <awal> dan <ukuran> (dan "
 "mungkin <tipe>).\n"
 
-#: fdisk/sfdisk.c:2289
+#: fdisk/sfdisk.c:2290
 #, c-format
 msgid "Usage: %s [options] device ...\n"
 msgstr "Penggunaan: %s [opsi] perangkat ...\n"
 
-#: fdisk/sfdisk.c:2290
+#: fdisk/sfdisk.c:2291
 msgid "device: something like /dev/hda or /dev/sda"
 msgstr "perangkat: sesuatu seperti /dev/hda atau /dev/sda"
 
-#: fdisk/sfdisk.c:2291
+#: fdisk/sfdisk.c:2292
 msgid "useful options:"
 msgstr "opsi yang berguna:"
 
-#: fdisk/sfdisk.c:2292
+#: fdisk/sfdisk.c:2293
 msgid "    -s [or --show-size]: list size of a partition"
 msgstr "    -s [atau --show-size]: tampilkan ukuran setiap partisi"
 
-#: fdisk/sfdisk.c:2293
+#: fdisk/sfdisk.c:2294
 msgid "    -c [or --id]:        print or change partition Id"
 msgstr "    -c [atau --id]:      mencetak atau mengubab Id dari partisi"
 
-#: fdisk/sfdisk.c:2294
+#: fdisk/sfdisk.c:2295
 msgid "    -l [or --list]:      list partitions of each device"
 msgstr "    -l [atau --list]:    tampilkan partisi di setiap perangkat"
 
-#: fdisk/sfdisk.c:2295
+#: fdisk/sfdisk.c:2296
 msgid "    -d [or --dump]:      idem, but in a format suitable for later input"
 msgstr ""
 "    -d [atau --dump]:    idem, tetapi dalam sebuah format yang sesuai untuk "
 "input selanjutnya"
 
-#: fdisk/sfdisk.c:2296
+#: fdisk/sfdisk.c:2297
 msgid "    -i [or --increment]: number cylinders etc. from 1 instead of from 0"
 msgstr ""
 "    -i [atau --increment]: nomor cylinders etc. dari 1 dari pada dari 0"
 
-#: fdisk/sfdisk.c:2297
+#: fdisk/sfdisk.c:2298
 msgid ""
 "    -uS, -uB, -uC, -uM:  accept/report in units of sectors/blocks/cylinders/"
 "MB"
@@ -4984,54 +4983,54 @@ msgstr ""
 "    -uS, -uB, -uC, -uM:  menerima/melaporkan dalam satuan dari sektor/block/"
 "cylinders/MB"
 
-#: fdisk/sfdisk.c:2298
+#: fdisk/sfdisk.c:2299
 msgid "    -T [or --list-types]:list the known partition types"
 msgstr ""
 "    -T [atau --list-types]:tampilkan daftar dari tipe partisi yang diketahui"
 
-#: fdisk/sfdisk.c:2299
+#: fdisk/sfdisk.c:2300
 msgid "    -D [or --DOS]:       for DOS-compatibility: waste a little space"
 msgstr ""
 "    -D [atau --DOS]:     untuk DOS-kompatibilitas: membuat sedikit ruang"
 
-#: fdisk/sfdisk.c:2300
+#: fdisk/sfdisk.c:2301
 msgid "    -R [or --re-read]:   make kernel reread partition table"
 msgstr "    -R [atau --re-read]  membuat kernel membaca kembali tabel partisi"
 
-#: fdisk/sfdisk.c:2301
+#: fdisk/sfdisk.c:2302
 msgid "    -N# :                change only the partition with number #"
 msgstr "    -N# :                hanya mengubah partisi nomor #"
 
-#: fdisk/sfdisk.c:2302
+#: fdisk/sfdisk.c:2303
 msgid "    -n :                 do not actually write to disk"
 msgstr "    -n :                 tidak menulis sebenarnya ke disk"
 
-#: fdisk/sfdisk.c:2303
+#: fdisk/sfdisk.c:2304
 msgid ""
 "    -O file :            save the sectors that will be overwritten to file"
 msgstr "    -O file :            menyimpan sectors yang akan ditulis ke file"
 
-#: fdisk/sfdisk.c:2304
+#: fdisk/sfdisk.c:2305
 msgid "    -I file :            restore these sectors again"
 msgstr "    -I file :            mengembalikan sektor itu kembali"
 
-#: fdisk/sfdisk.c:2305
+#: fdisk/sfdisk.c:2306
 msgid "    -v [or --version]:   print version"
 msgstr "    -v [atau --version]: tampilkan versi dari aplikasi"
 
-#: fdisk/sfdisk.c:2306
+#: fdisk/sfdisk.c:2307
 msgid "    -? [or --help]:      print this message"
 msgstr "    -? [atau --help]:    tampilkan pesan ini"
 
-#: fdisk/sfdisk.c:2307
+#: fdisk/sfdisk.c:2308
 msgid "dangerous options:"
 msgstr "opsi yang berbahaya:"
 
-#: fdisk/sfdisk.c:2308
+#: fdisk/sfdisk.c:2309
 msgid "    -g [or --show-geometry]: print the kernel's idea of the geometry"
 msgstr "    -g [atau --show-geometry]: tampilkan ide kernel mengenai geometri"
 
-#: fdisk/sfdisk.c:2309
+#: fdisk/sfdisk.c:2310
 msgid ""
 "    -G [or --show-pt-geometry]: print geometry guessed from the partition "
 "table"
@@ -5039,7 +5038,7 @@ msgstr ""
 "    -G [atau --show-pt-geometry]: tampilkan geometry yang ditebak dari tabel "
 "partisi"
 
-#: fdisk/sfdisk.c:2310
+#: fdisk/sfdisk.c:2311
 msgid ""
 "    -x [or --show-extended]: also list extended partitions on output\n"
 "                             or expect descriptors for them on input"
@@ -5049,64 +5048,64 @@ msgstr ""
 "                               atau memperkirakan deskripsi dari partisi di "
 "input"
 
-#: fdisk/sfdisk.c:2312
+#: fdisk/sfdisk.c:2313
 msgid ""
 "    -L  [or --Linux]:      do not complain about things irrelevant for Linux"
 msgstr ""
 "    -L  [atau --Linux]:    jangan mengkomplain mengenai sesuatu yang tidak "
 "berhubungan dengan Linux"
 
-#: fdisk/sfdisk.c:2313
+#: fdisk/sfdisk.c:2314
 msgid "    -q  [or --quiet]:      suppress warning messages"
 msgstr "    -q  [atau --quiet]:    menekan pesan peringatan"
 
-#: fdisk/sfdisk.c:2314
+#: fdisk/sfdisk.c:2315
 msgid "    You can override the detected geometry using:"
 msgstr "    Anda dapat memaksa pendeteksian geometri dengan menggunakan:"
 
-#: fdisk/sfdisk.c:2315
+#: fdisk/sfdisk.c:2316
 msgid "    -C# [or --cylinders #]:set the number of cylinders to use"
 msgstr "    -C# [atau --cylinders #]:set jumlah dari cylinders yang digunakan"
 
-#: fdisk/sfdisk.c:2316
+#: fdisk/sfdisk.c:2317
 msgid "    -H# [or --heads #]:    set the number of heads to use"
 msgstr "    -H# [atau --heads #]:  set jumlah dari heads yang digunakan"
 
-#: fdisk/sfdisk.c:2317
+#: fdisk/sfdisk.c:2318
 msgid "    -S# [or --sectors #]:  set the number of sectors to use"
 msgstr "    -S# [atau --sectors #]: set jumlah dari sectors yang digunakan"
 
-#: fdisk/sfdisk.c:2318
+#: fdisk/sfdisk.c:2319
 msgid "You can disable all consistency checking with:"
 msgstr "Anda dapat mematikan seluruh pemeriksaan konsistensi dengan:"
 
-#: fdisk/sfdisk.c:2319
+#: fdisk/sfdisk.c:2320
 msgid "    -f  [or --force]:      do what I say, even if it is stupid"
 msgstr ""
 "    -f  [atau --force]:    lakukan seperti yang SAYA katakan, meskipun ini "
 "merupakan perbuatan yang bodoh"
 
-#: fdisk/sfdisk.c:2325
+#: fdisk/sfdisk.c:2326
 msgid "Usage:"
 msgstr "Penggunaan:"
 
-#: fdisk/sfdisk.c:2326
+#: fdisk/sfdisk.c:2327
 #, c-format
 msgid "%s device\t\t list active partitions on device\n"
 msgstr "%s perangkat\t\t daftar dari partisi aktif di perangkat\n"
 
-#: fdisk/sfdisk.c:2327
+#: fdisk/sfdisk.c:2328
 #, c-format
 msgid "%s device n1 n2 ... activate partitions n1 ..., inactivate the rest\n"
 msgstr ""
 "%s perangkat n1 n2 ... aktivasi partisi n1 ..., menonaktifkan sisanya\n"
 
-#: fdisk/sfdisk.c:2328
+#: fdisk/sfdisk.c:2329
 #, c-format
 msgid "%s -An device\t activate partition n, inactivate the other ones\n"
 msgstr "%s -An perangkat\t aktivasi partisi n, menonaktifkan yang lainnya\n"
 
-#: fdisk/sfdisk.c:2457
+#: fdisk/sfdisk.c:2458
 #, c-format
 msgid ""
 "\n"
@@ -5115,69 +5114,69 @@ msgid ""
 "\n"
 msgstr ""
 
-#: fdisk/sfdisk.c:2460
+#: fdisk/sfdisk.c:2461
 #, fuzzy, c-format
 msgid "Use the --force flag to overrule this check.\n"
 msgstr "Gunakan opsi --force untuk memaksa pemeriksaan secara keseluruhan.\n"
 
-#: fdisk/sfdisk.c:2499
+#: fdisk/sfdisk.c:2500
 msgid "no command?\n"
 msgstr "tidak ada perintah?\n"
 
-#: fdisk/sfdisk.c:2623
+#: fdisk/sfdisk.c:2624
 #, c-format
 msgid "total: %llu blocks\n"
 msgstr "jumlah: %llu blocks\n"
 
-#: fdisk/sfdisk.c:2666
+#: fdisk/sfdisk.c:2667
 msgid "usage: sfdisk --print-id device partition-number\n"
 msgstr "penggunaan: sfdisk --print-id perangkat nomor-partisi\n"
 
-#: fdisk/sfdisk.c:2668
+#: fdisk/sfdisk.c:2669
 msgid "usage: sfdisk --change-id device partition-number Id\n"
 msgstr "penggunaan: sfdisk --change-id perangkat nomor-partisi Id\n"
 
-#: fdisk/sfdisk.c:2670
+#: fdisk/sfdisk.c:2671
 msgid "usage: sfdisk --id device partition-number [Id]\n"
 msgstr "penggunaan: sfdisk --id perangkat nomor-partisi [Id]\n"
 
-#: fdisk/sfdisk.c:2677
+#: fdisk/sfdisk.c:2678
 msgid "can specify only one device (except with -l or -s)\n"
 msgstr ""
 "tidak dapat menspesifikasikan hanya untuk satu perangkat (kecuali dengan "
 "opsi -l atau -s)\n"
 
-#: fdisk/sfdisk.c:2703
+#: fdisk/sfdisk.c:2704
 #, c-format
 msgid "cannot open %s read-write\n"
 msgstr "tidak dapat membuka %s untuk baca-tulis\n"
 
-#: fdisk/sfdisk.c:2705
+#: fdisk/sfdisk.c:2706
 #, c-format
 msgid "cannot open %s for reading\n"
 msgstr "tidak dapat membuka %s untuk membaca\n"
 
-#: fdisk/sfdisk.c:2730
+#: fdisk/sfdisk.c:2731
 #, c-format
 msgid "%s: OK\n"
 msgstr "%s: OK\n"
 
-#: fdisk/sfdisk.c:2747 fdisk/sfdisk.c:2778
+#: fdisk/sfdisk.c:2748 fdisk/sfdisk.c:2779
 #, c-format
 msgid "%s: %ld cylinders, %ld heads, %ld sectors/track\n"
 msgstr "%s: %ld cylinders, %ld heads, %ld sectors/track\n"
 
-#: fdisk/sfdisk.c:2795
+#: fdisk/sfdisk.c:2796
 #, c-format
 msgid "Cannot get size of %s\n"
 msgstr "Tidak dapat memperoleh ukuran dari %s\n"
 
-#: fdisk/sfdisk.c:2873
+#: fdisk/sfdisk.c:2874
 #, c-format
 msgid "bad active byte: 0x%x instead of 0x80\n"
 msgstr "active byte tidak baik: 0x%x daripada 0x80\n"
 
-#: fdisk/sfdisk.c:2891 fdisk/sfdisk.c:2944 fdisk/sfdisk.c:2975
+#: fdisk/sfdisk.c:2892 fdisk/sfdisk.c:2945 fdisk/sfdisk.c:2976
 msgid ""
 "Done\n"
 "\n"
@@ -5185,7 +5184,7 @@ msgstr ""
 "Selesai\n"
 "\n"
 
-#: fdisk/sfdisk.c:2900
+#: fdisk/sfdisk.c:2901
 #, c-format
 msgid ""
 "You have %d active primary partitions. This does not matter for LILO,\n"
@@ -5195,35 +5194,35 @@ msgstr ""
 "LILO,\n"
 "tetapi DOS MBR hanya akan memboot sebuah disk dengan 1 active partisi.\n"
 
-#: fdisk/sfdisk.c:2914
+#: fdisk/sfdisk.c:2915
 #, c-format
 msgid "partition %s has id %x and is not hidden\n"
 msgstr "partisi %s memiliki id %x dan ini tidak disembunyikan\n"
 
-#: fdisk/sfdisk.c:2971
+#: fdisk/sfdisk.c:2972
 #, c-format
 msgid "Bad Id %lx\n"
 msgstr "Bad Id %lx\n"
 
-#: fdisk/sfdisk.c:2986
+#: fdisk/sfdisk.c:2987
 msgid "This disk is currently in use.\n"
 msgstr "Disk ini saat ini sedang digunakan.\n"
 
-#: fdisk/sfdisk.c:3003
+#: fdisk/sfdisk.c:3004
 #, c-format
 msgid "Fatal error: cannot find %s\n"
 msgstr "Fatal error: tidak dapat menemukan %s\n"
 
-#: fdisk/sfdisk.c:3006
+#: fdisk/sfdisk.c:3007
 #, c-format
 msgid "Warning: %s is not a block device\n"
 msgstr "Peringatan: %s bukan sebuah perangkat block\n"
 
-#: fdisk/sfdisk.c:3012
+#: fdisk/sfdisk.c:3013
 msgid "Checking that no-one is using this disk right now ...\n"
 msgstr "Mengecheck apakah ada yang sedang menggunakan disk saat ini ...\n"
 
-#: fdisk/sfdisk.c:3014
+#: fdisk/sfdisk.c:3015
 msgid ""
 "\n"
 "This disk is currently in use - repartitioning is probably a bad idea.\n"
@@ -5235,30 +5234,30 @@ msgstr ""
 "Buruk. Umount seluruh filesystem, dan swapoff seluruh partisi swap di disk \n"
 "ini. Gunakan opsi --no-reread untuk menekan pengechekan ini.\n"
 
-#: fdisk/sfdisk.c:3018
+#: fdisk/sfdisk.c:3019
 msgid "Use the --force flag to overrule all checks.\n"
 msgstr "Gunakan opsi --force untuk memaksa pemeriksaan secara keseluruhan.\n"
 
-#: fdisk/sfdisk.c:3022
+#: fdisk/sfdisk.c:3023
 msgid "OK\n"
 msgstr "OK\n"
 
-#: fdisk/sfdisk.c:3031
+#: fdisk/sfdisk.c:3032
 #, c-format
 msgid "Old situation:\n"
 msgstr "Keadaan lama:\n"
 
-#: fdisk/sfdisk.c:3035
+#: fdisk/sfdisk.c:3036
 #, c-format
 msgid "Partition %d does not exist, cannot change it\n"
 msgstr "Partisi %d tidak ada, tidak dapat mengubahnya\n"
 
-#: fdisk/sfdisk.c:3043
+#: fdisk/sfdisk.c:3044
 #, c-format
 msgid "New situation:\n"
 msgstr "Keadaan baru:\n"
 
-#: fdisk/sfdisk.c:3048
+#: fdisk/sfdisk.c:3049
 msgid ""
 "I don't like these partitions - nothing changed.\n"
 "(If you really want this, use the --force option.)\n"
@@ -5266,21 +5265,21 @@ msgstr ""
 "Saya tidak suka partisi ini -- tidah ada yang diubah.\n"
 "(Jika anda benar - benar menginginkan ini, gunakan opsi --force.)\n"
 
-#: fdisk/sfdisk.c:3051
+#: fdisk/sfdisk.c:3052
 msgid "I don't like this - probably you should answer No\n"
 msgstr "Saya tidak menyukai ini - mungkin anda seharusnya menjawab No\n"
 
-#: fdisk/sfdisk.c:3056
+#: fdisk/sfdisk.c:3057
 #, c-format
 msgid "Are you satisfied with this? [ynq] "
 msgstr "Apakan anda puas dengan keadaan ini? [ynq]"
 
-#: fdisk/sfdisk.c:3058
+#: fdisk/sfdisk.c:3059
 #, c-format
 msgid "Do you want to write this to disk? [ynq] "
 msgstr "Anda ingin menulis ini ke disk? [ynq] "
 
-#: fdisk/sfdisk.c:3063
+#: fdisk/sfdisk.c:3064
 #, c-format
 msgid ""
 "\n"
@@ -5289,16 +5288,16 @@ msgstr ""
 "\n"
 "sfdisk: premature diakhir dari masukan\n"
 
-#: fdisk/sfdisk.c:3065
+#: fdisk/sfdisk.c:3066
 msgid "Quitting - nothing changed\n"
 msgstr "Selesai - tidak ada yang diubah\n"
 
-#: fdisk/sfdisk.c:3071
+#: fdisk/sfdisk.c:3072
 #, c-format
 msgid "Please answer one of y,n,q\n"
 msgstr "Tolong jawan salah satu dari y,n,q\n"
 
-#: fdisk/sfdisk.c:3079
+#: fdisk/sfdisk.c:3080
 #, c-format
 msgid ""
 "Successfully wrote the new partition table\n"
@@ -5307,7 +5306,7 @@ msgstr ""
 "Sukses menulis tabel partisi baru\n"
 "\n"
 
-#: fdisk/sfdisk.c:3085
+#: fdisk/sfdisk.c:3086
 msgid ""
 "If you created or changed a DOS partition, /dev/foo7, say, then use dd(1)\n"
 "to zero the first 512 bytes:  dd if=/dev/zero of=/dev/foo7 bs=512 count=1\n"
@@ -5399,9 +5398,9 @@ msgid "missing optstring argument"
 msgstr "hilang argument optstring"
 
 #: getopt/getopt.c:446
-#, fuzzy, c-format
+#, c-format
 msgid "getopt (enhanced) 1.1.4\n"
-msgstr "getopt (ditingkatkan) 1.1.3\n"
+msgstr "getopt (ditingkatkan) 1.1.4\n"
 
 #: getopt/getopt.c:452
 msgid "internal error, contact the author."
@@ -5804,9 +5803,9 @@ msgid "Unable to set the epoch value in the kernel.\n"
 msgstr "Tidak dapat menset nilai epoch dalam kernel.\n"
 
 #: hwclock/hwclock.c:1186 misc-utils/cal.c:332 misc-utils/kill.c:189
-#, fuzzy, c-format
+#, c-format
 msgid "%s from %s\n"
-msgstr "%s dari %s%s\n"
+msgstr "%s dari %s\n"
 
 #: hwclock/hwclock.c:1207
 #, fuzzy, c-format
@@ -6305,8 +6304,8 @@ msgid "chfn: PAM Failure, aborting: %s\n"
 msgstr "login: PAM Gagal, membatalkan: %s\n"
 
 #: login-utils/chfn.c:212 login-utils/chsh.c:211 login-utils/login.c:798
-#: login-utils/newgrp.c:85 login-utils/simpleinit.c:340 mount/lomount.c:333
-#: mount/lomount.c:336
+#: login-utils/newgrp.c:85 login-utils/simpleinit.c:340 mount/lomount.c:334
+#: mount/lomount.c:337
 msgid "Password: "
 msgstr "Password: "
 
@@ -7821,37 +7820,37 @@ msgstr ""
 msgid "%s: could not find any free loop device"
 msgstr "%s: tidak dapat menemukan perangkat loop yang tidak dipakai"
 
-#: mount/lomount.c:322
+#: mount/lomount.c:323
 #, c-format
 msgid "Couldn't lock into memory, exiting.\n"
 msgstr "Tidak dapat mengunci ke memory, keluar.\n"
 
-#: mount/lomount.c:349
+#: mount/lomount.c:350
 #, c-format
 msgid "ioctl LOOP_SET_FD failed: %s\n"
 msgstr ""
 
-#: mount/lomount.c:387
+#: mount/lomount.c:388
 #, c-format
 msgid "set_loop(%s,%s,%llu): success\n"
 msgstr "set_loop(%s,%s,%llu): berhasil\n"
 
-#: mount/lomount.c:398
+#: mount/lomount.c:399
 #, c-format
 msgid "loop: can't delete device %s: %s\n"
 msgstr "loop: tidak dapat menghapus perangkat %s: %s\n"
 
-#: mount/lomount.c:409
+#: mount/lomount.c:410
 #, c-format
 msgid "del_loop(%s): success\n"
 msgstr "del_loop(%s): berhasil\n"
 
-#: mount/lomount.c:417
+#: mount/lomount.c:418
 #, c-format
 msgid "This mount was compiled without loop support. Please recompile.\n"
 msgstr "Mount ini telah dikompile tanpa layanan loop. Tolong di rekompile.\n"
 
-#: mount/lomount.c:454
+#: mount/lomount.c:455
 #, c-format
 msgid ""
 "\n"
@@ -7873,12 +7872,12 @@ msgid ""
 "\n"
 msgstr ""
 
-#: mount/lomount.c:482 mount/sundries.c:206 mount/xmalloc.c:29
+#: mount/lomount.c:483 mount/sundries.c:206 mount/xmalloc.c:29
 #, c-format
 msgid "not enough memory"
 msgstr "memory tidak cukup"
 
-#: mount/lomount.c:643
+#: mount/lomount.c:644
 #, c-format
 msgid "No loop support was available at compile time. Please recompile.\n"
 msgstr "Layanan loop tidak ada pada waktu dikompile. Tolong di rekompile.\n"
@@ -7928,7 +7927,7 @@ msgstr "mount tidak dapat menset kecepatan: %s"
 msgid "mount: cannot set user id: %s"
 msgstr "mount tidak dapat menset kecepatan: %s"
 
-#: mount/mount.c:680 mount/mount.c:1569
+#: mount/mount.c:680 mount/mount.c:1572
 #, c-format
 msgid "mount: cannot fork: %s"
 msgstr "mount: tidak dapat melakukan fork: %s"
@@ -8227,36 +8226,36 @@ msgstr ""
 msgid "mount: %s%s is write-protected, mounting read-only"
 msgstr "mount: %s%s memiliki proteksi untuk ditulis, memount secara hanya-baca"
 
-#: mount/mount.c:1397
+#: mount/mount.c:1392
 #, c-format
 msgid "mount: no type was given - I'll assume nfs because of the colon\n"
 msgstr ""
 "mount: tipe tidak diberikan - Saya akan mengasumsikan nfs karena adanya "
 "colon\n"
 
-#: mount/mount.c:1403
-#, fuzzy, c-format
+#: mount/mount.c:1398
+#, c-format
 msgid "mount: no type was given - I'll assume cifs because of the // prefix\n"
 msgstr ""
-"mount: tipe tidak diberikan - Saya akan mengasumsikan smbfs karena adanya "
+"mount: tipe tidak diberikan - Saya akan mengasumsikan cifs karena adanya "
 "awalan //\n"
 
-#: mount/mount.c:1420
+#: mount/mount.c:1424
 #, c-format
 msgid "mount: backgrounding \"%s\"\n"
 msgstr "mount: backgrounding \"%s\"\n"
 
-#: mount/mount.c:1430
+#: mount/mount.c:1434
 #, c-format
 msgid "mount: giving up \"%s\"\n"
 msgstr "mount: menyerah \"%s\"\n"
 
-#: mount/mount.c:1516
+#: mount/mount.c:1519
 #, c-format
 msgid "mount: %s already mounted on %s\n"
 msgstr "mount: %s telah dimount di %s\n"
 
-#: mount/mount.c:1654
+#: mount/mount.c:1657
 #, fuzzy, c-format
 msgid ""
 "Usage: mount -V                 : print version\n"
@@ -8317,24 +8316,24 @@ msgstr ""
 "uuid. Opsi lain: [-nfFrsvw] [-o opsi] [-p passwdfd].\n"
 "Untuk informasi lebih detail, lihat man 8 mount.\n"
 
-#: mount/mount.c:1967
+#: mount/mount.c:1970
 msgid "mount: only root can do that"
 msgstr "mount: hanya root yang dapat melakukan itu"
 
-#: mount/mount.c:1972
+#: mount/mount.c:1975
 #, c-format
 msgid "mount: no %s found - creating it..\n"
 msgstr "mount: %s tidak ditemukan - membuatnya..\n"
 
-#: mount/mount.c:1982
+#: mount/mount.c:1985
 msgid "nothing was mounted"
 msgstr "tidak ada yang telah dimount"
 
-#: mount/mount.c:2000 mount/mount.c:2026
+#: mount/mount.c:2003 mount/mount.c:2029
 msgid "mount: no such partition found"
 msgstr "mount: partisi seperti itu tidak ditemukan"
 
-#: mount/mount.c:2003
+#: mount/mount.c:2006
 #, c-format
 msgid "mount: can't find %s in %s or %s"
 msgstr "mount: tidak dapat menemukan %s dalam %s atau %s"
@@ -9625,7 +9624,7 @@ msgstr ", siap"
 msgid "disable rtc alarm interrupt"
 msgstr ""
 
-#: sys-utils/setarch.c:70
+#: sys-utils/setarch.c:66
 #, c-format
 msgid ""
 "Usage: %s%s [options] [program [program arguments]]\n"
@@ -9633,46 +9632,46 @@ msgid ""
 "Options:\n"
 msgstr ""
 
-#: sys-utils/setarch.c:74
+#: sys-utils/setarch.c:70
 #, c-format
 msgid "\t-%c\tEnable %s\n"
 msgstr ""
 
-#: sys-utils/setarch.c:76
+#: sys-utils/setarch.c:72
 #, c-format
 msgid ""
 "\n"
 "For more information see setarch(8).\n"
 msgstr ""
 
-#: sys-utils/setarch.c:88
+#: sys-utils/setarch.c:84
 #, fuzzy, c-format
 msgid ""
 "%s: %s\n"
 "Try `%s --help' for more information.\n"
 msgstr "Coba `getopt --help' untuk informasi lebih lanjut.\n"
 
-#: sys-utils/setarch.c:155 sys-utils/setarch.c:171
+#: sys-utils/setarch.c:151 sys-utils/setarch.c:167
 #, fuzzy, c-format
 msgid "%s: Unrecognized architecture"
 msgstr " %s: tipe tabel partisi tidak diketahui\n"
 
-#: sys-utils/setarch.c:188 sys-utils/setarch.c:195
+#: sys-utils/setarch.c:184 sys-utils/setarch.c:191
 #, fuzzy
 msgid "Not enough arguments"
 msgstr "memory tidak cukup"
 
-#: sys-utils/setarch.c:237
+#: sys-utils/setarch.c:233
 #, c-format
 msgid "Switching on %s.\n"
 msgstr ""
 
-#: sys-utils/setarch.c:244
+#: sys-utils/setarch.c:240
 #, fuzzy, c-format
 msgid "Unknown option `%c' ignored"
 msgstr "%s: opsi tidak diketahui \"-%c\"\n"
 
-#: sys-utils/setarch.c:249
+#: sys-utils/setarch.c:245
 #, fuzzy, c-format
 msgid "Failed to set personality to %s"
 msgstr "Gagal menulis partisi di %s\n"
@@ -10203,20 +10202,14 @@ msgstr "Baris input terlalu panjang.\n"
 msgid "Out of memory when growing buffer.\n"
 msgstr "Kehabisan memori ketika meningkatkan buffer.\n"
 
-#~ msgid "Password error."
-#~ msgstr "Password error."
-
 #~ msgid "`%s': bad directory: '.' isn't first\n"
 #~ msgstr "`%s': bad directory: '.' tidak yang pertama\n"
 
 #~ msgid "`%s': bad directory: '..' isn't second\n"
 #~ msgstr "`%s': direktori buruk: '..' tidak yang kedua\n"
 
-#~ msgid "%s from util-linux-%s\n"
-#~ msgstr "%s dari util-linux-%s\n"
-
-#~ msgid "%s from %s%s\n"
-#~ msgstr "%s dari %s%s\n"
+#~ msgid "Password error."
+#~ msgstr "Password error."
 
 #~ msgid ""
 #~ "Exceeded MAXENTRIES.  Raise this value in mkcramfs.c and recompile.  "
@@ -10260,6 +10253,12 @@ msgstr "Kehabisan memori ketika meningkatkan buffer.\n"
 
 #~ msgid "Linux custom"
 #~ msgstr "Linux custom"
+
+#~ msgid "%s from util-linux-%s\n"
+#~ msgstr "%s dari util-linux-%s\n"
+
+#~ msgid "%s from %s%s\n"
+#~ msgstr "%s dari %s%s\n"
 
 #~ msgid ""
 #~ "usage:\n"
