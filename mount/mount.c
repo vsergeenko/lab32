@@ -185,8 +185,11 @@ static const struct opt_map opt_map[] = {
   { "norelatime", 0, 1, MS_RELATIME }, /* Update access time without regard
 					  to mtime/ctime */
 #endif
+  { "nofail",	0, 0, MS_COMMENT},	/* Do not fail if ENOENT on dev */
   { NULL,	0, 0, 0		}
 };
+
+static int opt_nofail = 0;
 
 static const char *opt_loopdev, *opt_vfstype, *opt_offset, *opt_encryption,
 	*opt_speed, *opt_comment, *opt_uhelper;
@@ -395,6 +398,8 @@ parse_opt(char *opt, int *mask, char **extra_opts) {
 				verbose = 0;
 			}
 #endif
+			if (streq(opt, "nofail"))
+				opt_nofail = 1;
 			return;
 		}
 
@@ -1213,9 +1218,11 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
       else if (stat (node, &statbuf))
 	   error (_("mount: mount point %s is a symbolic link to nowhere"),
 		  node);
-      else if (stat (spec, &statbuf))
+      else if (stat (spec, &statbuf)) {
+	   if (opt_nofail)
+		goto out;
 	   error (_("mount: special device %s does not exist"), spec);
-      else {
+      } else {
 	   errno = mnt_err;
 	   perror("mount");
       }
@@ -1223,10 +1230,12 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
     case ENOTDIR:
       if (stat (node, &statbuf) || ! S_ISDIR(statbuf.st_mode))
 	   error (_("mount: mount point %s is not a directory"), node);
-      else if (stat (spec, &statbuf) && errno == ENOTDIR)
+      else if (stat (spec, &statbuf) && errno == ENOTDIR) {
+	   if (opt_nofail)
+              goto out;
 	   error (_("mount: special device %s does not exist\n"
 		    "       (a path prefix is not a directory)\n"), spec);
-      else {
+      } else {
 	   errno = mnt_err;
 	   perror("mount");
       }
@@ -1311,6 +1320,8 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
       break;
     }
     case ENOTBLK:
+      if (opt_nofail)
+        goto out;
       if (stat (spec, &statbuf)) /* strange ... */
 	error (_("mount: %s is not a block device, and stat fails?"), spec);
       else if (S_ISBLK(statbuf.st_mode))
@@ -1323,6 +1334,8 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
 	error (_("mount: %s is not a block device"), spec);
       break;
     case ENXIO:
+      if (opt_nofail)
+        goto out;
       error (_("mount: %s is not a valid block device"), spec); break;
     case EACCES:  /* pre-linux 1.1.38, 1.1.41 and later */
     case EROFS:   /* linux 1.1.38 and later */
