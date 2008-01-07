@@ -1,9 +1,53 @@
-util-linux (2.14~a0-0) experimental-UNRELEASED; urgency=low
+util-linux (2.13.1~rc2-1) unstable; urgency=low
 
-  * Start new release
-  * DO NOT EDIT: changelog is built from commit messages
+  [LaMont Jones]
 
- -- LaMont Jones <lamont@debian.org>  Thu, 11 Oct 2007 21:01:08 -0600
+  * meta: mount should pre-depend on its libs
+  * hwclock.sh: add full path to comment.  Closes: #418107
+  * renice: correctly detect errors in arguments.  Closes: #385245
+
+  [Karel Zak]
+
+  * docs: update AUTHORS file, add all translators
+  * docs: update ReleaseNotes
+  * po: update po files
+    - po: update uk.po [Maxim V. Dziumanenko]
+    - po: update id.po [Arif E. Nugroho]
+    - po: update es.po [Santiago Vila Doncel]
+    - po: update hu.po [Gabor Kelemen]
+    - po: update it.po [Marco Colombo]
+    - po: update sl.po [Simon Mihevc]
+    - po: update ru.po [Pavel Maryanov]
+    - po: update cs.po [Petr Pisar]
+    - po: update pt_BR.po [Rodrigo Stulzer Lopes]
+    - po: add eu.po [Mikel Olasagasti]
+    - po: update ca.po [Josep Puigdemont]
+    - po: update sv.po [Daniel Nylander]
+    - po: update fr.po [Michel Robitaille]
+    - po: update tr.po [Nilgün Belma Bugüner]
+    - po: update ja.po [Daisuke Yamashita]
+    - po: update nl.po [Benno Schulenberg]
+    - po: add pl.po [Andrzej Krzysztofowicz]
+    - po: update da.po [Claus Hindsgaul]
+    - po: update vi.po [Clytie Siddall]
+    - po: update et.po [Meelis Roos]
+    - po: update de.po [Michael Piefel]
+    - po: update fi.po [Lauri Nurmi]
+  * build-sys: release++ (-rc2)
+
+ -- LaMont Jones <lamont@debian.org>  Sun, 06 Jan 2008 20:20:48 -0700
+
+util-linux (2.13-14) unstable; urgency=low
+
+  [Karel Zak]
+
+  * mount: hint about helper program if device doesn't exist.  Closes: #452330
+
+  [LaMont Jones]
+
+  * rules: correct LSB init data for hwclockfirst.sh.  Closes: #458346
+
+ -- LaMont Jones <lamont@debian.org>  Sun, 06 Jan 2008 12:50:08 -0700
 
 util-linux (2.13-13) unstable; urgency=low
 

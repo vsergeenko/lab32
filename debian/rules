@@ -104,10 +104,9 @@ endif
 	install -m 644 debian/mime.util-linux debian/util-linux/usr/lib/mime/packages/util-linux
 	if [ -f debian/util-linux/sbin/hwclock ] ; then \
 	    install -m 755 debian/hwclock.sh debian/util-linux/etc/init.d/hwclock.sh; \
-	fi
-	if [ -f debian/util-linux/sbin/hwclock ] ; then \
 	    install -m 755 debian/hwclock.sh debian/util-linux/etc/init.d/hwclockfirst.sh; \
-	    sed -i '/^FIRST=/s/no/yes/' debian/util-linux/etc/init.d/hwclockfirst.sh; \
+	    sed -i -e '/^FIRST=/s/no/yes/' -e '/Provides:/s/ck/ckfirst/' \
+	    	-e '/Required-Stop/s/.local_fs/umountfs/' debian/util-linux/etc/init.d/hwclockfirst.sh; \
 	fi
 ifneq ($(DISTRO),Debian)
 	if [ -f debian/util-linux/sbin/hwclock ] ; then \
