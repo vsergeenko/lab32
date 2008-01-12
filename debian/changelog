@@ -1,3 +1,9 @@
+util-linux (2.13.1~rc2-2) unstable; urgency=low
+
+  * hwclockfirst.sh: yet more tweaks for LSB init.  Closes: #459760
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 11 Jan 2008 22:32:15 -0700
+
 util-linux (2.13.1~rc2-1) unstable; urgency=low
 
   [LaMont Jones]
