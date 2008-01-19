@@ -1,3 +1,35 @@
+util-linux (2.13.1-1) unstable; urgency=low
+
+  * New Upstream Release [Karel Zak]
+    - docs: update AUTHORS file
+    - docs: update ReleseNotes
+    - build-sys: release++ (2.13.1)
+    - po: merge files
+      - po: update uk.po (from translationproject.org) (Maxim V. Dziumanenko)
+      - po: update it.po (from translationproject.org) (Marco Colombo)
+      - po: update sl.po (from translationproject.org) (Simon Mihevc)
+      - po: update ru.po (from translationproject.org) (Pavel Maryanov)
+      - po: update cs.po (from translationproject.org) (Petr Pisar)
+      - po: update pt_BR.po (from translationproject.org) (Rodrigo Stulzer Lopes)
+      - po: update id.po (from translationproject.org) (Arif E. Nugroho)
+      - po: update es.po (from translationproject.org) (Santiago Vila Doncel)
+      - po: update hu.po (from translationproject.org) (Gabor Kelemen)
+      - po: update eu.po (from translationproject.org) (Mikel Olasagasti)
+      - po: update ca.po (from translationproject.org) (Josep Puigdemont)
+      - po: update sv.po (from translationproject.org) (Daniel Nylander)
+      - po: update fr.po (from translationproject.org) (Michel Robitaille)
+      - po: update tr.po (from translationproject.org) (Nilgün Belma Bugüner)
+      - po: update ja.po (from translationproject.org) (Daisuke Yamashita)
+      - po: update nl.po (from translationproject.org) (Benno Schulenberg)
+      - po: update pl.po (from translationproject.org) (Andrzej Krzysztofowicz)
+      - po: update da.po (from translationproject.org) (Claus Hindsgaul)
+      - po: update vi.po (from translationproject.org) (Clytie Siddall)
+      - po: update et.po (from translationproject.org) (Meelis Roos)
+      - po: update de.po (from translationproject.org) (Michael Piefel)
+      - po: update fi.po (from translationproject.org) (Lauri Nurmi)
+
+ -- LaMont Jones <lamont@debian.org>  Sat, 19 Jan 2008 08:48:31 -0700
+
 util-linux (2.13.1~rc2-2) unstable; urgency=low
 
   * hwclockfirst.sh: yet more tweaks for LSB init.  Closes: #459760
