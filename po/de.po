@@ -1,7 +1,7 @@
 # German translation for util-linux.
 # Copyright © 1999, 2000, 2001 Elrond <Elrond@Wunder-Nett.org>
 # Copyright © 2001, 2002 Karl Eichwalder.
-# Copyright © Michael Piefel <piefel@informatik.hu-berlin.de>, 2002, 2004, 2005, 2007.
+# Copyright © Michael Piefel <piefel@informatik.hu-berlin.de>, 2002, 2004, 2005, 2007, 2008.
 #
 # Note:
 # =====
@@ -42,10 +42,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: util-linux-ng 2.13-rc3\n"
+"Project-Id-Version: util-linux-ng 2.13.1-rc1\n"
 "Report-Msgid-Bugs-To: Karel Zak <kzak@redhat.com>\n"
 "POT-Creation-Date: 2008-01-02 14:15+0100\n"
-"PO-Revision-Date: 2007-10-12 11:38+0200\n"
+"PO-Revision-Date: 2008-01-09 17:38+0200\n"
 "Last-Translator: Michael Piefel <piefel@informatik.hu-berlin.de>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -9255,7 +9255,7 @@ msgstr "Nicht gesetzt"
 
 #: sys-utils/ipcs.c:375
 msgid "dest"
-msgstr "Ziel"
+msgstr "zerstört"
 
 #: sys-utils/ipcs.c:376
 msgid "locked"
