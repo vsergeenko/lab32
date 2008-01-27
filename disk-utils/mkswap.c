@@ -351,7 +351,7 @@ bit_test_and_clear (unsigned long *addr, unsigned int nr) {
 static void
 usage(void) {
 	fprintf(stderr,
-		_("Usage: %s [-c] [-v0|-v1] [-pPAGESZ] [-L label] /dev/name [blocks]\n"),
+		_("Usage: %s [-c] [-v0|-v1] [-pPAGESZ] [-L label] [-U UUID] /dev/name [blocks]\n"),
 		program_name);
 	exit(1);
 }
@@ -501,6 +501,8 @@ main(int argc, char ** argv) {
 	char *pp;
 	char *opt_label = NULL;
 	unsigned char *uuid = NULL;
+	unsigned char *uuid_input = NULL;
+	int set_uuid = 0; // User Defined UUID, o: False, 1: True
 #ifdef HAVE_LIBUUID
 	uuid_t uuid_dat;
 #endif
@@ -546,6 +548,12 @@ main(int argc, char ** argv) {
 				case 'v':
 					version = atoi(argv[i]+2);
 					break;
+				case 'U':
+					set_uuid = 1;
+					uuid_input = argv[i]+2;
+					if (!*uuid_input && i+1 < argc)
+						uuid_input = argv[++i];
+					break;
 				default:
 					usage();
 			}
@@ -558,8 +566,14 @@ main(int argc, char ** argv) {
 	}
 
 #ifdef HAVE_LIBUUID
-	uuid_generate(uuid_dat);
-	uuid = uuid_dat;
+	if(!set_uuid)
+	{
+ 	  uuid_generate(uuid_dat);
+    	  uuid = uuid_dat;
+	} else {
+	  uuid_parse(uuid_input, uuid_dat);
+	  uuid = uuid_dat;
+	}
 #endif
 
 	init_signature_page();	/* get pagesize */
