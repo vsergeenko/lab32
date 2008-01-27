@@ -567,13 +567,10 @@ main(int argc, char ** argv) {
 
 #ifdef HAVE_LIBUUID
 	if(!set_uuid)
-	{
- 	  uuid_generate(uuid_dat);
-    	  uuid = uuid_dat;
-	} else {
-	  uuid_parse(uuid_input, uuid_dat);
-	  uuid = uuid_dat;
-	}
+		uuid_generate(uuid_dat);
+	else
+		uuid_parse(uuid_input, uuid_dat);
+	uuid = uuid_dat;
 #endif
 
 	init_signature_page();	/* get pagesize */
