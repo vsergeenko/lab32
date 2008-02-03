@@ -77,6 +77,10 @@ int delloop = 0;
 /* True if ruid != euid.  */
 int suid = 0;
 
+/* Last error message */
+int complained_err = 0;
+char *complained_dev = NULL;
+
 /*
  * check_special_umountprog()
  *	If there is a special umount program for this type, exec it.
@@ -142,6 +146,15 @@ check_special_umountprog(const char *spec, const char *node,
 
 /* complain about a failed umount */
 static void complain(int err, const char *dev) {
+
+  if (complained_err == err && complained_dev && dev &&
+		  strcmp(dev, complained_dev) == 0)
+    return;
+
+  complained_err = err;
+  free(complained_dev);
+  complained_dev = xstrdup(dev);
+
   switch (err) {
     case ENXIO:
       error (_("umount: %s: invalid block device"), dev); break;
@@ -152,7 +165,10 @@ static void complain(int err, const char *dev) {
     case EBUSY:
      /* Let us hope fstab has a line "proc /proc ..."
 	and not "none /proc ..."*/
-      error (_("umount: %s: device is busy"), dev); break;
+      error (_("umount: %s: device is busy.\n"
+	       "        (In some cases useful info about processes that use\n"
+	       "         the device is found by lsof(8) or fuser(1))"), dev);
+      break;
     case ENOENT:
       error (_("umount: %s: not found"), dev); break;
     case EPERM:
