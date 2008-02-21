@@ -67,8 +67,8 @@ Priority: extra
 Section: debian-installer
 Depends: ${shlibs:Depends}
 XC-Package-Type: udeb
-Description: Partition a hard drive (manual)
- fdisk package
+XB-Installer-Menu-Item: 99900
+Description: Manually partition a hard drive (fdisk)
 
 Package: cfdisk-udeb
 Architecture: alpha amd64 arm armeb armel hppa i386 ia64 lpia m32r mips mipsel powerpc ppc64 hurd-i386 s390
@@ -76,5 +76,5 @@ Priority: extra
 Section: debian-installer
 Depends: ${shlibs:Depends}
 XC-Package-Type: udeb
-Description: Partition a hard drive (cfdisk)
- Cfdisk package
+XB-Installer-Menu-Item: 99900
+Description: Manually partition a hard drive (cfdisk)
