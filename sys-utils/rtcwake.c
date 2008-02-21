@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <getopt.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -47,7 +48,7 @@ static char		*progname;
 
 #define VERSION_STRING		"rtcwake from " PACKAGE_STRING
 #define RTC_PATH		"/sys/class/rtc/%s/device/power/wakeup"
-#define SYS_POWER_SATE_PATH	"/sys/power/state"
+#define SYS_POWER_STATE_PATH	"/sys/power/state"
 #define ADJTIME_PATH		"/etc/adjtime"
 #define DEFAULT_DEVICE		"/dev/rtc0"
 #define DEFAULT_MODE		"suspend"
@@ -187,7 +188,17 @@ static int setup_alarm(int fd, time_t *wakeup)
 	struct tm		*tm;
 	struct rtc_wkalrm	wake;
 
-	tm = gmtime(wakeup);
+	/* The wakeup time is in POSIX time (more or less UTC).
+	 * Ideally RTCs use that same time; but PCs can't do that
+	 * if they need to boot MS-Windows.  Messy...
+	 *
+	 * When clock_mode == CM_UTC this process's timezone is UTC,
+	 * so we'll pass a UTC date to the RTC.
+	 *
+	 * Else clock_mode == CM_LOCAL so the time given to the RTC
+	 * will instead use the local time zone.
+	 */
+	tm = localtime(wakeup);
 
 	wake.time.tm_sec = tm->tm_sec;
 	wake.time.tm_min = tm->tm_min;
@@ -227,10 +238,10 @@ static int setup_alarm(int fd, time_t *wakeup)
 
 static void suspend_system(const char *suspend)
 {
-	FILE	*f = fopen(SYS_POWER_SATE_PATH, "w");
+	FILE	*f = fopen(SYS_POWER_STATE_PATH, "w");
 
 	if (!f) {
-		perror(SYS_POWER_SATE_PATH);
+		perror(SYS_POWER_STATE_PATH);
 		return;
 	}
 

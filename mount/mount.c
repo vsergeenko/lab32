@@ -574,6 +574,8 @@ create_mtab (void) {
 	my_endmntent (mfp);
 
 	unlock_mtab();
+
+	reset_mtab_info();
 }
 
 /* count successful mount system calls */
@@ -922,8 +924,11 @@ loop_check(const char **spec, const char **type, int *flags,
       if (verbose)
 	printf(_("mount: skipping the setup of a loop device\n"));
     } else {
-      int loopro = (*flags & MS_RDONLY);
+      int loop_opts = SETLOOP_AUTOCLEAR; /* always attempt autoclear */
       int res;
+
+      if (*flags & MS_RDONLY)
+        loop_opts |= SETLOOP_RDONLY;
 
       offset = opt_offset ? strtoull(opt_offset, NULL, 0) : 0;
 
@@ -944,7 +949,7 @@ loop_check(const char **spec, const char **type, int *flags,
 	if (opt_nohashpass)
 	  hash_pass=0;
 	if ((res = set_loop(*loopdev, *loopfile, offset,
-			    opt_encryption, pfd, &loopro, keysz, hash_pass))) {
+			    opt_encryption, pfd, &loop_opts, keysz, hash_pass))) {
 	  if (res == 2) {
 	     /* loop dev has been grabbed by some other process,
 	        try again, if not given explicitly */
@@ -973,8 +978,13 @@ loop_check(const char **spec, const char **type, int *flags,
       if (verbose > 1)
 	printf(_("mount: setup loop device successfully\n"));
       *spec = *loopdev;
-      if (loopro)
-	*flags |= MS_RDONLY;
+
+      if (loop_opts & SETLOOP_RDONLY)
+        *flags |= MS_RDONLY;
+
+      if (loop_opts & SETLOOP_AUTOCLEAR)
+        /* Prevent recording loop dev in mtab for cleanup on umount */
+        *loop = 0;
     }
   }
 
@@ -997,6 +1007,13 @@ update_mtab_entry(const char *spec, const char *node, const char *type,
 	   mount succeeded, even if the write to /etc/mtab should fail.  */
 	if (verbose)
 		print_one (&mnt);
+
+	if (!nomtab && mtab_does_not_exist()) {
+		if (verbose > 1)
+			printf(_("mount: no %s found - creating it..\n"),
+			       MOUNTED);
+		create_mtab ();
+	}
 
 	if (!nomtab && mtab_is_writable()) {
 		if (flags & MS_REMOUNT)
@@ -2037,15 +2054,9 @@ main(int argc, char *argv[]) {
 			die (EX_USAGE, _("mount: only root can do that"));
 	}
 
-	if (!nomtab && mtab_does_not_exist()) {
-		if (verbose > 1)
-			printf(_("mount: no %s found - creating it..\n"),
-			       _PATH_MOUNTED);
-		create_mtab ();
-	}
-
 	if (keysize && sscanf(keysize,"%d",&keysz) != 1)
 		die (EX_USAGE, _("mount: argument to --keybits or -k must be a number"));
+
 	atexit(unlock_mtab);
 
 	switch (argc+specseen) {
