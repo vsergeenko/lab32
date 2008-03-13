@@ -239,12 +239,6 @@ parse_string_opt(char *s) {
 	return 0;
 }
 
-static void
-my_free(const void *s) {
-	if (s)
-		free((void *) s);
-}
-
 /* Report on a single mount.  */
 static void
 print_one (const struct my_mntent *me) {
@@ -556,7 +550,7 @@ create_mtab (void) {
 		mnt.mnt_type = fstab->m.mnt_type;
 		mnt.mnt_opts = fix_opts_string (flags, extra_opts, NULL);
 		mnt.mnt_freq = mnt.mnt_passno = 0;
-		my_free(extra_opts);
+		free(extra_opts);
 
 		if (my_addmntent (mfp, &mnt) == 1) {
 			int errsv = errno;
@@ -1516,7 +1510,8 @@ mount_one (const char *spec, const char *node, const char *types,
 	if (verbose && status2)
 		printf (_("mount: giving up \"%s\"\n"), spec);
 
-	my_free(opts);
+	free(opts);
+
 	my_free(node);
 	my_free(types);
 	exit (0);			/* child stops here */
@@ -1847,8 +1842,7 @@ getfs(const char *spec, const char *uuid, const char *label)
 	if (!mc && (devname || spec))
 		mc = getmntfile (devname ? devname : spec);
 
-	if (devname)
-		my_free(devname);
+	my_free(devname);
 	return mc;
 }
 
