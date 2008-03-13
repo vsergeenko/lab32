@@ -1,3 +1,28 @@
+util-linux (2.13.1-2) unstable; urgency=low
+
+  [Frans Pop]
+
+  * Add menu item numbers for *fdisk udebs.  Closes: #466831
+
+  [Hamish Coleman]
+
+  * agetty: make username-in-uppercase feature optional (off by default.).  Closes: #156242
+
+  [Neil Williams]
+
+  * debian/rules: allow cross-building.  Closes: #465123
+
+  [glandux]
+
+  * hwclock.sh: fix typo.  LP: #103680
+
+  [LaMont Jones]
+
+  * mkswap: Set UUID for swap space.  Closes: #462662  LP: #66637
+  * mkswap: -U UUID cleanup
+
+ -- LaMont Jones <lamont@debian.org>  Thu, 06 Mar 2008 20:33:38 -0700
+
 util-linux (2.13.1-1) unstable; urgency=low
 
   * New Upstream Release [Karel Zak]
