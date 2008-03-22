@@ -23,6 +23,8 @@
 
 #define PATH_MKSWAP	"/sbin/mkswap"
 
+#define PATH_MKSWAP	"/sbin/mkswap"
+
 #ifdef HAVE_SYS_SWAP_H
 # include <sys/swap.h>
 #endif
