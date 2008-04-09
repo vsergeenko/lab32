@@ -488,6 +488,24 @@ check_mount(void) {
 	return 1;
 }
 
+static ssize_t
+write_all(int fd, const void *buf, size_t count) {
+	const unsigned char *b = buf;
+	ssize_t ret = 0;
+	ssize_t tmp;
+	do {
+		tmp = write(fd, b + ret, count - ret);
+		if (tmp > 0) {
+			ret += tmp, b += tmp, count -= tmp;
+		} else if (tmp == 0) {
+			break;		/* hit end of file... */
+		} else if (errno != EINTR && errno != EAGAIN) {
+			return -1;
+		}
+	} while (ret < count && ret != -1);
+	return ret;
+}
+
 int
 main(int argc, char ** argv) {
 	struct stat statbuf;
@@ -730,8 +748,11 @@ the -f option to force it.\n"),
 	offset = ((version == 0) ? 0 : 1024);
 	if (lseek(DEV, offset, SEEK_SET) != offset)
 		die(_("unable to rewind swap-device"));
-	if (write(DEV,(char*)signature_page+offset, pagesize-offset)
-	    != pagesize-offset)
+	i=write_all(DEV,(char*)signature_page+offset, pagesize-offset);
+	if (i < 0)
+		fprintf(stderr, _("error writing swap signature: %s"),
+			strerror(errno));
+	if (i != pagesize-offset)
 		die(_("unable to write signature page"));
 
 	/*
