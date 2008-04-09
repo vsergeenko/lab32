@@ -1066,16 +1066,14 @@ cdrom_setspeed(const char *spec) {
 
 /*
  * try_mount_one()
- *	Try to mount one file system. When "bg" is 1, this is a retry
- *	in the background. One additional exit code EX_BG is used here.
- *	It is used to instruct the caller to retry the mount in the
- *	background.
+ *	Try to mount one file system.
+ *
  * returns: 0: OK, EX_SYSERR, EX_FAIL, return code from nfsmount,
  *      return status from wait
  */
 static int
 try_mount_one (const char *spec0, const char *node0, const char *types0,
-	       const char *opts0, int freq, int pass, int bg, int ro) {
+	       const char *opts0, int freq, int pass, int ro) {
   int res = 0, status = 0, special = 0;
   int mnt5_res = 0;		/* only for gcc */
   int mnt_err;
@@ -1373,7 +1371,7 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
 	     types = 0;
          error (_("mount: %s%s is write-protected, mounting read-only"),
 		bd, spec0);
-	 res = try_mount_one (spec0, node0, types, opts, freq, pass, bg, 1);
+	 res = try_mount_one (spec0, node0, types, opts, freq, pass, 1);
 	 goto out;
       }
       break;
@@ -1392,19 +1390,6 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
   my_free(types1);
 
   return res;
-}
-
-/*
- * set_proc_name()
- *	Update the argument vector, so that this process may be easily
- *	identified in a "ps" listing.
- */
-static void
-set_proc_name (const char *spec)
-{
-#ifdef DO_PS_FIDDLING
-	setproctitle ("mount", spec);
-#endif
 }
 
 static char *
@@ -1452,7 +1437,6 @@ is_existing_file (const char *s) {
 static int
 mount_one (const char *spec, const char *node, const char *types,
 	   const char *fstabopts, char *cmdlineopts, int freq, int pass) {
-	int status, status2;
 	const char *nspec;
 	char *opts;
 
@@ -1487,34 +1471,7 @@ mount_one (const char *spec, const char *node, const char *types,
 			spec = nspec;
 	}
 
-	/*
-	 * Try to mount the file system. When the exit status is EX_BG,
-	 * we will retry in the background. Otherwise, we're done.
-	 */
-	status = try_mount_one (spec, node, types, opts, freq, pass, 0, 0);
-	if (status != EX_BG)
-		return status;
-
-	/*
-	 * Retry in the background.
-	 */
-	printf (_("mount: backgrounding \"%s\"\n"), spec);
-	fflush( stdout );		/* prevent duplicate output */
-	if (fork() > 0)
-		return 0;			/* parent returns "success" */
-	spec = xstrdup(spec);		/* arguments will be destroyed */
-	node = xstrdup(node);		/* by set_proc_name()          */
-	types = xstrdup(types);
-	set_proc_name (spec);		/* make a nice "ps" listing */
-	status2 = try_mount_one (spec, node, types, opts, freq, pass, 1, 0);
-	if (verbose && status2)
-		printf (_("mount: giving up \"%s\"\n"), spec);
-
-	free(opts);
-
-	my_free(node);
-	my_free(types);
-	exit (0);			/* child stops here */
+	return try_mount_one (spec, node, types, opts, freq, pass, 0);
 }
 
 /* Check if an fsname/dir pair was already in the old mtab.  */

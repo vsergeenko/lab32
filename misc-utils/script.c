@@ -286,7 +286,7 @@ my_strftime(char *buf, size_t len, const char *fmt, const struct tm *tm) {
 
 void
 dooutput() {
-	register int cc;
+	register ssize_t cc;
 	time_t tvec;
 	char obuf[BUFSIZ];
 	struct timeval tv;
@@ -301,8 +301,7 @@ dooutput() {
 #endif
 	tvec = time((time_t *)NULL);
 	my_strftime(obuf, sizeof obuf, "%c\n", localtime(&tvec));
-	if (!qflg)
-		fprintf(fscript, _("Script started on %s"), obuf);
+	fprintf(fscript, _("Script started on %s"), obuf);
 
 	if (die == 0 && child && kill(child, 0) == -1 && errno == ESRCH)
 		/*
@@ -339,7 +338,7 @@ dooutput() {
 			break;
 		if (tflg) {
 			newtime = tv.tv_sec + (double) tv.tv_usec / 1000000;
-			fprintf(stderr, "%f %i\n", newtime - oldtime, cc);
+			fprintf(stderr, "%f %zd\n", newtime - oldtime, cc);
 			oldtime = newtime;
 		}
 		wrt = write(1, obuf, cc);
