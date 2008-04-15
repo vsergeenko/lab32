@@ -1,3 +1,10 @@
+util-linux (2.13.1-5) unstable; urgency=low
+
+  * Switch to upstream's more-correct fix for LP#206113
+  * mkswap: when writing the signature page, handle EINTR returns.  LP: #206113
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 14 Apr 2008 18:18:30 -0600
+
 util-linux (2.13.1-4) unstable; urgency=low
 
   * meta: Drop bashism in preinst.  Closes: #472248
