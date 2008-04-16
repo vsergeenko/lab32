@@ -610,7 +610,8 @@ digits_only(const char *s) {
 
 int
 set_loop(const char *device, const char *file, unsigned long long offset,
-	 const char *encryption, int pfd, int *options, int keysz, int hash_pass) {
+	 unsigned long long sizelimit, const char *encryption, int pfd, int *options,
+	 int keysz, int hash_pass) {
 	struct loop_info64 loopinfo64;
 	int fd, ffd, mode, i;
 	char *pass;
@@ -658,6 +659,7 @@ set_loop(const char *device, const char *file, unsigned long long offset,
 	}
 
 	loopinfo64.lo_offset = offset;
+	loopinfo64.lo_sizelimit = sizelimit;
 
 #ifdef MCL_FUTURE
 	/*
@@ -826,8 +828,8 @@ set_loop(const char *device, const char *file, unsigned long long offset,
 		close (fd);
 
 	if (verbose > 1)
-		printf(_("set_loop(%s,%s,%llu): success\n"),
-		       device, filename, offset);
+		printf(_("set_loop(%s,%s,%llu,%llu): success\n"),
+		       device, filename, offset, sizelimit);
 	if (file != filename)
 		free(filename);
 	return 0;
@@ -863,8 +865,9 @@ mutter(void) {
 }
 
 int
-set_loop (const char *device, const char *file, unsigned long long offset,
-	  const char *encryption, int pfd, int *options, int keysz, int hash_pass) {
+set_loop(const char *device, const char *file, unsigned long long offset,
+	 unsigned long long sizelimit, const char *encryption, int pfd, int *options,
+	 int keysz, int hash_pass) {
 	mutter();
 	return 1;
 }
@@ -898,28 +901,30 @@ usage(void) {
   " %1$s -d | --detach <loopdev>                 delete\n"
   " %1$s -f | --find                             find unused\n"
   " %1$s -j | --associated <file> [-o <num>]     list all associated with <file>\n"
-  " %1$s [ options ] {-f|--find|loopdev} <file>  setup\n"
-  "\nOptions:\n"
+  " %1$s [ options ] {-f|--find|loopdev} <file>  setup\n"),
+		progname);
+
+	fprintf(stderr, _("\nOptions:\n"
   " -e | --encryption <type> enable data encryption with specified <name/num>\n"
   " -h | --help              this help\n"
   " -o | --offset <num>      start at offset <num> into file\n"
+  "      --sizelimit <num>   loop limited to only <num> bytes of the file\n"
   " -p | --pass-fd <num>     read passphrase from file descriptor <num>\n"
   " -r | --read-only         setup read-only loop device\n"
-  " -s | --show              print device name (with -f <file>)\n"
+  "      --show              print device name (with -f <file>)\n"
   " -N | --nohashpass        Do not hash the given password (Debian hashes)\n"
   " -k | --keybits <num>     specify number of bits in the hashed key given\n"
   "                          to the cipher.  Some ciphers support several key\n"
   "                          sizes and might be more efficient with a smaller\n"
   "                          key size.  Key sizes < 128 are generally not\n"
   "                          recommended\n"
-  " -v | --verbose           verbose mode\n\n"),
-		progname);
+  " -v | --verbose           verbose mode\n\n"));
 	exit(1);
  }
 
 int
 main(int argc, char **argv) {
-	char *p, *offset, *encryption, *passfd, *device, *file, *assoc;
+	char *p, *offset, *sizelimit, *encryption, *passfd, *device, *file, *assoc;
 	char *keysize;
 	int delete, find, c, all;
 	int res = 0;
@@ -928,7 +933,7 @@ main(int argc, char **argv) {
 	int pfd = -1;
 	int keysz = 0;
 	int hash_pass = 1;
-	unsigned long long off;
+	unsigned long long off, slimit;
 	struct option longopts[] = {
 		{ "all", 0, 0, 'a' },
 		{ "detach", 0, 0, 'd' },
@@ -940,6 +945,7 @@ main(int argc, char **argv) {
 		{ "nohashpass", 0, 0, 'N' },
 		{ "associated", 1, 0, 'j' },
 		{ "offset", 1, 0, 'o' },
+		{ "sizelimit", 1, 0, 128 },
 		{ "pass-fd", 1, 0, 'p' },
 		{ "read-only", 0, 0, 'r' },
 	        { "show", 0, 0, 's' },
@@ -953,7 +959,7 @@ main(int argc, char **argv) {
 
 	delete = find = all = 0;
 	off = 0;
-	offset = encryption = passfd = NULL;
+        slimit = 0;
 	assoc = offset = encryption = passfd = NULL;
 	keysize = NULL;
 
@@ -1000,6 +1006,11 @@ main(int argc, char **argv) {
 		case 'v':
 			verbose = 1;
 			break;
+
+	        case 128:			/* --sizelimit */
+			sizelimit = optarg;
+                        break;
+
 		default:
 			usage();
 		}
@@ -1008,7 +1019,7 @@ main(int argc, char **argv) {
 	if (argc == 1) {
 		usage();
 	} else if (delete) {
-		if (argc != optind+1 || encryption || offset ||
+		if (argc != optind+1 || encryption || offset || sizelimit ||
 				find || all || showdev || assoc || ro)
 			usage();
 	} else if (find) {
@@ -1026,6 +1037,9 @@ main(int argc, char **argv) {
 	}
 
 	if (offset && sscanf(offset, "%llu", &off) != 1)
+		usage();
+
+	if (sizelimit && sscanf(sizelimit, "%llu", &slimit) != 1)
 		usage();
 
 	if (all)
@@ -1061,7 +1075,7 @@ main(int argc, char **argv) {
 		if (keysize && sscanf(keysize,"%d",&keysz) != 1)
 			usage();
 		do {
-			res = set_loop(device, file, off, encryption, pfd, &ro, keysz, hash_pass);
+			res = set_loop(device, file, off, slimit, encryption, pfd, &ro, keysz, hash_pass);
 			if (res == 2 && find) {
 				if (verbose)
 					printf("stolen loop=%s...trying again\n",

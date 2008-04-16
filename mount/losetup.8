@@ -35,11 +35,13 @@ Setup loop device:
 .IR encryption ]
 .RB [ \-o
 .IR offset ]
+.RB [ \-\-sizelimit
+.IR limit ]
 .RB [ \-p
 .IR pfd ]
 .RB [ \-r ]
 .in +8
-.RB { \-f [ \-s ] | \fIloop_device\fP }
+.RB { \-f [ \-\-show ] | \fIloop_device\fP }
 .I file
 .in -13
 .ad b
@@ -89,18 +91,24 @@ hash function, non-Debian systems tend not to.
 .IP "\fB\-o, \-\-offset \fIoffset\fP"
 the data start is moved \fIoffset\fP bytes into the specified file or
 device
+.IP "\fB\-\-sizelimit \fIlimit\fP"
+the data end is set to no more than \fIsizelimit\fP bytes after the data start
 .IP "\fB\-p, \-\-pass-fd \fInum\fP"
 read the passphrase from file descriptor with number
 .I num
 instead of from the terminal
 .IP "\fB\-r, \-\-read-only\fP"
 setup read-only loop device
-.IP "\fB\-s, \-\-show\fP"
+.IP "\fB\-\-show\fP"
 print device name if the
 .I -f
 option and a
 .I file
-argument are present
+argument are present.
+
+The short form of this option (\fB\-s\fP) is deprecated.  This short form could
+be in collision with Loop-AES implementation where the same option is used for
+\fB\-\-sizelimit\fP.
 .IP "\fB\-v, \-\-verbose\fP"
 verbose mode
 

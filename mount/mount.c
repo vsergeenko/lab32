@@ -191,8 +191,8 @@ static const struct opt_map opt_map[] = {
 
 static int opt_nofail = 0;
 
-static const char *opt_loopdev, *opt_vfstype, *opt_offset, *opt_encryption,
-	*opt_speed, *opt_comment, *opt_uhelper;
+static const char *opt_loopdev, *opt_vfstype, *opt_offset, *opt_sizelimit,
+        *opt_encryption, *opt_speed, *opt_comment, *opt_uhelper;
 static const char *opt_keybits, *opt_nohashpass;
 
 static int mounted (const char *spec0, const char *node0);
@@ -207,6 +207,7 @@ static struct string_opt_map {
   { "loop=",	0, &opt_loopdev },
   { "vfs=",	1, &opt_vfstype },
   { "offset=",	0, &opt_offset },
+  { "sizelimit=",  0, &opt_sizelimit },
   { "encryption=", 0, &opt_encryption },
   { "keybits=", 0, &opt_keybits },
   { "nohashpass", 0, &opt_nohashpass },
@@ -884,7 +885,7 @@ loop_check(const char **spec, const char **type, int *flags,
 	   int *loop, const char **loopdev, const char **loopfile,
 	   const char *node) {
   int looptype;
-  unsigned long long offset;
+  unsigned long long offset, sizelimit;
 
   /*
    * In the case of a loop mount, either type is of the form lo@/dev/loop5
@@ -909,7 +910,7 @@ loop_check(const char **spec, const char **type, int *flags,
       *type = opt_vfstype;
   }
 
-  *loop = ((*flags & MS_LOOP) || *loopdev || opt_offset || opt_encryption || opt_keybits);
+  *loop = ((*flags & MS_LOOP) || *loopdev || opt_offset || opt_sizelimit || opt_encryption || opt_keybits);
   *loopfile = *spec;
 
   if (*loop) {
@@ -925,6 +926,7 @@ loop_check(const char **spec, const char **type, int *flags,
         loop_opts |= SETLOOP_RDONLY;
 
       offset = opt_offset ? strtoull(opt_offset, NULL, 0) : 0;
+      sizelimit = opt_sizelimit ? strtoull(opt_sizelimit, NULL, 0) : 0;
 
       if (is_mounted_same_loopfile(node, *loopfile, offset)) {
         error(_("mount: according to mtab %s is already mounted on %s as loop"), *loopfile, node);
@@ -942,7 +944,7 @@ loop_check(const char **spec, const char **type, int *flags,
 	  keysz  = strtoul(opt_keybits, NULL, 0);
 	if (opt_nohashpass)
 	  hash_pass=0;
-	if ((res = set_loop(*loopdev, *loopfile, offset,
+	if ((res = set_loop(*loopdev, *loopfile, offset, sizelimit,
 			    opt_encryption, pfd, &loop_opts, keysz, hash_pass))) {
 	  if (res == 2) {
 	     /* loop dev has been grabbed by some other process,

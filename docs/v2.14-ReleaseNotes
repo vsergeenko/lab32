@@ -14,6 +14,8 @@ Release highlights:
 
  losetup(8) supports unlimited number of loop devices.
 
+ losetup(8) supports new command line option "--sizelimit" to set data end.
+
  ldattach(8) command has been added to util-linux-ng. The ldattach
  daemon opens the specified device file and attaches the line discipline
  to it for processing of the sent and/or received data.
@@ -37,6 +39,19 @@ Release highlights:
 
  losetup(8), mount(8), umount(8), fdisk(8) and sfdisk(8) support static
  linking when compiled with --enable-static-programs.
+
+ hwclock(8) supports new command line option "adjfile" to override
+ the default /etc/adjtime.
+
+ scriptreplay(1) command has been re-written from Perl to C.
+
+
+Deprecated
+----------
+
+ The losetup(8) '-s' option (introduced by util-linux-ng-2.13) is deprecated.
+ This short form of the option '--show' could be in collision with Loop-AES
+ losetup implementation where the same option is used for the loop sizelimit.
 
 
 ChangeLog between v2.13 and v2.14
