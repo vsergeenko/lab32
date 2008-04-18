@@ -1,8 +1,10 @@
-util-linux (2.14~rc1-0) experimental; urgency=low
+util-linux (2.14~rc1-1) experimental; urgency=low
 
   * New upstream version
+  * control: drop -1 version from libslang2-dev build-dep
+  * control: standards-version 3.7.3.0
 
- -- LaMont Jones <lamont@debian.org>  Thu, 17 Apr 2008 16:58:38 -0600
+ -- LaMont Jones <lamont@debian.org>  Thu, 17 Apr 2008 18:19:27 -0600
 
 util-linux (2.13.1-5) unstable; urgency=low
 
