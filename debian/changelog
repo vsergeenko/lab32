@@ -6,6 +6,27 @@ util-linux (2.14~rc1-1) experimental; urgency=low
 
  -- LaMont Jones <lamont@debian.org>  Thu, 17 Apr 2008 18:19:27 -0600
 
+util-linux (2.13.1.1-0) unstable; urgency=low
+
+  [Steve Grubb]
+
+  * login: audit log injection attack via login
+
+  [Karel Zak]
+
+  * po: merge changes
+   - po: update it.po (from translationproject.org) (Marco Colombo)
+   - po: update nl.po (from translationproject.org) (Benno Schulenberg)
+  * docs: add v2.13.1.1 ReleaseNotes
+  * build-sys: release++ (2.13.1.1)
+
+  [LaMont Jones]
+
+  * control: drop -1 version from libslang2-dev build-dep
+  * control: standards-version 3.7.3.0
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 22 Apr 2008 22:44:08 -0600
+
 util-linux (2.13.1-5) unstable; urgency=low
 
   * Switch to upstream's more-correct fix for LP#206113
