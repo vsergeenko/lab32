@@ -1,16 +1,16 @@
-# Italian messages for util-linux.
-# Copyright (C) 2000, 2005, 2006 Free Software Foundation, Inc.
-# This file is distributed under the same license as the util-linux package.
-# Marco Colombo <m.colombo@ed.ac.uk>, 2005, 2006.
+# Italian messages for util-linux-ng.
+# Copyright (C) 2000, 2005, 2006, 2008 Free Software Foundation, Inc.
+# This file is distributed under the same license as the util-linux-ng package.
+# Marco Colombo <m.colombo@ed.ac.uk>, 2005, 2006, 2008.
 # Beth Powell <bpowell@turbolinux.com>, 2000.
 #
 # partition table: tavola delle partizioni? tabella delle partizioni?
 msgid ""
 msgstr ""
-"Project-Id-Version: util-linux 2.13-pre7\n"
+"Project-Id-Version: util-linux-ng 2.13.1-rc1\n"
 "Report-Msgid-Bugs-To: Karel Zak <kzak@redhat.com>\n"
-"POT-Creation-Date: 2008-01-02 14:15+0100\n"
-"PO-Revision-Date: 2006-03-13 14:43+0000\n"
+"POT-Creation-Date: 2008-04-21 23:22+0200\n"
+"PO-Revision-Date: 2008-04-18 13:44+0100\n"
 "Last-Translator: Marco Colombo <m.colombo@ed.ac.uk>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -59,14 +59,12 @@ msgid "get readahead"
 msgstr "visualizza readahead"
 
 #: disk-utils/blockdev.c:95
-#, fuzzy
 msgid "set filesystem readahead"
-msgstr "imposta readahead"
+msgstr "imposta file system readahead"
 
 #: disk-utils/blockdev.c:98
-#, fuzzy
 msgid "get filesystem readahead"
-msgstr "visualizza readahead"
+msgstr "visualizza file system readahead"
 
 #: disk-utils/blockdev.c:101
 msgid "flush buffers"
@@ -96,11 +94,9 @@ msgstr "  %s [-v|-q] comandi dispositivi\n"
 msgid "Available commands:\n"
 msgstr "Comandi disponibili:\n"
 
-# FIXME
 #: disk-utils/blockdev.c:123
-#, fuzzy
 msgid "get size in 512-byte sectors"
-msgstr "visualizza la dimensione in byte"
+msgstr "visualizza la dimensione in settori da 512 byte"
 
 #: disk-utils/blockdev.c:275
 #, c-format
@@ -113,9 +109,9 @@ msgid "%s requires an argument\n"
 msgstr "%s richiede un argomento\n"
 
 #: disk-utils/blockdev.c:329
-#, fuzzy, c-format
+#, c-format
 msgid "%s failed.\n"
-msgstr "ricerca non riuscita"
+msgstr "%s non riuscito.\n"
 
 #: disk-utils/blockdev.c:366
 #, c-format
@@ -338,9 +334,8 @@ msgid "Unable to allocate buffer for inode map"
 msgstr "Impossibile allocare il buffer per la mappa inode"
 
 #: disk-utils/fsck.minix.c:593
-#, fuzzy
 msgid "Unable to allocate buffer for zone map"
-msgstr "Impossibile allocare il buffer per la mappa inode"
+msgstr "Impossibile allocare il buffer per la mappa zone"
 
 #: disk-utils/fsck.minix.c:598
 msgid "Unable to allocate buffer for inodes"
@@ -714,7 +709,7 @@ msgstr "Nome filesystem: <%-6s>\n"
 #: disk-utils/mkfs.bfs.c:231
 #, c-format
 msgid "BlockSize: %d\n"
-msgstr ""
+msgstr "Dimensioni blocco: %d\n"
 
 #: disk-utils/mkfs.bfs.c:233
 #, c-format
@@ -855,10 +850,10 @@ msgid "CRC: %x\n"
 msgstr "CRC: %x\n"
 
 #: disk-utils/mkfs.cramfs.c:897
-#, fuzzy, c-format
+#, c-format
 msgid "not enough space allocated for ROM image (%lld allocated, %d used)\n"
 msgstr ""
-"spazio insufficiente allocato per l'immagine ROM (%Ld allocati, %d usati)\n"
+"spazio insufficiente allocato per l'immagine ROM (%lld allocati, %d usati)\n"
 
 #: disk-utils/mkfs.cramfs.c:909
 #, c-format
@@ -1027,11 +1022,11 @@ msgid "Bad user-specified page size %d\n"
 msgstr "dimensione pagina %d specificata dall'utente non corretta\n"
 
 #: disk-utils/mkswap.c:182
-#, fuzzy, c-format
+#, c-format
 msgid "Using user-specified page size %d, instead of the system value %d\n"
 msgstr ""
-"Utilizzo della dimensione pagina %d specificata dall'utente, al posto dei "
-"valori del sistema %d/%d\n"
+"Utilizzo la dimensione pagina %d specificata dall'utente, al posto del "
+"valore di sistema %d\n"
 
 #: disk-utils/mkswap.c:206
 #, c-format
@@ -1110,14 +1105,14 @@ msgid "%s: error: label only with v1 swap area\n"
 msgstr ""
 
 #: disk-utils/mkswap.c:662
-#, fuzzy, c-format
+#, c-format
 msgid "%s: error: will not try to make swapdevice on '%s'\n"
-msgstr "Non si cercherà di creare uno swapdevice su '%s'"
+msgstr "%s: errore: Non si cercherà di creare uno swapdevice su '%s'\n"
 
 #: disk-utils/mkswap.c:668
-#, fuzzy, c-format
+#, c-format
 msgid "%s: error: %s is mounted; will not make swapspace.\n"
-msgstr "%s è montata; qui non verrà creato un filesystem!"
+msgstr "%s: errore: %s è montata; qui non verrà creato uno spazio di swap.\n"
 
 #: disk-utils/mkswap.c:681 disk-utils/mkswap.c:702
 msgid "fatal: first page unreadable"
@@ -1164,23 +1159,21 @@ msgid "%s: %s: unable to obtain selinux file label: %s\n"
 msgstr ""
 
 #: disk-utils/mkswap.c:749
-#, fuzzy
 msgid "unable to matchpathcon()"
-msgstr "impossibile fare stat di %s"
+msgstr "impossibile fare matchpathcon()"
 
 #: disk-utils/mkswap.c:752
-#, fuzzy
 msgid "unable to create new selinux context"
-msgstr "impossibile scrivere inode"
+msgstr "impossibile creare un nuovo contesto selinux"
 
 #: disk-utils/mkswap.c:754
 msgid "couldn't compute selinux context"
 msgstr ""
 
 #: disk-utils/mkswap.c:760
-#, fuzzy, c-format
+#, c-format
 msgid "%s: unable to relabel %s to %s: %s\n"
-msgstr "impossibile rinominare %s in %s: %s\n"
+msgstr "%s: impossibile rinominare %s in %s: %s\n"
 
 #: fdisk/cfdisk.c:368 fdisk/cfdisk.c:2066
 msgid "Unusable"
@@ -2653,9 +2646,8 @@ msgid "   f   fix partition order"
 msgstr "   f   aggiusta l'ordine delle partizioni"
 
 #: fdisk/fdisk.c:504
-#, fuzzy
 msgid "   i   change the disk identifier"
-msgstr "   u   modifica delle unità di visualizzazione/di immissione"
+msgstr "   i   cambia l'identificativo del disco"
 
 #: fdisk/fdisk.c:620
 #, c-format
@@ -2725,12 +2717,12 @@ msgstr ""
 #: fdisk/fdisk.c:779
 #, c-format
 msgid "Disk identifier: 0x%08x\n"
-msgstr ""
+msgstr "Identificativo disco: 0x%08x\n"
 
 #: fdisk/fdisk.c:788
 #, c-format
 msgid "New disk identifier (current 0x%08x): "
-msgstr ""
+msgstr "Nuovo identificativo disco (corrente 0x%08x): "
 
 #: fdisk/fdisk.c:807
 #, fuzzy, c-format
@@ -2990,9 +2982,9 @@ msgstr ""
 "\n"
 
 #: fdisk/fdisk.c:1614
-#, fuzzy, c-format
+#, c-format
 msgid "%d heads, %llu sectors/track, %d cylinders"
-msgstr "%d testine, %d settori/tracce, %d cilindri"
+msgstr "%d testine, %llu settori/tracce, %d cilindri"
 
 #: fdisk/fdisk.c:1617
 #, c-format
@@ -3000,11 +2992,9 @@ msgid ", total %llu sectors"
 msgstr ", totale %llu settori"
 
 #: fdisk/fdisk.c:1620
-#, fuzzy, c-format
+#, c-format
 msgid "Units = %s of %d * %d = %d bytes\n"
-msgstr ""
-"Unità = %s di %d * %d = %d byte\n"
-"\n"
+msgstr "Unità = %s di %d * %d = %d byte\n"
 
 #: fdisk/fdisk.c:1731
 #, c-format
@@ -3044,14 +3034,14 @@ msgstr ""
 "disco\n"
 
 #: fdisk/fdisk.c:1848
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Disk %s: %d heads, %llu sectors, %d cylinders\n"
 "\n"
 msgstr ""
 "\n"
-"Disco %s: %d testine, %d settori, %d cilindri\n"
+"Disco %s: %d testine, %llu settori, %d cilindri\n"
 "\n"
 
 #: fdisk/fdisk.c:1850
@@ -3070,9 +3060,9 @@ msgid "Partition %d: head %d greater than maximum %d\n"
 msgstr "Partizione %d: testina %d più grande del massimo %d\n"
 
 #: fdisk/fdisk.c:1902
-#, fuzzy, c-format
+#, c-format
 msgid "Partition %d: sector %d greater than maximum %llu\n"
-msgstr "Partizione %d: settore %d più grande del massimo %d\n"
+msgstr "Partizione %d: settore %d più grande del massimo %llu\n"
 
 #: fdisk/fdisk.c:1905
 #, c-format
@@ -3105,9 +3095,9 @@ msgid "Logical partition %d not entirely in partition %d\n"
 msgstr "La partizione logica %d non è interamente nella partizione %d\n"
 
 #: fdisk/fdisk.c:1980
-#, fuzzy, c-format
+#, c-format
 msgid "Total allocated sectors %ld greater than the maximum %lld\n"
-msgstr "Numero totale dei settori allocati %d superiore al massimo %lld\n"
+msgstr "Numero totale dei settori allocati %ld superiore al massimo %lld\n"
 
 #: fdisk/fdisk.c:1983
 #, c-format
@@ -3121,9 +3111,9 @@ msgstr ""
 "La partizione %d è già definita.  Cancellarla prima di riaggiungerla.\n"
 
 #: fdisk/fdisk.c:2040
-#, fuzzy, c-format
+#, c-format
 msgid "Sector %llu is already allocated\n"
-msgstr "Il settore %d è già allocato\n"
+msgstr "Il settore %llu è già allocato\n"
 
 #: fdisk/fdisk.c:2076
 #, c-format
@@ -3473,7 +3463,7 @@ msgid "Detected sgi disklabel with wrong checksum.\n"
 msgstr "Rilevato un disklabel sgi con checksum errato.\n"
 
 #: fdisk/fdisksgilabel.c:200
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Disk %s (SGI disk label): %d heads, %llu sectors\n"
@@ -3484,7 +3474,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Disco %s (disk label SGI): %d testine, %d settori\n"
+"Disco %s (disk label SGI): %d testine, %llu settori\n"
 "%d cilindri, %d cilindri fisici\n"
 "%d sett/cil supplementari, interleave %d:1\n"
 "%s\n"
@@ -3492,7 +3482,7 @@ msgstr ""
 "\n"
 
 #: fdisk/fdisksgilabel.c:213
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Disk %s (SGI disk label): %d heads, %llu sectors, %d cylinders\n"
@@ -3500,7 +3490,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Disco %s (disk label SGI): %d testine, %d settori, %d cilindri\n"
+"Disco %s (disk label SGI): %d testine, %llu settori, %d cilindri\n"
 "Unità = %s di %d * %d byte\n"
 "\n"
 
@@ -3772,7 +3762,7 @@ msgstr "ID=%02x\tINIZIO=%d\tLUNGHEZZA=%d\n"
 
 #: fdisk/fdisksunlabel.c:40
 msgid "Unassigned"
-msgstr ""
+msgstr "Non assegnato"
 
 #: fdisk/fdisksunlabel.c:42
 msgid "SunOS root"
@@ -3803,19 +3793,16 @@ msgid "SunOS home"
 msgstr "SunOS home"
 
 #: fdisk/fdisksunlabel.c:49
-#, fuzzy
 msgid "SunOS alt sectors"
-msgstr "%lld settori non allocati\n"
+msgstr ""
 
 #: fdisk/fdisksunlabel.c:50
-#, fuzzy
 msgid "SunOS cachefs"
-msgstr "SunOS home"
+msgstr "SunOS cachefs"
 
 #: fdisk/fdisksunlabel.c:51
-#, fuzzy
 msgid "SunOS reserved"
-msgstr "SunOS usr"
+msgstr "SunOS riservato"
 
 #: fdisk/fdisksunlabel.c:55 fdisk/i386_sys_types.c:100
 msgid "Linux raid autodetect"
@@ -3835,27 +3822,26 @@ msgstr ""
 "o forzare un'etichetta nuova (comando s nel menu principale)\n"
 
 #: fdisk/fdisksunlabel.c:147
-#, fuzzy, c-format
+#, c-format
 msgid "Detected sun disklabel with wrong version [0x%08x].\n"
-msgstr "Rilevato un disklabel sgi con checksum errato.\n"
+msgstr "Rilevato un disklabel con versione errata [0x%08x].\n"
 
 #: fdisk/fdisksunlabel.c:152
-#, fuzzy, c-format
+#, c-format
 msgid "Detected sun disklabel with wrong sanity [0x%08x].\n"
-msgstr "Rilevato un disklabel sgi con checksum errato.\n"
+msgstr "Rilevato un disklabel con sanity errato [0x%08x].\n"
 
 #: fdisk/fdisksunlabel.c:157
-#, fuzzy, c-format
+#, c-format
 msgid "Detected sun disklabel with wrong num_partitions [%u].\n"
-msgstr "Rilevato un disklabel sgi con checksum errato.\n"
+msgstr "Rilevato un disklabel con num_partitions errato [%u].\n"
 
+# FIXME
 #: fdisk/fdisksunlabel.c:162
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Warning: Wrong values need to be fixed up and will be corrected by w(rite)\n"
-msgstr ""
-"Attenzione: il flag 0x%04x non valido della tabella delle partizioni %d "
-"verrà corretto con w(rite)\n"
+msgstr "Attenzione: i valori non validi devono essere corretti con w(rite)\n"
 
 #: fdisk/fdisksunlabel.c:192
 #, c-format
@@ -6312,7 +6298,7 @@ msgstr "Modifica delle informazioni finger per %s in corso.\n"
 msgid "chfn: PAM Failure, aborting: %s\n"
 msgstr "login: errore PAM, interruzione in corso: %s\n"
 
-#: login-utils/chfn.c:212 login-utils/chsh.c:211 login-utils/login.c:798
+#: login-utils/chfn.c:212 login-utils/chsh.c:211 login-utils/login.c:794
 #: login-utils/newgrp.c:85 login-utils/simpleinit.c:340 mount/lomount.c:334
 #: mount/lomount.c:337
 msgid "Password: "
@@ -6409,9 +6395,9 @@ msgid "Changing shell for %s.\n"
 msgstr "Modifica shell per %s in corso.\n"
 
 #: login-utils/chsh.c:188
-#, fuzzy, c-format
+#, c-format
 msgid "chsh: PAM Failure, aborting: %s\n"
-msgstr "login: errore PAM, interruzione in corso: %s\n"
+msgstr "chsh: errore PAM, interruzione in corso: %s\n"
 
 #: login-utils/chsh.c:222
 msgid "New shell"
@@ -6544,36 +6530,36 @@ msgstr "FATALE: impossibile riaprire la tty: %s"
 msgid "FATAL: bad tty"
 msgstr "FATALE: tty non valida"
 
-#: login-utils/login.c:415
+#: login-utils/login.c:411
 #, c-format
 msgid "login: -h for super-user only.\n"
 msgstr "login: -h solamente per super-user.\n"
 
-#: login-utils/login.c:458
+#: login-utils/login.c:454
 #, c-format
 msgid "usage: login [-fp] [username]\n"
 msgstr "Uso: login [-fp] [nomeutente]\n"
 
-#: login-utils/login.c:551
+#: login-utils/login.c:547
 #, c-format
 msgid "login: PAM Failure, aborting: %s\n"
 msgstr "login: errore PAM, interruzione in corso: %s\n"
 
-#: login-utils/login.c:553
+#: login-utils/login.c:549
 #, c-format
 msgid "Couldn't initialize PAM: %s"
 msgstr "Impossibile inizializzare PAM: %s"
 
-#: login-utils/login.c:570
+#: login-utils/login.c:566
 msgid "login: "
 msgstr "login: "
 
-#: login-utils/login.c:610
+#: login-utils/login.c:606
 #, c-format
 msgid "FAILED LOGIN %d FROM %s FOR %s, %s"
 msgstr "FALLITO IL LOGIN %d DA %s PER %s, %s"
 
-#: login-utils/login.c:615
+#: login-utils/login.c:611
 #, c-format
 msgid ""
 "Login incorrect\n"
@@ -6582,17 +6568,17 @@ msgstr ""
 "Login non corretto\n"
 "\n"
 
-#: login-utils/login.c:624
+#: login-utils/login.c:620
 #, c-format
 msgid "TOO MANY LOGIN TRIES (%d) FROM %s FOR %s, %s"
 msgstr "TROPPI TENTATIVI DI LOGIN (%d) DA %s PER %s, %s"
 
-#: login-utils/login.c:628
+#: login-utils/login.c:624
 #, c-format
 msgid "FAILED LOGIN SESSION FROM %s FOR %s, %s"
 msgstr "FALLITA SESSIONE DI LOGIN DA %s PER %s, %s"
 
-#: login-utils/login.c:633
+#: login-utils/login.c:629
 #, c-format
 msgid ""
 "\n"
@@ -6602,7 +6588,7 @@ msgstr ""
 "Login non corretto\n"
 
 # FIXME
-#: login-utils/login.c:661 login-utils/login.c:668 login-utils/login.c:702
+#: login-utils/login.c:657 login-utils/login.c:664 login-utils/login.c:698
 #, c-format
 msgid ""
 "\n"
@@ -6611,120 +6597,120 @@ msgstr ""
 "\n"
 "Problema nell'avviare la sessione, interrotto.\n"
 
-#: login-utils/login.c:662
+#: login-utils/login.c:658
 #, c-format
 msgid "NULL user name in %s:%d. Abort."
 msgstr "Nome utente NULL in %s:%d. Interrotto."
 
-#: login-utils/login.c:669
+#: login-utils/login.c:665
 #, c-format
 msgid "Invalid user name \"%s\" in %s:%d. Abort."
 msgstr "Nome utente \"%s\" non valido in %s:%d. Interrotto."
 
-#: login-utils/login.c:688
+#: login-utils/login.c:684
 #, c-format
 msgid "login: Out of memory\n"
 msgstr "login: memoria esaurita\n"
 
-#: login-utils/login.c:732
+#: login-utils/login.c:728
 msgid "Illegal username"
 msgstr "Nome utente non valido"
 
-#: login-utils/login.c:775
+#: login-utils/login.c:771
 #, c-format
 msgid "%s login refused on this terminal.\n"
 msgstr "%s login rifiutato su questo terminale.\n"
 
-#: login-utils/login.c:780
+#: login-utils/login.c:776
 #, c-format
 msgid "LOGIN %s REFUSED FROM %s ON TTY %s"
 msgstr "LOGIN %s RIFIUTATO DA %s SU TTY %s"
 
-#: login-utils/login.c:784
+#: login-utils/login.c:780
 #, c-format
 msgid "LOGIN %s REFUSED ON TTY %s"
 msgstr "LOGIN %s RIFIUTATO SU TTY %s"
 
-#: login-utils/login.c:838
+#: login-utils/login.c:834
 #, c-format
 msgid "Login incorrect\n"
 msgstr "Login non corretto\n"
 
-#: login-utils/login.c:1063
+#: login-utils/login.c:1059
 #, c-format
 msgid "DIALUP AT %s BY %s"
 msgstr " CONNESSIONE DI ACCESSO REMOTO A %s ATTRAVERSO %s"
 
-#: login-utils/login.c:1070
+#: login-utils/login.c:1066
 #, c-format
 msgid "ROOT LOGIN ON %s FROM %s"
 msgstr "LOGIN DI ROOT A %s DA %s"
 
-#: login-utils/login.c:1073
+#: login-utils/login.c:1069
 #, c-format
 msgid "ROOT LOGIN ON %s"
 msgstr "LOGIN DI ROOT A %s"
 
-#: login-utils/login.c:1076
+#: login-utils/login.c:1072
 #, c-format
 msgid "LOGIN ON %s BY %s FROM %s"
 msgstr "LOGIN A %s ATTRAVERSO %s DA %s"
 
-#: login-utils/login.c:1079
+#: login-utils/login.c:1075
 #, c-format
 msgid "LOGIN ON %s BY %s"
 msgstr "LOGIN A %s ATTRAVERSO %s"
 
-#: login-utils/login.c:1100
+#: login-utils/login.c:1096
 #, c-format
 msgid "You have new mail.\n"
 msgstr "C'è nuova posta.\n"
 
-#: login-utils/login.c:1102
+#: login-utils/login.c:1098
 #, c-format
 msgid "You have mail.\n"
 msgstr "C'è posta.\n"
 
-#: login-utils/login.c:1146
+#: login-utils/login.c:1142
 #, c-format
 msgid "login: failure forking: %s"
 msgstr "login: errore in esecuzione del fork: %s"
 
-#: login-utils/login.c:1193
+#: login-utils/login.c:1189
 #, c-format
 msgid "TIOCSCTTY failed: %m"
 msgstr "TIOCSCTTY non riuscito: %m"
 
-#: login-utils/login.c:1199
+#: login-utils/login.c:1195
 msgid "setuid() failed"
 msgstr "setuid() non riuscito"
 
-#: login-utils/login.c:1205
+#: login-utils/login.c:1201
 #, c-format
 msgid "No directory %s!\n"
 msgstr "Nessuna directory %s!\n"
 
-#: login-utils/login.c:1209
+#: login-utils/login.c:1205
 #, c-format
 msgid "Logging in with home = \"/\".\n"
 msgstr "Connessione con home = \"/\".\n"
 
-#: login-utils/login.c:1217
+#: login-utils/login.c:1213
 #, c-format
 msgid "login: no memory for shell script.\n"
 msgstr "login: nessuna memoria per lo script shell.\n"
 
-#: login-utils/login.c:1244
+#: login-utils/login.c:1240
 #, c-format
 msgid "login: couldn't exec shell script: %s.\n"
 msgstr "login: exec dello script shell impossibile: %s.\n"
 
-#: login-utils/login.c:1247
+#: login-utils/login.c:1243
 #, c-format
 msgid "login: no shell: %s.\n"
 msgstr "login: nessuna shell: %s.\n"
 
-#: login-utils/login.c:1262
+#: login-utils/login.c:1258
 #, c-format
 msgid ""
 "\n"
@@ -6733,65 +6719,65 @@ msgstr ""
 "\n"
 "%s login: "
 
-#: login-utils/login.c:1273
+#: login-utils/login.c:1269
 #, c-format
 msgid "login name much too long.\n"
 msgstr "il nome di login è troppo lungo.\n"
 
-#: login-utils/login.c:1274
+#: login-utils/login.c:1270
 msgid "NAME too long"
 msgstr "NOME troppo lungo"
 
-#: login-utils/login.c:1281
+#: login-utils/login.c:1277
 #, c-format
 msgid "login names may not start with '-'.\n"
 msgstr "I nomi di login non possono iniziare con'-'.\n"
 
-#: login-utils/login.c:1291
+#: login-utils/login.c:1287
 #, c-format
 msgid "too many bare linefeeds.\n"
 msgstr "troppi linefeed vuoti.\n"
 
-#: login-utils/login.c:1292
+#: login-utils/login.c:1288
 msgid "EXCESSIVE linefeeds"
 msgstr "Linefeed ECCESSIVI"
 
-#: login-utils/login.c:1324
+#: login-utils/login.c:1320
 #, c-format
 msgid "Login timed out after %d seconds\n"
 msgstr "Login scaduto dopo %d secondi\n"
 
-#: login-utils/login.c:1412
+#: login-utils/login.c:1408
 #, c-format
 msgid "Last login: %.*s "
 msgstr "Ultimo login: %.*s "
 
-#: login-utils/login.c:1416
+#: login-utils/login.c:1412
 #, c-format
 msgid "from %.*s\n"
 msgstr "da %.*s\n"
 
-#: login-utils/login.c:1419
+#: login-utils/login.c:1415
 #, c-format
 msgid "on %.*s\n"
 msgstr "su %.*s\n"
 
-#: login-utils/login.c:1439
+#: login-utils/login.c:1435
 #, c-format
 msgid "LOGIN FAILURE FROM %s, %s"
 msgstr "ERRORE DI LOGIN DA %s, %s"
 
-#: login-utils/login.c:1442
+#: login-utils/login.c:1438
 #, c-format
 msgid "LOGIN FAILURE ON %s, %s"
 msgstr "ERRORE DI LOGIN SU %s, %s"
 
-#: login-utils/login.c:1446
+#: login-utils/login.c:1442
 #, c-format
 msgid "%d LOGIN FAILURES FROM %s, %s"
 msgstr "%d ERRORI DI LOGIN DA %s, %s"
 
-#: login-utils/login.c:1449
+#: login-utils/login.c:1445
 #, c-format
 msgid "%d LOGIN FAILURES ON %s, %s"
 msgstr "%d ERRORI DI LOGIN SU %s, %s"
@@ -7680,9 +7666,9 @@ msgid "Trying %s\n"
 msgstr "Prova di %s in corso\n"
 
 #: mount/fsprobe.c:187
-#, fuzzy, c-format
+#, c-format
 msgid "mount: going to mount %s by %s\n"
-msgstr "mount: %s verrà montato in base all'UUID\n"
+msgstr "mount: %s verrà montato in base a %s\n"
 
 #: mount/fsprobe.c:195
 #, fuzzy, c-format
@@ -7924,14 +7910,14 @@ msgid "mount: error changing mode of %s: %s"
 msgstr "mount: errore durante il cambio di modalità di %s: %s"
 
 #: mount/mount.c:638
-#, fuzzy, c-format
+#, c-format
 msgid "mount: cannot set group id: %s"
-msgstr "mount: impossibile impostare la velocità: %s"
+msgstr "mount: impossibile impostare l'id di gruppo: %s"
 
 #: mount/mount.c:641
-#, fuzzy, c-format
+#, c-format
 msgid "mount: cannot set user id: %s"
-msgstr "mount: impossibile impostare la velocità: %s"
+msgstr "mount: impossibile impostare l'id utente: %s"
 
 #: mount/mount.c:680 mount/mount.c:1572
 #, c-format
@@ -8030,9 +8016,9 @@ msgid "mount: cannot set speed: %s"
 msgstr "mount: impossibile impostare la velocità: %s"
 
 #: mount/mount.c:1044
-#, fuzzy, c-format
+#, c-format
 msgid "mount: according to mtab, %s is already mounted on %s\n"
-msgstr "mount: secondo mtab, %s è già montato su %s"
+msgstr "mount: secondo mtab, %s è già montato su %s\n"
 
 #: mount/mount.c:1119
 msgid ""
@@ -8106,13 +8092,13 @@ msgid "mount: %s not mounted already, or bad option"
 msgstr "mount: %s non ancora montato, oppure l'opzione non è valida"
 
 #: mount/mount.c:1183
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "mount: wrong fs type, bad option, bad superblock on %s,\n"
 "       missing codepage or helper program, or other error"
 msgstr ""
 "mount: tipo fs errato, opzione non valida, superblocco su %s danneggiato,\n"
-"       codepage mancante o altro errore"
+"       codepage o programma ausiliario mancante, o altro errore"
 
 #: mount/mount.c:1193
 msgid ""
@@ -8352,9 +8338,9 @@ msgstr ""
 "     %s [-v] speciale ...\n"
 
 #: mount/swapon.c:128
-#, fuzzy, c-format
+#, c-format
 msgid "%s: cannot canonicalize %s: %s\n"
-msgstr "%s: impossibile aprire %s: %s\n"
+msgstr "%s: impossibile rendere canonico %s: %s\n"
 
 #: mount/swapon.c:167 mount/swapon.c:255
 #, c-format
@@ -8397,14 +8383,14 @@ msgid "umount: compiled without support for -f\n"
 msgstr "umount: compilato senza supporto per -f\n"
 
 #: mount/umount.c:106
-#, fuzzy, c-format
+#, c-format
 msgid "umount: cannot set group id: %s"
-msgstr "mount: impossibile impostare la velocità: %s"
+msgstr "umount: impossibile impostare l'id di gruppo: %s"
 
 #: mount/umount.c:109
-#, fuzzy, c-format
+#, c-format
 msgid "umount: cannot set user id: %s"
-msgstr "mount: impossibile impostare la velocità: %s"
+msgstr "umount: impossibile impostare l'id utente: %s"
 
 #: mount/umount.c:134
 #, c-format
@@ -9535,19 +9521,19 @@ msgid "%s: unrecognized suspend state '%s'\n"
 msgstr " %s: tipo di tabella delle partizioni non riconosciuto\n"
 
 #: sys-utils/rtcwake.c:333
-#, fuzzy, c-format
+#, c-format
 msgid "%s: illegal interval %s seconds\n"
-msgstr "%s: chiave illegale (%s)\n"
+msgstr "%s: intervallo illegale %s secondi\n"
 
 #: sys-utils/rtcwake.c:347
-#, fuzzy, c-format
+#, c-format
 msgid "%s: illegal time_t value %s\n"
-msgstr "%s: opzione illecita -- %s\n"
+msgstr "%s: valore time_t illecito %s\n"
 
 #: sys-utils/rtcwake.c:363
-#, fuzzy, c-format
+#, c-format
 msgid "%s: version %s\n"
-msgstr "%s versione %s\n"
+msgstr "%s: versione %s\n"
 
 #: sys-utils/rtcwake.c:376
 #, c-format
@@ -9565,9 +9551,8 @@ msgid "%s: must provide wake time\n"
 msgstr ""
 
 #: sys-utils/rtcwake.c:395
-#, fuzzy
 msgid "malloc() failed"
-msgstr "malloc non riuscita"
+msgstr "malloc() non riuscita"
 
 #: sys-utils/rtcwake.c:406
 #, fuzzy, c-format
@@ -9590,9 +9575,8 @@ msgid "%s: wakeup from \"%s\" using %s at %s\n"
 msgstr "Messaggio da %s@%s su %s a %s ..."
 
 #: sys-utils/rtcwake.c:451
-#, fuzzy
 msgid "rtc read"
-msgstr ", pronto"
+msgstr "rtc letto"
 
 #: sys-utils/rtcwake.c:460
 msgid "disable rtc alarm interrupt"
@@ -9617,23 +9601,26 @@ msgid ""
 "\n"
 "For more information see setarch(8).\n"
 msgstr ""
+"\n"
+"Per maggiori informazioni vedere setarch(8).\n"
 
 #: sys-utils/setarch.c:84
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s: %s\n"
 "Try `%s --help' for more information.\n"
-msgstr "Provare con \"getopt --help\" per ulteriori informazioni.\n"
+msgstr ""
+"%s: %s\n"
+"Provare \"%s --help\" per ulteriori informazioni.\n"
 
 #: sys-utils/setarch.c:151 sys-utils/setarch.c:167
-#, fuzzy, c-format
+#, c-format
 msgid "%s: Unrecognized architecture"
-msgstr " %s: tipo di tabella delle partizioni non riconosciuto\n"
+msgstr " %s: architettura non riconosciuta"
 
 #: sys-utils/setarch.c:184 sys-utils/setarch.c:191
-#, fuzzy
 msgid "Not enough arguments"
-msgstr "Troppi argomenti.\n"
+msgstr "Argomenti insufficienti"
 
 #: sys-utils/setarch.c:233
 #, c-format
@@ -9641,9 +9628,9 @@ msgid "Switching on %s.\n"
 msgstr ""
 
 #: sys-utils/setarch.c:240
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown option `%c' ignored"
-msgstr "%s: opzione sconosciuta \"-%c\"\n"
+msgstr "Ignorata l'opzione sconosciuta \"%c\""
 
 #: sys-utils/setarch.c:245
 #, fuzzy, c-format

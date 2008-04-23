@@ -1,26 +1,21 @@
-# Translation of util-linux-ng-2.13.1-rc1 to Dutch.
-# Copyright (C) 2002, 2003, 2006, 2007 Free Software Foundation, Inc.
-#
-# Permission is granted to freely copy and distribute
-# this file and modified versions, provided that this
-# header is not removed and modified versions are marked
-# as such.
+# Dutch translations for util-linux-ng.
+# This file is distributed under the same license as the util-linux-ng package.
 #
 # block    -> blok
 # sector   -> sector
 # cylinder -> cilinder
 # volume   -> volumen
-# inode blijft onvertaald
+# (inode blijft onvertaald)
 #
 # Taco Witte <tcwitte@cs.uu.nl>, 2002, 2003.
 # Luk Claes <luk.claes@ugent.be>, 2005.
-# Benno Schulenberg <benno@vertaalt.nl>, 2006, 2007.
+# Benno Schulenberg <benno@vertaalt.nl>, 2006, 2007, 2008.
 msgid ""
 msgstr ""
 "Project-Id-Version: util-linux-ng-2.13.1-rc1\n"
 "Report-Msgid-Bugs-To: Karel Zak <kzak@redhat.com>\n"
-"POT-Creation-Date: 2008-01-02 14:15+0100\n"
-"PO-Revision-Date: 2007-11-16 13:10+0100\n"
+"POT-Creation-Date: 2008-04-21 23:22+0200\n"
+"PO-Revision-Date: 2008-04-07 21:35+0200\n"
 "Last-Translator: Benno Schulenberg <benno@vertaalt.nl>\n"
 "Language-Team: Dutch <vertaling@vrijschrift.org>\n"
 "MIME-Version: 1.0\n"
@@ -807,20 +802,24 @@ msgid ""
 msgstr ""
 "Gebruik:  %s [-h] [-v] [-b blokgrootte] [-e editie] [-i bestand]\n"
 "          [-n naam] mapnaam uitvoerbestand\n"
-" -h          deze hulp tonen\n"
-" -v          breedsprakige uitvoer\n"
-" -E          van alle waarschuwingen fouten maken (een niet-nul "
+"\n"
+" -h          deze hulptekst tonen\n"
+" -v          gedetailleerde uitvoer produceren\n"
+" -V          programmaversie tonen\n"
+" -E          van alle waarschuwingen fouten maken (met niet-nul "
 "afsluitstatus)\n"
+"\n"
 " -b blokgrootte  deze blokgrootte gebruiken; moet gelijk zijn aan "
 "paginagrootte\n"
 " -e editie   editienummer instellen (deel van bestandssysteem-ID)\n"
 " -i bestand  een bestandsafbeelding invoegen in het bestandssysteem\n"
-" -n naam     te gebruiken naam van cramfs-bestandssysteem\n"
+" -n naam     te gebruiken naam van 'cramfs'-bestandssysteem\n"
 " -p          opvullen met %d bytes voor opstartcode\n"
-" -s          mapingangen sorteren (oude optie, wordt genegeerd)\n"
+" -s          (oude optie, wordt genegeerd) mapingangen sorteren\n"
 " -z          expliciete gaten maken\n"
-" mapnaam     basismap van het in te pakken bestandssysteem\n"
-" uitvoerbestand  te gebruiken uitvoerbestand\n"
+"\n"
+" mapnaam = basismap van het in te pakken bestandssysteem\n"
+" uitvoerbestand = te gebruiken uitvoerbestand\n"
 
 #: disk-utils/mkfs.cramfs.c:337
 #, c-format
@@ -839,7 +838,7 @@ msgstr "bestandssysteem is te groot -- gestopt\n"
 #: disk-utils/mkfs.cramfs.c:627
 #, c-format
 msgid "AIEEE: block \"compressed\" to > 2*blocklength (%ld)\n"
-msgstr "OEPS: blok \"gecomprimeerd\" tot > 2*bloklengte (%ld)\n"
+msgstr "OEPS: blok is \"gecomprimeerd\" tot > 2*bloklengte (%ld)\n"
 
 #: disk-utils/mkfs.cramfs.c:646
 #, c-format
@@ -852,8 +851,9 @@ msgid ""
 "warning: guestimate of required size (upper bound) is %LdMB, but maximum "
 "image size is %uMB.  We might die prematurely.\n"
 msgstr ""
-"Waarschuwing: de geschatte benodigde grootte (bovengrens) is %Ld MB, maar de "
-"maximale afbeeldingsgrootte is %u MB.  Dit gaat misschien niet lukken.\n"
+"Waarschuwing: de geschatte benodigde grootte is %Ld MB (bovengrens),\n"
+"maar de maximale afbeeldingsgrootte is %u MB.\n"
+"Dit gaat misschien niet lukken.\n"
 
 #: disk-utils/mkfs.cramfs.c:866
 #, c-format
@@ -2089,7 +2089,7 @@ msgstr ""
 "\n"
 "Gebruik:  %s [opties] apparaat              interactief\n"
 "          %s -P{r|s|t} [opties] apparaat    partitietabel weergeven\n"
-"          %s -v                             versie tonen\n"
+"          %s -v                             programmaversie tonen\n"
 "Opties:\n"
 "-a   een pijl gebruiken in plaats van een inverse balk;\n"
 "-z   met lege partitietabel starten, in plaats van deze van schijf te "
@@ -2471,7 +2471,7 @@ msgstr ""
 "          fdisk -l [-b SECTORGROOTTE] [-u] APPARAAT    partitietabel "
 "weergeven\n"
 "          fdisk -s PARTITIE    partitiegrootte in blokken weergeven\n"
-"          fdisk -v             versie van fdisk tonen\n"
+"          fdisk -v             programmaversie tonen\n"
 "\n"
 "Hier is APPARAAT zoiets als /dev/hda of /dev/sdb,\n"
 "en PARTITIE zoiets als /dev/hda7 of /dev/sdb4.\n"
@@ -5020,7 +5020,7 @@ msgstr "  -I bestand          deze opgeslagen sectoren herstellen"
 
 #: fdisk/sfdisk.c:2306
 msgid "    -v [or --version]:   print version"
-msgstr "  -v, --version       versienummer tonen"
+msgstr "  -v, --version       programmaversie tonen"
 
 #: fdisk/sfdisk.c:2307
 msgid "    -? [or --help]:      print this message"
@@ -5396,7 +5396,7 @@ msgstr "  -u, --unquoted                de uitvoer niet aanhalen\n"
 
 #: getopt/getopt.c:340
 msgid "  -V, --version                Output version information\n"
-msgstr "  -V, --version                 versie-informatie tonen\n"
+msgstr "  -V, --version                 programmaversie tonen\n"
 
 #: getopt/getopt.c:397 getopt/getopt.c:458
 msgid "missing optstring argument"
@@ -5863,7 +5863,7 @@ msgstr ""
 "  --getepoch    tijdperkwaarde van de kernel tonen\n"
 "  --setepoch    tijdperkwaarde van de kernel instellen op de waarde\n"
 "                gegeven met de optie '--epoch'\n"
-"  --version     versienummer tonen\n"
+"  --version     programmaversie tonen\n"
 "\n"
 "Opties: \n"
 "  --utc         de hardwareklok bevat de gecoördineerde universele tijd\n"
@@ -6310,7 +6310,7 @@ msgstr "Wijzigen van finger-informatie voor %s.\n"
 msgid "chfn: PAM Failure, aborting: %s\n"
 msgstr "chfn: PAM-fout -- gestopt: %s\n"
 
-#: login-utils/chfn.c:212 login-utils/chsh.c:211 login-utils/login.c:798
+#: login-utils/chfn.c:212 login-utils/chsh.c:211 login-utils/login.c:794
 #: login-utils/newgrp.c:85 login-utils/simpleinit.c:340 mount/lomount.c:334
 #: mount/lomount.c:337
 msgid "Password: "
@@ -6545,36 +6545,36 @@ msgstr "FATAAL: kan tty niet heropenen: %s"
 msgid "FATAL: bad tty"
 msgstr "FATAAL: slechte tty"
 
-#: login-utils/login.c:415
+#: login-utils/login.c:411
 #, c-format
 msgid "login: -h for super-user only.\n"
 msgstr "login: optie '-h' kan alleen door root gebruikt worden\n"
 
-#: login-utils/login.c:458
+#: login-utils/login.c:454
 #, c-format
 msgid "usage: login [-fp] [username]\n"
 msgstr "Gebruik:  login [-fp] [gebruikersnaam]\n"
 
-#: login-utils/login.c:551
+#: login-utils/login.c:547
 #, c-format
 msgid "login: PAM Failure, aborting: %s\n"
 msgstr "login: PAM-fout -- gestopt: %s\n"
 
-#: login-utils/login.c:553
+#: login-utils/login.c:549
 #, c-format
 msgid "Couldn't initialize PAM: %s"
 msgstr "Kan PAM niet initialiseren: %s"
 
-#: login-utils/login.c:570
+#: login-utils/login.c:566
 msgid "login: "
 msgstr "inlognaam: "
 
-#: login-utils/login.c:610
+#: login-utils/login.c:606
 #, c-format
 msgid "FAILED LOGIN %d FROM %s FOR %s, %s"
 msgstr "INLOGPOGING %d IS MISLUKT VANAF %s VOOR %s -- %s"
 
-#: login-utils/login.c:615
+#: login-utils/login.c:611
 #, c-format
 msgid ""
 "Login incorrect\n"
@@ -6583,17 +6583,17 @@ msgstr ""
 "Inloggegevens onjuist\n"
 "\n"
 
-#: login-utils/login.c:624
+#: login-utils/login.c:620
 #, c-format
 msgid "TOO MANY LOGIN TRIES (%d) FROM %s FOR %s, %s"
 msgstr "TE VEEL INLOGPOGINGEN (%d) VANAF %s VOOR %s -- %s"
 
-#: login-utils/login.c:628
+#: login-utils/login.c:624
 #, c-format
 msgid "FAILED LOGIN SESSION FROM %s FOR %s, %s"
 msgstr "INLOGSESSIE IS MISLUKT VANAF %s VOOR %s -- %s"
 
-#: login-utils/login.c:633
+#: login-utils/login.c:629
 #, c-format
 msgid ""
 "\n"
@@ -6602,7 +6602,7 @@ msgstr ""
 "\n"
 "Inloggegevens onjuist\n"
 
-#: login-utils/login.c:661 login-utils/login.c:668 login-utils/login.c:702
+#: login-utils/login.c:657 login-utils/login.c:664 login-utils/login.c:698
 #, c-format
 msgid ""
 "\n"
@@ -6611,120 +6611,120 @@ msgstr ""
 "\n"
 "Sessie-instellingsprobleem -- gestopt\n"
 
-#: login-utils/login.c:662
+#: login-utils/login.c:658
 #, c-format
 msgid "NULL user name in %s:%d. Abort."
 msgstr "Lege gebruikersnaam in %s:%d -- gestopt"
 
-#: login-utils/login.c:669
+#: login-utils/login.c:665
 #, c-format
 msgid "Invalid user name \"%s\" in %s:%d. Abort."
 msgstr "Onjuiste gebruikersnaam '%s' in %s:%d -- gestopt"
 
-#: login-utils/login.c:688
+#: login-utils/login.c:684
 #, c-format
 msgid "login: Out of memory\n"
 msgstr "login: Onvoldoende geheugen beschikbaar\n"
 
-#: login-utils/login.c:732
+#: login-utils/login.c:728
 msgid "Illegal username"
 msgstr "Ongeldige gebruikersnaam"
 
-#: login-utils/login.c:775
+#: login-utils/login.c:771
 #, c-format
 msgid "%s login refused on this terminal.\n"
 msgstr "Inloggen door %s op deze terminal is geweigerd.\n"
 
-#: login-utils/login.c:780
+#: login-utils/login.c:776
 #, c-format
 msgid "LOGIN %s REFUSED FROM %s ON TTY %s"
 msgstr "INLOGGEN DOOR %s VANAF %s IS GEWEIGERD OP TTY %s"
 
-#: login-utils/login.c:784
+#: login-utils/login.c:780
 #, c-format
 msgid "LOGIN %s REFUSED ON TTY %s"
 msgstr "INLOGGEN DOOR %s IS GEWEIGERD OP TTY %s"
 
-#: login-utils/login.c:838
+#: login-utils/login.c:834
 #, c-format
 msgid "Login incorrect\n"
 msgstr "Inloggegevens onjuist\n"
 
-#: login-utils/login.c:1063
+#: login-utils/login.c:1059
 #, c-format
 msgid "DIALUP AT %s BY %s"
 msgstr "INBELLEN OP %s DOOR %s"
 
-#: login-utils/login.c:1070
+#: login-utils/login.c:1066
 #, c-format
 msgid "ROOT LOGIN ON %s FROM %s"
 msgstr "ROOT-LOGIN OP %s VANAF %s"
 
-#: login-utils/login.c:1073
+#: login-utils/login.c:1069
 #, c-format
 msgid "ROOT LOGIN ON %s"
 msgstr "ROOT-LOGIN OP %s"
 
-#: login-utils/login.c:1076
+#: login-utils/login.c:1072
 #, c-format
 msgid "LOGIN ON %s BY %s FROM %s"
 msgstr "LOGIN OP %s DOOR %s VANAF %s"
 
-#: login-utils/login.c:1079
+#: login-utils/login.c:1075
 #, c-format
 msgid "LOGIN ON %s BY %s"
 msgstr "LOGIN OP %s DOOR %s"
 
-#: login-utils/login.c:1100
+#: login-utils/login.c:1096
 #, c-format
 msgid "You have new mail.\n"
 msgstr "U hebt nieuwe e-mail.\n"
 
-#: login-utils/login.c:1102
+#: login-utils/login.c:1098
 #, c-format
 msgid "You have mail.\n"
 msgstr "U hebt e-mail.\n"
 
-#: login-utils/login.c:1146
+#: login-utils/login.c:1142
 #, c-format
 msgid "login: failure forking: %s"
 msgstr "login: kan geen nieuw proces starten: %s"
 
-#: login-utils/login.c:1193
+#: login-utils/login.c:1189
 #, c-format
 msgid "TIOCSCTTY failed: %m"
 msgstr "ioctl(TIOCSCTTY) is mislukt: %m"
 
-#: login-utils/login.c:1199
+#: login-utils/login.c:1195
 msgid "setuid() failed"
 msgstr "setuid() is mislukt"
 
-#: login-utils/login.c:1205
+#: login-utils/login.c:1201
 #, c-format
 msgid "No directory %s!\n"
 msgstr "Er is geen map %s!\n"
 
-#: login-utils/login.c:1209
+#: login-utils/login.c:1205
 #, c-format
 msgid "Logging in with home = \"/\".\n"
 msgstr "Ingelogd met home = '/'.\n"
 
-#: login-utils/login.c:1217
+#: login-utils/login.c:1213
 #, c-format
 msgid "login: no memory for shell script.\n"
 msgstr "login: onvoldoende geheugen beschikbaar voor shell-script\n"
 
-#: login-utils/login.c:1244
+#: login-utils/login.c:1240
 #, c-format
 msgid "login: couldn't exec shell script: %s.\n"
 msgstr "login: kan shell-script niet uitvoeren: %s\n"
 
-#: login-utils/login.c:1247
+#: login-utils/login.c:1243
 #, c-format
 msgid "login: no shell: %s.\n"
 msgstr "login: geen shell: %s\n"
 
-#: login-utils/login.c:1262
+#: login-utils/login.c:1258
 #, c-format
 msgid ""
 "\n"
@@ -6733,65 +6733,65 @@ msgstr ""
 "\n"
 "%s inlognaam: "
 
-#: login-utils/login.c:1273
+#: login-utils/login.c:1269
 #, c-format
 msgid "login name much too long.\n"
 msgstr "inlognaam is veel te lang\n"
 
-#: login-utils/login.c:1274
+#: login-utils/login.c:1270
 msgid "NAME too long"
 msgstr "NAAM is te lang"
 
-#: login-utils/login.c:1281
+#: login-utils/login.c:1277
 #, c-format
 msgid "login names may not start with '-'.\n"
 msgstr "inlognamen mogen niet beginnen met '-'\n"
 
-#: login-utils/login.c:1291
+#: login-utils/login.c:1287
 #, c-format
 msgid "too many bare linefeeds.\n"
 msgstr "te veel witregels\n"
 
-#: login-utils/login.c:1292
+#: login-utils/login.c:1288
 msgid "EXCESSIVE linefeeds"
 msgstr "EXCESSIEF aantal witregels"
 
-#: login-utils/login.c:1324
+#: login-utils/login.c:1320
 #, c-format
 msgid "Login timed out after %d seconds\n"
 msgstr "Inloggen duurde te lang: afgebroken na %d seconden.\n"
 
-#: login-utils/login.c:1412
+#: login-utils/login.c:1408
 #, c-format
 msgid "Last login: %.*s "
 msgstr "Laatste keer ingelogd: %.*s "
 
-#: login-utils/login.c:1416
+#: login-utils/login.c:1412
 #, c-format
 msgid "from %.*s\n"
 msgstr "vanaf %.*s\n"
 
-#: login-utils/login.c:1419
+#: login-utils/login.c:1415
 #, c-format
 msgid "on %.*s\n"
 msgstr "op %.*s\n"
 
-#: login-utils/login.c:1439
+#: login-utils/login.c:1435
 #, c-format
 msgid "LOGIN FAILURE FROM %s, %s"
 msgstr "INLOGGEN IS MISLUKT VANAF %s -- %s"
 
-#: login-utils/login.c:1442
+#: login-utils/login.c:1438
 #, c-format
 msgid "LOGIN FAILURE ON %s, %s"
 msgstr "INLOGGEN IS MISLUKT OP %s -- %s"
 
-#: login-utils/login.c:1446
+#: login-utils/login.c:1442
 #, c-format
 msgid "%d LOGIN FAILURES FROM %s, %s"
 msgstr "%d INLOGMISLUKKINGEN VANAF %s -- %s"
 
-#: login-utils/login.c:1449
+#: login-utils/login.c:1445
 #, c-format
 msgid "%d LOGIN FAILURES ON %s, %s"
 msgstr "%d INLOGMISLUKKINGEN OP %s --  %s"
@@ -7895,7 +7895,7 @@ msgstr ""
 "lezen\n"
 "  -r | --read-only           een alleen-lezen lus-apparaat instellen\n"
 "  -s | --show                apparaatnaam tonen (met '-f <bestand>')\n"
-"  -v | --verbose             breedsprakige uitvoer\n"
+"  -v | --verbose             gedetailleerde uitvoer produceren\n"
 
 #: mount/lomount.c:483 mount/sundries.c:206 mount/xmalloc.c:29
 #, c-format
@@ -8313,7 +8313,7 @@ msgstr ""
 "Gebruik:  mount                 : aangekoppelde bestandssystemen tonen\n"
 "          mount -l              : idem, inclusief volumenlabels\n"
 "          mount -h              : deze hulptekst tonen\n"
-"          mount -V              : versienummer tonen\n"
+"          mount -V              : programmaversie tonen\n"
 "\n"
 "Tot zover het deel dat informatie weergeeft.  Nu het aankoppelen.\n"
 "De algemene vorm is:  'mount [-t bestandssysteemsoort] iets ergens'.\n"
@@ -9499,8 +9499,8 @@ msgstr ""
 "  -n         autodetectie van bytevolgorde uitzetten\n"
 "  -r         alle tellers opnieuw op nul instellen (alleen door root)\n"
 "  -s         individuele tellers in functies weergeven\n"
-"  -v         breedsprakige uitvoer\n"
-"  -V         versie tonen en afsluiten\n"
+"  -v         gedetailleerde uitvoer produceren\n"
+"  -V         programmaversie tonen\n"
 
 #: sys-utils/readprofile.c:284
 #, c-format
@@ -9578,8 +9578,8 @@ msgstr ""
 "    -s | --seconds <seconden>  aantal te slapen seconden\n"
 "    -t | --time <tijdstip>     ontwakingstijdstip\n"
 "    -u | --utc                 de hardwareklok bevat UTC\n"
-"    -v | --verbose             breedsprakige uitvoer\n"
-"    -V | --version             versie-informatie tonen\n"
+"    -v | --verbose             gedetailleerde uitvoer produceren\n"
+"    -V | --version             programmaversie tonen\n"
 
 #: sys-utils/rtcwake.c:138
 msgid "read rtc time"
