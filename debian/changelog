@@ -1,3 +1,21 @@
+util-linux (2.14~rc2-0) experimental; urgency=low
+
+  [Steve Grubb]
+
+  * login: audit log injection attack via login
+
+  [Karel Zak]
+
+  * po: merge changes
+   - po: update it.po (from translationproject.org) (Marco Colombo)
+   - po: update nl.po (from translationproject.org) (Benno Schulenberg)
+  * ionice: update man page to reflect IDLE class change in  2.6.25
+  * scriptreplay: gettextize a forgotten messages
+  * docs: update v2.14 ReleaseNotes
+  * build-sys: release++
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 28 Apr 2008 19:51:41 -0600
+
 util-linux (2.14~rc1-1) experimental; urgency=low
 
   * New upstream version
