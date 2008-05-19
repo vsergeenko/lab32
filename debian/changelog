@@ -1,3 +1,26 @@
+util-linux (2.14~rc3-0) experimental; urgency=low
+
+
+  [James Youngman]
+
+  * docs: we already rewrote the scriptreplay script; remove that TODO entry
+
+  [Karel Zak]
+
+  * setarch: add fallback for linux/personality
+  * fdisk: doesn't recognize the VMware ESX partitions
+  * build-sys: add support ionice for Super-H architecture
+  * mount: remount doesn't care about loop=
+  * po: merge changes
+    - po: update cs.po (from translationproject.org) (Petr Pisar)
+    - po: update nl.po (from translationproject.org) (Benno Schulenberg)
+    - po: update it.po (from translationproject.org) (Marco Colombo)
+    - po: update vi.po (from translationproject.org) (Clytie Siddall)
+  * docs: update 2.14 ReleaseNotes
+  * build-sys: release++
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 19 May 2008 06:31:20 -0600
+
 util-linux (2.14~rc2-0) experimental; urgency=low
 
   [Steve Grubb]
