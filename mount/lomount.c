@@ -960,7 +960,7 @@ main(int argc, char **argv) {
 	delete = find = all = 0;
 	off = 0;
         slimit = 0;
-	assoc = offset = encryption = passfd = NULL;
+	assoc = offset = sizelimit = encryption = passfd = NULL;
 	keysize = NULL;
 
 	progname = argv[0];
