@@ -1,5 +1,17 @@
-util-linux (2.14~rc3-0) experimental; urgency=low
+util-linux (2.14~rc3-1) experimental; urgency=low
 
+  [LaMont Jones]
+
+  * lomount: initialize sizelimit (lost in merge).  LP: #230974
+  * meta: fix description of bsdutils.  Closes: #482098
+
+  [Nobuhiro Iwamatsu]
+
+  * control: add support for sh4.  Closes: #479509
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 27 May 2008 22:45:49 -0600
+
+util-linux (2.14~rc3-0) experimental; urgency=low
 
   [James Youngman]
 
