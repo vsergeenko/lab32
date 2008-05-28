@@ -38,7 +38,7 @@ Description: Locales files for util-linux
  messages in other languages than English.
 
 Package: mount
-Architecture: alpha amd64 arm armeb armel hppa i386 ia64 lpia m32r m68k mips mipsel powerpc ppc64 sh s390 sparc sparc64
+Architecture: alpha amd64 arm armeb armel hppa i386 ia64 lpia m32r m68k mips mipsel powerpc ppc64 sh4 s390 sparc sparc64
 Essential: yes
 Section: admin
 Pre-Depends: ${shlibs:Depends}
@@ -59,7 +59,7 @@ Description: Basic utilities from 4.4BSD-Lite
  The remaining standard BSD utilities are provided by bsdmainutils.
 
 Package: fdisk-udeb
-Architecture: alpha amd64 arm armeb armel hppa i386 ia64 lpia m32r mips mipsel powerpc ppc64 hurd-i386 sparc s390
+Architecture: alpha amd64 arm armeb armel hppa i386 ia64 lpia m32r mips mipsel powerpc ppc64 hurd-i386 sh4 sparc s390
 Priority: extra
 Section: debian-installer
 Depends: ${shlibs:Depends}
@@ -68,7 +68,7 @@ XB-Installer-Menu-Item: 99900
 Description: Manually partition a hard drive (fdisk)
 
 Package: cfdisk-udeb
-Architecture: alpha amd64 arm armeb armel hppa i386 ia64 lpia m32r mips mipsel powerpc ppc64 hurd-i386 s390
+Architecture: alpha amd64 arm armeb armel hppa i386 ia64 lpia m32r mips mipsel powerpc ppc64 hurd-i386 sh4 s390
 Priority: extra
 Section: debian-installer
 Depends: ${shlibs:Depends}
