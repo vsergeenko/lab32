@@ -55,11 +55,8 @@ Depends: ${shlibs:Depends}
 Recommends: bsdmainutils
 Description: Basic utilities from 4.4BSD-Lite
  This package contains the bare minimum number of BSD utilities needed
- to boot a Debian system.  You should probably also install
- bsdmainutils to get the remaining standard BSD utilities.
- .
- Included are: cal, col, colcrt, colrm, column, logger, renice,
- script, scriptreplay, ul, wall
+ to boot a Debian system: logger, renice, script, scriptreplay, and wall.
+ The remaining standard BSD utilities are provided by bsdmainutils.
 
 Package: fdisk-udeb
 Architecture: alpha amd64 arm armeb armel hppa i386 ia64 lpia m32r mips mipsel powerpc ppc64 hurd-i386 sparc s390
