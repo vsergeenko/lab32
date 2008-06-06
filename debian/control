@@ -64,7 +64,7 @@ Priority: extra
 Section: debian-installer
 Depends: ${shlibs:Depends}
 XC-Package-Type: udeb
-XB-Installer-Menu-Item: 99900
+XB-Installer-Menu-Item: 99999
 Description: Manually partition a hard drive (fdisk)
 
 Package: cfdisk-udeb
@@ -73,5 +73,5 @@ Priority: extra
 Section: debian-installer
 Depends: ${shlibs:Depends}
 XC-Package-Type: udeb
-XB-Installer-Menu-Item: 99900
+XB-Installer-Menu-Item: 99999
 Description: Manually partition a hard drive (cfdisk)
