@@ -1,3 +1,34 @@
+util-linux (2.14-1) unstable; urgency=low
+
+  [Volker Schatz]
+
+  * ddate: 11th, 12th and 13th of month
+
+  [Paulius Zaleckas]
+
+  * rtcwake: fix the default mode to "standby"
+
+  [Christophe Blaess]
+
+  * mount: fix a small typo in mount.8
+
+  [Frans Pop]
+
+  * Update menu-item number for Debian Installer components.  Closes: #484407
+
+  [Karel Zak]
+
+  * docs: update AUTHORS file
+  * docs: update v2.14 ReleaseNotes
+  * build-sys: release++ (v2.14)
+  * po: merge changes
+
+  [localization folks]
+
+  * po: update hu.po (from translationproject.org) (Gabor Kelemen)
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 16 Jun 2008 07:43:29 -0600
+
 util-linux (2.14~rc3-1) experimental; urgency=low
 
   [LaMont Jones]
