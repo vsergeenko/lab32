@@ -40,15 +40,10 @@ ifneq ($(DISTRO),Debian)
 CONFOPTS += --with-fsprobe=volume_id 
 endif
 
-configure: configure-stamp
-configure-stamp:
-	dh_testdir
-	./configure $(CONFOPTS) $(CROSS)
-	touch configure-stamp
-
-build: configure-stamp build-stamp
+build: build-stamp
 build-stamp:
 	dh_testdir
+	./configure $(CONFOPTS) $(CROSS)
 	$(MAKE) all CPU=$(arch) arch=$(arch)
 	touch build-stamp
 
@@ -65,7 +60,7 @@ clean-preunpatch:
 
 clean: clean-preunpatch
 	find . -name \*.o -exec rm {} \;
-	rm -f build-stamp configure-stamp
+	rm -f build-stamp
 
 install: build
 	dh_testdir
