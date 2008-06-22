@@ -1,5 +1,9 @@
 util-linux (2.14-1) unstable; urgency=low
 
+  [LaMont Jones]
+
+  * rules: drop separate configure target.  Closes: #487497
+
   [Volker Schatz]
 
   * ddate: 11th, 12th and 13th of month
@@ -27,7 +31,7 @@ util-linux (2.14-1) unstable; urgency=low
 
   * po: update hu.po (from translationproject.org) (Gabor Kelemen)
 
- -- LaMont Jones <lamont@debian.org>  Mon, 16 Jun 2008 07:43:29 -0600
+ -- LaMont Jones <lamont@debian.org>  Sun, 22 Jun 2008 08:17:41 -0600
 
 util-linux (2.14~rc3-1) experimental; urgency=low
 
