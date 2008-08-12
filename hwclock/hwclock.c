@@ -847,8 +847,7 @@ calculate_adjustment(const double factor,
                      const double not_adjusted,
                      const time_t systime,
                      int *adjustment_p,
-                     double *retro_p,
-                     const int debug ) {
+                     double *retro_p) {
 /*----------------------------------------------------------------------------
   Do the drift adjustment calculation.
 
@@ -988,8 +987,7 @@ do_adjustment(struct adjtime *adjtime_p,
                          adjtime_p->last_adj_time,
                          adjtime_p->not_adjusted,
                          hclocktime,
-                         &adjustment, &retro,
-                         debug );
+                         &adjustment, &retro);
     if (adjustment > 0 || adjustment < -1) {
       set_hardware_clock_exact(hclocktime + adjustment,
                                time_inc(read_time, -retro),
@@ -1101,8 +1099,9 @@ manipulate_clock(const bool show, const bool adjust, const bool noadjfile,
         } else if (set) {
           set_hardware_clock_exact(set_time, startup_time,
 				      universal, testing);
-          adjust_drift_factor(&adjtime, set_time, hclock_valid, hclocktime,
-			      time_diff(read_time, startup_time));
+	  if (!noadjfile)
+            adjust_drift_factor(&adjtime, set_time, hclock_valid, hclocktime,
+			        time_diff(read_time, startup_time));
         } else if (adjust) {
           do_adjustment(&adjtime, hclock_valid, hclocktime,
                         read_time, universal, testing);
@@ -1118,8 +1117,9 @@ manipulate_clock(const bool show, const bool adjust, const bool noadjfile,
 
           set_hardware_clock_exact((time_t) reftime.tv_sec, reftime,
                                    universal, testing);
-          adjust_drift_factor(&adjtime, (time_t) reftime.tv_sec, hclock_valid,
-                              hclocktime, (double) read_time.tv_usec / 1E6);
+	  if (!noadjfile)
+            adjust_drift_factor(&adjtime, (time_t) reftime.tv_sec, hclock_valid,
+                                hclocktime, (double) read_time.tv_usec / 1E6);
         } else if (hctosys) {
           rc = set_system_clock(hclock_valid, hclocktime, testing);
           if (rc) {
@@ -1502,7 +1502,7 @@ main(int argc, char **argv) {
 		permitted = TRUE;
 	else {
 		/* program is designed to run setuid (in some situations) */
-		if (set || hctosys || systohc || adjust) {
+		if (set || systohc || adjust) {
 			fprintf(stderr,
 				_("Sorry, only the superuser can change "
 				  "the Hardware Clock.\n"));
