@@ -51,6 +51,7 @@
 #include "xstrncpy.h"
 #include "nls.h"
 #include "blkdev.h"
+#include "pathnames.h"
 
 #ifdef HAVE_LIBUUID
 #include <uuid/uuid.h>
@@ -131,10 +132,6 @@ is_sparc64(void) {
  *
  * What to do? Let us allow the user to specify the pagesize explicitly.
  *
- * Update 05-Feb-2007 (kzak):
- *      - use sysconf(_SC_PAGESIZE) to be consistent with the rest of
- *        util-linux code.  It is the standardized and preferred way of
- *        querying page size.
  */
 static int user_pagesize;
 static int pagesize;
@@ -144,7 +141,7 @@ struct swap_header_v1 *p;
 static void
 init_signature_page(void) {
 
-	int kernel_pagesize = pagesize = (int) sysconf(_SC_PAGESIZE);
+	int kernel_pagesize = pagesize = getpagesize();
 
 	if (user_pagesize) {
 		if ((user_pagesize & (user_pagesize-1)) ||
@@ -388,35 +385,6 @@ check_blocks(void) {
 		printf(_("%lu bad pages\n"), badpages);
 }
 
-static long
-valid_offset (int fd, off_t offset) {
-	char ch;
-
-	if (lseek (fd, offset, 0) < 0)
-		return 0;
-	if (read (fd, &ch, 1) < 1)
-		return 0;
-	return 1;
-}
-
-static off_t
-find_size (int fd) {
-	off_t high, low;
-
-	low = 0;
-	for (high = 1; high > 0 && valid_offset (fd, high); high *= 2)
-		low = high;
-	while (low < high - 1) {
-		const off_t mid = (low + high) / 2;
-
-		if (valid_offset (fd, mid))
-			low = mid;
-		else
-			high = mid;
-	}
-	return (low + 1);
-}
-
 /* return size in pages, to avoid integer overflow */
 static unsigned long
 get_size(const char  *file) {
@@ -431,7 +399,7 @@ get_size(const char  *file) {
 	if (blkdev_get_size(fd, &size) == 0)
 		size /= pagesize;
 	else
-		size = find_size(fd) / pagesize;
+		size = blkdev_find_size(fd) / pagesize;
 
 	close(fd);
 	return size;
@@ -454,7 +422,7 @@ check_mount(void) {
 	FILE * f;
 	struct mntent * mnt;
 
-	if ((f = setmntent (MOUNTED, "r")) == NULL)
+	if ((f = setmntent (_PATH_MOUNTED, "r")) == NULL)
 		return 0;
 	while ((mnt = getmntent (f)) != NULL)
 		if (strcmp (device_name, mnt->mnt_fsname) == 0)
@@ -607,9 +575,12 @@ main(int argc, char ** argv) {
 			version = 1;
 		else
 		/* use version 1 as default, if possible */
+#ifdef __linux__
 		if (get_linux_version() < KERNEL_VERSION(2,1,117))
 			version = 0;
-		else if (pagesize < 2048)
+		else
+#endif
+		if (pagesize < 2048)
 			version = 0;
 		else
 			version = 1;
@@ -629,10 +600,12 @@ main(int argc, char ** argv) {
 
 	if (version == 0)
 		maxpages = V0_MAX_PAGES;
+#ifdef __linux__
 	else if (get_linux_version() >= KERNEL_VERSION(2,3,4))
 		maxpages = PAGES;
 	else if (get_linux_version() >= KERNEL_VERSION(2,2,1))
 		maxpages = V1_MAX_PAGES;
+#endif
 	else
 		maxpages = V1_OLD_MAX_PAGES;
 
@@ -746,7 +719,7 @@ use the -f option to force it.\n"),
 #endif
 
 #ifdef HAVE_LIBSELINUX
-	if (S_ISREG(statbuf.st_mode) && is_selinux_enabled()) {
+	if (S_ISREG(statbuf.st_mode) && is_selinux_enabled() > 0) {
 		security_context_t context_string;
 		security_context_t oldcontext;
 		context_t newcontext;

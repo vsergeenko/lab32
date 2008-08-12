@@ -2,7 +2,6 @@
 /*
  * losetup.c - setup and control loop devices
  */
-
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -25,6 +24,7 @@
 #include "sundries.h"
 #include "xmalloc.h"
 #include "realpath.h"
+#include "pathnames.h"
 
 #define SIZE(a) (sizeof(a)/sizeof(a[0]))
 
@@ -64,17 +64,16 @@ loop_info64_to_old(const struct loop_info64 *info64, struct loop_info *info)
 
 #define DEV_LOOP_PATH		"/dev/loop"
 #define DEV_PATH		"/dev"
-#define SYSFS_BLOCK_PATH	"/sys/block"
 #define LOOPMAJOR		7
 #define NLOOPS_DEFAULT		8	/* /dev/loop[0-7] */
 
 struct looplist {
 	int		flag;		/* scanning options */
-	int		ndef;		/* number of tested default devices */
-	struct dirent   **names;	/* scandir-like list of loop devices */
-	int		nnames;		/* number of items in names */
-	int		ncur;		/* current possition in direcotry */
-	char		name[32];	/* device name */
+	FILE		*proc;		/* /proc/partitions */
+	int		ncur;		/* current possition */
+	int		*minors;	/* ary of minor numbers (when scan whole /dev) */
+	int		nminors;	/* number of items in *minors */
+	char		name[128];	/* device name */
 	int		ct_perm;	/* count permission problems */
 	int		ct_succ;	/* count number of successfully
 					   detected devices */
@@ -83,7 +82,7 @@ struct looplist {
 #define LLFLG_USEDONLY	(1 << 1)	/* return used devices only */
 #define LLFLG_FREEONLY	(1 << 2)	/* return non-used devices */
 #define LLFLG_DONE	(1 << 3)	/* all is done */
-#define LLFLG_SYSFS	(1 << 4)	/* try to use /sys/block */
+#define LLFLG_PROCFS	(1 << 4)	/* try to found used devices in /proc/partitions */
 #define LLFLG_SUBDIR	(1 << 5)	/* /dev/loop/N */
 #define LLFLG_DFLT	(1 << 6)	/* directly try to check default loops */
 
@@ -103,48 +102,34 @@ is_loop_used(int fd)
 	return ioctl (fd, LOOP_GET_STATUS, &li) == 0;
 }
 
-static char *
-looplist_mk_devname(struct looplist *ll, int num)
-{
-	if (ll->flag & LLFLG_SUBDIR)
-		snprintf(ll->name, sizeof(ll->name),
-				DEV_LOOP_PATH "/%d", num);
-	else
-		snprintf(ll->name, sizeof(ll->name),
-				DEV_PATH "/loop%d", num);
-
-	return is_loop_device(ll->name) ? ll->name : NULL;
-}
-
-/* ignores all non-loop devices, default loop devices */
 static int
-filter_loop(const struct dirent *d)
+is_loopfd_autoclear(int fd)
 {
-	return strncmp(d->d_name, "loop", 4) == 0;
-}
+	struct loop_info lo;
+	struct loop_info64 lo64;
 
-/* all loops exclude default loops */
-static int
-filter_loop_ndflt(const struct dirent *d)
-{
-	int mn;
+	if (ioctl(fd, LOOP_GET_STATUS64, &lo64) == 0) {
+		if (lo64.lo_flags & LO_FLAGS_AUTOCLEAR)
+			return 1;
 
-	if (strncmp(d->d_name, "loop", 4) == 0 &&
-			sscanf(d->d_name, "loop%d", &mn) == 1 &&
-			mn >= NLOOPS_DEFAULT)
-		return 1;
+	} else if (ioctl(fd, LOOP_GET_STATUS, &lo) == 0) {
+		if (lo.lo_flags & LO_FLAGS_AUTOCLEAR)
+			return 1;
+	}
 	return 0;
 }
 
-static int
-filter_loop_num(const struct dirent *d)
+int
+is_loop_autoclear(const char *device)
 {
-	char *end = NULL;
-	int mn = strtol(d->d_name, &end, 10);
+	int fd, rc;
 
-	if (mn >= NLOOPS_DEFAULT && end && *end == '\0')
-		return 1;
-	return 0;
+	if ((fd = open(device, O_RDONLY)) < 0)
+		return 0;
+	rc = is_loopfd_autoclear(fd);
+
+	close(fd);
+	return rc;
 }
 
 static int
@@ -154,7 +139,6 @@ looplist_open(struct looplist *ll, int flag)
 
 	memset(ll, 0, sizeof(*ll));
 	ll->flag = flag;
-	ll->ndef = -1;
 	ll->ncur = -1;
 
 	if (stat(DEV_PATH, &st) == -1 || (!S_ISDIR(st.st_mode)))
@@ -164,9 +148,8 @@ looplist_open(struct looplist *ll, int flag)
 		ll->flag |= LLFLG_SUBDIR;	/* /dev/loop/ exists */
 
 	if ((ll->flag & LLFLG_USEDONLY) &&
-			stat(SYSFS_BLOCK_PATH, &st) == 0 &&
-			S_ISDIR(st.st_mode))
-		ll->flag |= LLFLG_SYSFS;	/* try to use /sys/block/loopN */
+			stat(_PATH_PROC_PARTITIONS, &st) == 0)
+		ll->flag |= LLFLG_PROCFS;	/* try /proc/partitions */
 
 	ll->flag |= LLFLG_DFLT;			/* required! */
 	return 0;
@@ -175,135 +158,184 @@ looplist_open(struct looplist *ll, int flag)
 static void
 looplist_close(struct looplist *ll)
 {
-	if (ll->names) {
-		for(++ll->ncur; ll->ncur < ll->nnames; ll->ncur++)
-			free(ll->names[ll->ncur]);
-
-		free(ll->names);
-		ll->names = NULL;
-		ll->nnames = 0;
-	}
+	if (ll->minors)
+		free(ll->minors);
+	if (ll->proc)
+		fclose(ll->proc);
+	ll->minors = NULL;
+	ll->proc = NULL;
 	ll->ncur = -1;
 	ll->flag |= LLFLG_DONE;
 }
 
 static int
-looplist_is_wanted(struct looplist *ll, int fd)
+looplist_open_dev(struct looplist *ll, int lnum)
 {
-	int ret;
+	struct stat st;
+	int used;
+	int fd;
 
+	/* create a full device path */
+	snprintf(ll->name, sizeof(ll->name),
+		ll->flag & LLFLG_SUBDIR ?
+			DEV_LOOP_PATH "/%d" :
+			DEV_PATH "/loop%d",
+		lnum);
+
+	fd = open(ll->name, O_RDONLY);
+	if (fd == -1) {
+		if (errno == EACCES)
+			ll->ct_perm++;
+		return -1;
+	}
+	if (fstat(fd, &st) == -1)
+		goto error;
+	if (!S_ISBLK(st.st_mode) || major(st.st_rdev) != LOOPMAJOR)
+		goto error;
+
+	ll->ct_succ++;
+
+	/* check if the device is wanted */
 	if (!(ll->flag & (LLFLG_USEDONLY | LLFLG_FREEONLY)))
-		return 1;
-	ret = is_loop_used(fd);
+		return fd;
 
-	if ((ll->flag & LLFLG_USEDONLY) && ret == 0)
-		return 0;
-	if ((ll->flag & LLFLG_FREEONLY) && ret == 1)
-		return 0;
+	used = is_loop_used(fd);
 
-	return 1;
+	if ((ll->flag & LLFLG_USEDONLY) && used)
+		return fd;
+	if ((ll->flag & LLFLG_FREEONLY) && !used)
+		return fd;
+error:
+	close(fd);
+	return -1;
+}
+
+/* returns <N> from "loop<N>" */
+static int
+name2minor(int hasprefix, const char *name)
+{
+	int n;
+	char *end;
+
+	if (hasprefix) {
+		if (strncmp(name, "loop", 4))
+			return -1;
+		name += 4;
+	}
+	n = strtol(name, &end, 10);
+	if (end && end != name && *end == '\0' && n >= 0)
+		return n;
+	return -1;
+}
+
+static int
+cmpnum(const void *p1, const void *p2)
+{
+	return (* (int *) p1) > (* (int *) p2);
+}
+
+/*
+ * The classic scandir() is more expensive and less portable.
+ * We needn't full loop device names -- minor numers (loop<N>)
+ * are enough.
+ */
+static int
+loop_scandir(const char *dirname, int **ary, int hasprefix)
+{
+	DIR *dir;
+	struct dirent *d;
+	int n, count = 0, arylen = 0;
+
+	if (!dirname || !ary)
+		return -1;
+	dir = opendir(dirname);
+	if (!dir)
+		return -1;
+
+	*ary = NULL;
+
+	while((d = readdir(dir))) {
+		if (d->d_type != DT_BLK && d->d_type != DT_UNKNOWN)
+			continue;
+		n = name2minor(hasprefix, d->d_name);
+		if (n == -1 || n < NLOOPS_DEFAULT)
+			continue;
+		if (count + 1 > arylen) {
+			arylen += 1;
+			*ary = *ary ? realloc(*ary, arylen * sizeof(int)) :
+				      malloc(arylen * sizeof(int));
+			if (!*ary)
+				return -1;
+		}
+		(*ary)[count++] = n;
+	}
+	if (count)
+		qsort(*ary, count, sizeof(int), cmpnum);
+
+	closedir(dir);
+	return count;
 }
 
 static int
 looplist_next(struct looplist *ll)
 {
-	int fd;
-	int ret;
-	char *dirname, *dev;
+	int fd, n;
 
 	if (ll->flag & LLFLG_DONE)
 		return -1;
 
-	/* A) try to use /sys/block/loopN devices (for losetup -a only)
+	/* A) Look for used loop devices in /proc/partitions ("losetup -a" only)
 	 */
-	if (ll->flag & LLFLG_SYSFS) {
-		int mn;
+	if (ll->flag & LLFLG_PROCFS) {
+		char buf[BUFSIZ];
 
-		if (!ll->nnames) {
-			ll->nnames = scandir(SYSFS_BLOCK_PATH, &ll->names,
-						filter_loop, versionsort);
-			ll->ncur = -1;
-		}
-		for(++ll->ncur; ll->ncur < ll->nnames; ll->ncur++) {
-			ret = sscanf(ll->names[ll->ncur]->d_name, "loop%d", &mn);
-			free(ll->names[ll->ncur]);
-			if (ret != 1)
+		if (!ll->proc)
+			ll->proc = fopen(_PATH_PROC_PARTITIONS, "r");
+
+		while (ll->proc && fgets(buf, sizeof(buf), ll->proc)) {
+			int m;
+			unsigned long long sz;
+			char name[128];
+
+			if (sscanf(buf, " %d %d %llu %128[^\n ]",
+						   &m, &n, &sz, name) != 4)
 				continue;
-			dev = looplist_mk_devname(ll, mn);
-			if (dev) {
-				ll->ct_succ++;
-				if ((fd = open(dev, O_RDONLY)) > -1) {
-					if (looplist_is_wanted(ll, fd))
-						return fd;
-					close(fd);
-				} else if (errno == EACCES)
-					ll->ct_perm++;
-			}
+			if (m != LOOPMAJOR)
+				continue;
+			fd = looplist_open_dev(ll, n);
+			if (fd != -1)
+				return fd;
 		}
-		if (ll->nnames)
-			free(ll->names);
-		ll->names = NULL;
-		ll->ncur = -1;
-		ll->nnames = 0;
-		ll->flag &= ~LLFLG_SYSFS;
 		goto done;
 	}
+
 
 	/* B) Classic way, try first eight loop devices (default number
 	 *    of loop devices). This is enough for 99% of all cases.
 	 */
 	if (ll->flag & LLFLG_DFLT) {
 		for (++ll->ncur; ll->ncur < NLOOPS_DEFAULT; ll->ncur++) {
-			dev = looplist_mk_devname(ll, ll->ncur);
-			if (dev) {
-				ll->ct_succ++;
-				if ((fd = open(dev, O_RDONLY)) > -1) {
-					if (looplist_is_wanted(ll, fd))
-						return fd;
-					close(fd);
-				} else if (errno == EACCES)
-					ll->ct_perm++;
-			}
+			fd = looplist_open_dev(ll, ll->ncur);
+			if (fd != -1)
+				return fd;
 		}
 		ll->flag &= ~LLFLG_DFLT;
-		ll->ncur = -1;
 	}
-
 
 	/* C) the worst posibility, scan all /dev or /dev/loop
 	 */
-	dirname = ll->flag & LLFLG_SUBDIR ? DEV_LOOP_PATH : DEV_PATH;
-
-	if (!ll->nnames) {
-		ll->nnames = scandir(dirname, &ll->names,
-				ll->flag & LLFLG_SUBDIR ?
-					filter_loop_num : filter_loop_ndflt,
-				versionsort);
+	if (!ll->minors) {
+		ll->nminors = (ll->flag & LLFLG_SUBDIR) ?
+			loop_scandir(DEV_LOOP_PATH, &ll->minors, 0) :
+			loop_scandir(DEV_PATH, &ll->minors, 1);
 		ll->ncur = -1;
 	}
-
-	for(++ll->ncur; ll->ncur < ll->nnames; ll->ncur++) {
-		struct stat st;
-
-		snprintf(ll->name, sizeof(ll->name),
-			"%s/%s", dirname, ll->names[ll->ncur]->d_name);
-		free(ll->names[ll->ncur]);
-		ret = stat(ll->name, &st);
-
-		if (ret == 0 &&	S_ISBLK(st.st_mode) &&
-				major(st.st_rdev) == LOOPMAJOR &&
-				minor(st.st_rdev) >= NLOOPS_DEFAULT) {
-			ll->ct_succ++;
-			fd = open(ll->name, O_RDONLY);
-
-			if (fd != -1) {
-				if (looplist_is_wanted(ll, fd))
-					return fd;
-				close(fd);
-			} else if (errno == EACCES)
-				ll->ct_perm++;
-		}
+	for (++ll->ncur; ll->ncur < ll->nminors; ll->ncur++) {
+		fd = looplist_open_dev(ll, ll->minors[ll->ncur]);
+		if (fd != -1)
+			return fd;
 	}
+
 done:
 	looplist_close(ll);
 	return -1;
@@ -400,8 +432,9 @@ show_used_loop_devices (void) {
 	}
 	looplist_close(&ll);
 
-	if (ll.ct_succ && ll.ct_perm) {
-		error(_("%s: no permission to look at /dev/loop#"), progname);
+	if (!ll.ct_succ && ll.ct_perm) {
+		error(_("%s: no permission to look at /dev/loop%s<N>"), progname,
+				(ll.flag & LLFLG_SUBDIR) ? "/" : "");
 		return 1;
 	}
 	return 0;
@@ -547,8 +580,9 @@ find_unused_loop_device (void) {
 	if (devname)
 		return devname;
 
-	if (ll.ct_succ && ll.ct_perm)
-		error(_("%s: no permission to look at /dev/loop#"), progname);
+	if (!ll.ct_succ && ll.ct_perm)
+		error(_("%s: no permission to look at /dev/loop%s<N>"), progname,
+				(ll.flag & LLFLG_SUBDIR) ? "/" : "");
 	else if (ll.ct_succ)
 		error(_("%s: could not find any free loop device"), progname);
 	else
@@ -794,23 +828,15 @@ set_loop(const char *device, const char *file, unsigned long long offset,
 			i = ioctl(fd, LOOP_SET_STATUS, &loopinfo);
 			if (i)
 				perror("ioctl: LOOP_SET_STATUS");
-			else if (*options & SETLOOP_AUTOCLEAR)
-			{
-				i = ioctl(fd, LOOP_GET_STATUS, &loopinfo);
-				if (i || !(loopinfo.lo_flags & LO_FLAGS_AUTOCLEAR))
-					*options &= ~SETLOOP_AUTOCLEAR;
-			}
 		}
 		memset(&loopinfo, 0, sizeof(loopinfo));
 	}
-	else if (*options & SETLOOP_AUTOCLEAR)
-	{
-		i = ioctl(fd, LOOP_GET_STATUS64, &loopinfo64);
-		if (i || !(loopinfo64.lo_flags & LO_FLAGS_AUTOCLEAR))
-			*options &= ~SETLOOP_AUTOCLEAR;
-	}
-	memset(&loopinfo64, 0, sizeof(loopinfo64));
 
+	if ((*options & SETLOOP_AUTOCLEAR) && !is_loopfd_autoclear(fd))
+		/* kernel doesn't support loop auto-destruction */
+		*options &= ~SETLOOP_AUTOCLEAR;
+
+	memset(&loopinfo64, 0, sizeof(loopinfo64));
 
 	if (i) {
 		ioctl (fd, LOOP_CLR_FD, 0);

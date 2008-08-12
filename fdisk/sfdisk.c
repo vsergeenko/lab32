@@ -446,7 +446,10 @@ get_geometry(char *dev, int fd, int silent) {
     unsigned long long sectors;
     struct geometry R;
 
-    if (ioctl(fd, HDIO_GETGEO, &g)) {
+#ifdef HDIO_GETGEO
+    if (ioctl(fd, HDIO_GETGEO, &g))
+#endif
+    {
 	g.heads = g.sectors = g.cylinders = g.start = 0;
 	if (!silent)
 	    do_warn(_("Disk %s: cannot get geometry\n"), dev);
@@ -790,7 +793,12 @@ add_sector_and_offset(struct disk_desc *z) {
 /* tell the kernel to reread the partition tables */
 static int
 reread_ioctl(int fd) {
-    if (ioctl(fd, BLKRRPART)) {
+#ifdef BLKRRPART
+    if (ioctl(fd, BLKRRPART))
+#else
+    errno = ENOSYS;
+#endif
+    {
 	perror("BLKRRPART");
 
 	/* 2.6.8 returns EIO for a zero table */
@@ -1508,7 +1516,10 @@ msdos_partition(char *dev, int fd, unsigned long start, struct disk_desc *z) {
     struct sector *s;
     struct part_desc *partitions = &(z->partitions[0]);
     int pno = z->partno;
-    int bsd_later = (get_linux_version() >= KERNEL_VERSION(2,3,40));
+    int bsd_later = 1;
+#ifdef __linux__
+    bsd_later = (get_linux_version() >= KERNEL_VERSION(2,3,40));
+#endif
 
     if (!(s = get_sector(dev, fd, start)))
 	return 0;
@@ -2283,7 +2294,7 @@ read_input(char *dev, int interactive, struct disk_desc *z) {
  */
 
 static void version(void) {
-    printf("sfdisk (%s)", PACKAGE_STRING);
+    printf("sfdisk (%s)\n", PACKAGE_STRING);
 }
 
 static void

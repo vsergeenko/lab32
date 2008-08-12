@@ -1,6 +1,5 @@
 /*
- * A mount(8) for Linux 0.99.
- * mount.c,v 1.1.1.1 1993/11/18 08:40:51 jrs Exp
+ * A mount(8) for Linux.
  *
  * Modifications by many people. Distributed under GPL.
  */
@@ -339,7 +338,7 @@ append_context(const char *optname, char *optdata, char **extra_opts)
 	security_context_t raw = NULL;
 	char *data = NULL;
 
-	if (!is_selinux_enabled())
+	if (is_selinux_enabled() != 1)
 		/* ignore the option if we running without selinux */
 		return 0;
 
@@ -350,8 +349,8 @@ append_context(const char *optname, char *optdata, char **extra_opts)
 	data = *optdata =='"' ? strip_quotes(optdata) : optdata;
 
 	if (selinux_trans_to_raw_context(
-			(security_context_t) data, &raw)==-1 ||
-			raw==NULL)
+			(security_context_t) data, &raw) == -1 ||
+			raw == NULL)
 		return -1;
 
 	if (verbose)
@@ -1007,7 +1006,7 @@ update_mtab_entry(const char *spec, const char *node, const char *type,
 	if (!nomtab && mtab_does_not_exist()) {
 		if (verbose > 1)
 			printf(_("mount: no %s found - creating it..\n"),
-			       MOUNTED);
+			       _PATH_MOUNTED);
 		create_mtab ();
 	}
 
@@ -1087,6 +1086,7 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
   int loop = 0;
   const char *loopdev = 0, *loopfile = 0;
   struct stat statbuf;
+  int retries = 0;	/* Nr of retries for mount in case of ENOMEDIUM */
 
   /* copies for freeing on exit */
   const char *opts1, *spec1, *node1, *types1, *extra_opts1;
@@ -1149,6 +1149,7 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
       goto out;
   }
 
+mount_retry:
   block_signals (SIG_BLOCK);
 
   if (!fake) {
@@ -1378,6 +1379,17 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
       }
       break;
     }
+    case ENOMEDIUM:
+      if (retries < CRDOM_NOMEDIUM_RETRIES) {
+	      if (verbose)
+		      printf(_("mount: no medium found on %s ...trying again\n"),
+				 spec);
+              sleep(3);
+	      ++retries;
+              goto mount_retry;
+      }
+      error(_("mount: no medium found on %s"), spec);
+      break;
     default:
       error ("mount: %s", strerror (mnt_err)); break;
     }
@@ -1385,6 +1397,27 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
   res = EX_FAIL;
 
  out:
+
+#ifdef HAVE_LIBSELINUX
+  if (res != EX_FAIL && verbose && is_selinux_enabled() > 0) {
+      security_context_t raw = NULL, def = NULL;
+
+      if (getfilecon(node, &raw) > 0 &&
+		     security_get_initial_context("file", &def) == 0) {
+
+	  if (!selinux_file_context_cmp(raw, def))
+	      printf(_("mount: %s does not contain SELinux labels.\n"
+                   "       You just mounted an file system that supports labels which does not\n"
+                   "       contain labels, onto an SELinux box. It is likely that confined\n"
+                   "       applications will generate AVC messages and not be allowed access to\n"
+                   "       this file system.  For more details see restorecon(8) and mount(8).\n"),
+                   node);
+      }
+      freecon(raw);
+      freecon(def);
+  }
+#endif
+
   my_free(extra_opts1);
   my_free(spec1);
   my_free(node1);
@@ -1667,10 +1700,10 @@ static struct option longopts[] = {
 	{ "pass-fd", 1, 0, 'p' },
 	{ "keybits", 1, 0, 'k' },
 	{ "types", 1, 0, 't' },
-	{ "bind", 0, 0, 128 },
-	{ "move", 0, 0, 133 },
+	{ "bind", 0, 0, 'B' },
+	{ "move", 0, 0, 'M' },
 	{ "guess-fstype", 1, 0, 134 },
-	{ "rbind", 0, 0, 135 },
+	{ "rbind", 0, 0, 'R' },
 	{ "make-shared", 0, 0, 136 },
 	{ "make-slave", 0, 0, 137 },
 	{ "make-private", 0, 0, 138 },
@@ -1858,11 +1891,14 @@ main(int argc, char *argv[]) {
 	initproctitle(argc, argv);
 #endif
 
-	while ((c = getopt_long (argc, argv, "afFhik:lL:no:O:p:rsU:vVwt:",
+	while ((c = getopt_long (argc, argv, "aBfFhik:lL:Mno:O:p:rRsU:vVwt:",
 				 longopts, NULL)) != -1) {
 		switch (c) {
 		case 'a':	       /* mount everything in fstab */
 			++mount_all;
+			break;
+		case 'B': /* bind */
+			mounttype = MS_BIND;
 			break;
 		case 'f':	       /* fake: don't actually call mount(2) */
 			++fake;
@@ -1885,6 +1921,9 @@ main(int argc, char *argv[]) {
 		case 'L':
 			label = optarg;
 			break;
+		case 'M': /* move */
+			mounttype = MS_MOVE;
+			break;
 		case 'n':		/* do not write /etc/mtab */
 			++nomtab;
 			break;
@@ -1900,6 +1939,9 @@ main(int argc, char *argv[]) {
 		case 'r':		/* mount readonly */
 			readonly = 1;
 			readwrite = 0;
+			break;
+		case 'R': /* rbind */
+			mounttype = (MS_BIND | MS_REC);
 			break;
 		case 's':		/* allow sloppy mount options */
 			sloppy = 1;
@@ -1923,12 +1965,6 @@ main(int argc, char *argv[]) {
 		case 0:
 			break;
 
-		case 128: /* bind */
-			mounttype = MS_BIND;
-			break;
-		case 133: /* move */
-			mounttype = MS_MOVE;
-			break;
 		case 134:
 			/* undocumented, may go away again:
 			   call: mount --guess-fstype device
@@ -1940,9 +1976,6 @@ main(int argc, char *argv[]) {
 			printf("%s\n", fstype ? fstype : "unknown");
 			exit(fstype ? 0 : EX_FAIL);
 		    }
-		case 135:
-			mounttype = (MS_BIND | MS_REC);
-			break;
 
 		case 136:
 			mounttype = MS_SHARED;

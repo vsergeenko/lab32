@@ -54,7 +54,6 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/wait.h>
-#include <a.out.h>
 #include "xstrncpy.h"
 #include "nls.h"
 #include "widechar.h"
@@ -531,35 +530,35 @@ checkf (fs, clearfirst)
 /*
  * magic --
  *	check for file magic numbers.  This code would best be shared with
- *	the file(1) program or, perhaps, more should not try and be so smart?
+ *	the file(1) program or, perhaps, more should not try to be so smart.
  */
 static int
 magic(f, fs)
 	FILE *f;
 	char *fs;
 {
-	char twobytes[2];
+	signed char twobytes[2];
 
 	/* don't try to look ahead if the input is unseekable */
 	if (fseek(f, 0L, SEEK_SET))
-		return(0);
+		return 0;
 
 	if (fread(twobytes, 2, 1, f) == 1) {
 		switch(twobytes[0] + (twobytes[1]<<8)) {
-		case OMAGIC:	/* 0407 */
-		case NMAGIC:	/* 0410 */
-		case ZMAGIC:	/* 0413 */
+		case 0407:	/* a.out obj */
+		case 0410:	/* a.out exec */
+		case 0413:	/* a.out demand exec */
 		case 0405:
 		case 0411:
 		case 0177545:
 		case 0x457f:		/* simple ELF detection */
 			printf(_("\n******** %s: Not a text file ********\n\n"), fs);
 			(void)fclose(f);
-			return(1);
+			return 1;
 		}
 	}
 	(void)fseek(f, 0L, SEEK_SET);		/* rewind() not necessary */
-	return(0);
+	return 0;
 }
 
 /*

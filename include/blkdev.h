@@ -6,7 +6,10 @@
 
 #define DEFAULT_SECTOR_SIZE       512
 
-#ifndef BLKROSET
+/* open() retries when errno is ENOMEDIUM */
+#define CRDOM_NOMEDIUM_RETRIES    5
+
+#if !defined(BLKROSET) && defined(__linux__)
 
 #define BLKROSET   _IO(0x12,93)	/* set device read-only (0 = read-write) */
 #define BLKROGET   _IO(0x12,94)	/* get read-only status (0 = read_write) */
@@ -34,7 +37,9 @@
 #endif /* BLKROSET */
 
 #ifndef HDIO_GETGEO
-#define HDIO_GETGEO 0x0301
+# ifdef __linux__
+#  define HDIO_GETGEO 0x0301
+# endif
 struct hd_geometry {
 	unsigned char heads;
 	unsigned char sectors;
@@ -42,6 +47,9 @@ struct hd_geometry {
 	unsigned long start;
 };
 #endif
+
+/* Determine size in bytes */
+off_t blkdev_find_size (int fd);
 
 /* get size in bytes */
 int blkdev_get_size(int fd, unsigned long long *bytes);
@@ -51,6 +59,5 @@ int blkdev_get_sectors(int fd, unsigned long long *sectors);
 
 /* get hardware sector size */
 int blkdev_get_sector_size(int fd, int *sector_size);
-
 
 #endif /* BLKDEV_H */

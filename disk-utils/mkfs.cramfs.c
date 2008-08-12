@@ -28,7 +28,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -735,7 +735,7 @@ int main(int argc, char **argv)
 	u32 crc = crc32(0L, Z_NULL, 0);
 	int c;
 
-	blksize = sysconf(_SC_PAGESIZE);
+	blksize = getpagesize();
 	total_blocks = 0;
 
 	if (argc) {

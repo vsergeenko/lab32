@@ -425,7 +425,7 @@ mktime_tz(struct tm tm, const bool universal,
 }
 
 
-static void
+static int
 read_hardware_clock(const bool universal, bool *valid_p, time_t *systime_p){
 /*----------------------------------------------------------------------------
   Read the hardware clock and return the current time via <tm> argument.
@@ -436,6 +436,8 @@ read_hardware_clock(const bool universal, bool *valid_p, time_t *systime_p){
   int err;
 
   err = ur->read_hardware_clock(&tm);
+  if (err)
+	  return err;
 
   if (badyear)
     read_date_from_file(&tm);
@@ -445,6 +447,8 @@ read_hardware_clock(const bool universal, bool *valid_p, time_t *systime_p){
 	    tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday,
             tm.tm_hour, tm.tm_min, tm.tm_sec);
   mktime_tz(tm, universal, valid_p, systime_p);
+
+  return 0;
 }
 
 
@@ -847,8 +851,7 @@ calculate_adjustment(const double factor,
                      const double not_adjusted,
                      const time_t systime,
                      int *adjustment_p,
-                     double *retro_p,
-                     const int debug ) {
+                     double *retro_p) {
 /*----------------------------------------------------------------------------
   Do the drift adjustment calculation.
 
@@ -988,8 +991,7 @@ do_adjustment(struct adjtime *adjtime_p,
                          adjtime_p->last_adj_time,
                          adjtime_p->not_adjusted,
                          hclocktime,
-                         &adjustment, &retro,
-                         debug );
+                         &adjustment, &retro);
     if (adjustment > 0 || adjustment < -1) {
       set_hardware_clock_exact(hclocktime + adjustment,
                                time_inc(read_time, -retro),
@@ -1073,27 +1075,31 @@ manipulate_clock(const bool show, const bool adjust, const bool noadjfile,
 	adjtime.dirty = TRUE;
       }
 
-      rc = synchronize_to_clock_tick();  /* this takes up to 1 second */
-      if (rc)
-	      return rc;
-
       {
         struct timeval read_time;
           /* The time at which we read the Hardware Clock */
 
-        bool hclock_valid;
+        bool hclock_valid = FALSE;
           /* The Hardware Clock gives us a valid time, or at least something
              close enough to fool mktime().
              */
 
-        time_t hclocktime;
+        time_t hclocktime = 0;
           /* The time the hardware clock had just after we
              synchronized to its next clock tick when we started up.
              Defined only if hclock_valid is true.
              */
 
-        gettimeofday(&read_time, NULL);
-        read_hardware_clock(universal, &hclock_valid, &hclocktime);
+       if (show || adjust || hctosys || !noadjfile) {
+          /* data from HW-clock are required */
+          rc = synchronize_to_clock_tick();
+          if (rc)
+             return EX_IOERR;
+          gettimeofday(&read_time, NULL);
+          rc = read_hardware_clock(universal, &hclock_valid, &hclocktime);
+          if (rc)
+             return EX_IOERR;
+	}
 
         if (show) {
           display_time(hclock_valid, hclocktime,
@@ -1101,8 +1107,9 @@ manipulate_clock(const bool show, const bool adjust, const bool noadjfile,
         } else if (set) {
           set_hardware_clock_exact(set_time, startup_time,
 				      universal, testing);
-          adjust_drift_factor(&adjtime, set_time, hclock_valid, hclocktime,
-			      time_diff(read_time, startup_time));
+	  if (!noadjfile)
+            adjust_drift_factor(&adjtime, set_time, hclock_valid, hclocktime,
+			        time_diff(read_time, startup_time));
         } else if (adjust) {
           do_adjustment(&adjtime, hclock_valid, hclocktime,
                         read_time, universal, testing);
@@ -1118,8 +1125,9 @@ manipulate_clock(const bool show, const bool adjust, const bool noadjfile,
 
           set_hardware_clock_exact((time_t) reftime.tv_sec, reftime,
                                    universal, testing);
-          adjust_drift_factor(&adjtime, (time_t) reftime.tv_sec, hclock_valid,
-                              hclocktime, (double) read_time.tv_usec / 1E6);
+	  if (!noadjfile)
+            adjust_drift_factor(&adjtime, (time_t) reftime.tv_sec, hclock_valid,
+                                hclocktime, (double) read_time.tv_usec / 1E6);
         } else if (hctosys) {
           rc = set_system_clock(hclock_valid, hclocktime, testing);
           if (rc) {
@@ -1210,38 +1218,42 @@ usage( const char *fmt, ... ) {
     "hwclock - query and set the hardware clock (RTC)\n\n"
     "Usage: hwclock [function] [options...]\n\n"
     "Functions:\n"
-    "  --help         show this help\n"
-    "  --show         read hardware clock and print result\n"
-    "  --set          set the rtc to the time given with --date\n"
-    "  --hctosys      set the system time from the hardware clock\n"
-    "  --systohc      set the hardware clock to the current system time\n"
-    "  --adjust       adjust the rtc to account for systematic drift since \n"
-    "                 the clock was last set or adjusted\n"
-    "  --getepoch     print out the kernel's hardware clock epoch value\n"
-    "  --setepoch     set the kernel's hardware clock epoch value to the \n"
-    "                 value given with --epoch\n"
-    "  --version      print out the version of hwclock to stdout\n"
-    "\nOptions: \n"
-    "  --utc          the hardware clock is kept in coordinated universal time\n"
-    "  --localtime    the hardware clock is kept in local time\n"
-    "  --rtc=path     special /dev/... file to use instead of default\n"
-    "  --directisa    access the ISA bus directly instead of %s\n"
-    "  --badyear      ignore rtc's year because the bios is broken\n"
-    "  --date         specifies the time to which to set the hardware clock\n"
-    "  --epoch=year   specifies the year which is the beginning of the \n"
-    "                 hardware clock's epoch value\n"
-    "  --noadjfile    do not access /etc/adjtime. Requires the use of\n"
-    "                 either --utc or --localtime\n"
-    "  --adjfile=path specifies the path to the adjust file (default is\n"
-    "                 /etc/adjtime)\n"
+	"  -h | --help         show this help\n"
+	"  -r | --show         read hardware clock and print result\n"
+	"       --set          set the rtc to the time given with --date\n"
+	"  -s | --hctosys      set the system time from the hardware clock\n"
+	"  -w | --systohc      set the hardware clock to the current system time\n"
+	"       --adjust       adjust the rtc to account for systematic drift since\n"
+	"                      the clock was last set or adjusted\n"
+	"       --getepoch     print out the kernel's hardware clock epoch value\n"
+	"       --setepoch     set the kernel's hardware clock epoch value to the \n"
+	"                      value given with --epoch\n"
+	"  -v | --version      print out the version of hwclock to stdout\n"
+	"\nOptions: \n"
+	"  -u | --utc          the hardware clock is kept in UTC\n"
+	"       --localtime    the hardware clock is kept in local time\n"
+	"  -f | --rtc=path     special /dev/... file to use instead of default\n"
+	"       --directisa    access the ISA bus directly instead of %s\n"
+	"       --badyear      ignore rtc's year because the bios is broken\n"
+	"       --date         specifies the time to which to set the hardware clock\n"
+	"       --epoch=year   specifies the year which is the beginning of the \n"
+	"                      hardware clock's epoch value\n"
+	"       --noadjfile    do not access /etc/adjtime. Requires the use of\n"
+	"                      either --utc or --localtime\n"
+	"       --adjfile=path specifies the path to the adjust file (default is\n"
+	"                      /etc/adjtime)\n"
+	"       --test         do everything except actually updating the hardware\n"
+	"                      clock or anything else\n"
+	"  -D | --debug        debug mode\n"
+	"\n"
     ),RTC_DEV);
 #ifdef __alpha__
   fprintf(usageto, _(
-    "  --jensen, --arc, --srm, --funky-toy\n"
-    "                tell hwclock the type of alpha you have (see hwclock(8))\n"
+	"  -J|--jensen, -A|--arc, -S|--srm, -F|--funky-toy\n"
+	"       tell hwclock the type of alpha you have (see hwclock(8))\n"
+	"\n"
     ) );
 #endif
-
 
   fflush(stdout);
   if (fmt) {
@@ -1502,7 +1514,7 @@ main(int argc, char **argv) {
 		permitted = TRUE;
 	else {
 		/* program is designed to run setuid (in some situations) */
-		if (set || hctosys || systohc || adjust) {
+		if (set || systohc || adjust) {
 			fprintf(stderr,
 				_("Sorry, only the superuser can change "
 				  "the Hardware Clock.\n"));
