@@ -92,6 +92,15 @@ struct linux_rtc_time {
 /* default or user defined dev (by hwclock --rtc=<path>) */
 char *rtc_dev_name;
 
+static int rtc_dev_fd = -1;
+
+static void
+close_rtc(void) {
+	if (rtc_dev_fd != -1)
+		close(rtc_dev_fd);
+	rtc_dev_fd = -1;
+}
+
 static int
 open_rtc(void) {
 	char *fls[] = {
@@ -106,20 +115,28 @@ open_rtc(void) {
 	};
 	char **p;
 
+	if (rtc_dev_fd != -1)
+		return rtc_dev_fd;
+
 	/* --rtc option has been given */
 	if (rtc_dev_name)
-		return open(rtc_dev_name, O_RDONLY);
+		rtc_dev_fd = open(rtc_dev_name, O_RDONLY);
+	else {
+		for (p=fls; *p; ++p) {
+			rtc_dev_fd = open(*p, O_RDONLY);
 
-	for (p=fls; *p; ++p) {
-		int fd = open(*p, O_RDONLY);
-
-		if (fd < 0 && (errno == ENOENT || errno == ENODEV))
-			continue;
-		rtc_dev_name = *p;
-		return fd;
+			if (rtc_dev_fd < 0 && (errno == ENOENT || errno == ENODEV))
+				continue;
+			rtc_dev_name = *p;
+			break;
+		}
+		if (rtc_dev_fd < 0)
+			rtc_dev_name = *fls;	/* default for error messages */
 	}
-	rtc_dev_name = *fls;	/* default */
-	return -1;
+
+	if (rtc_dev_fd != 1)
+		atexit(close_rtc);
+	return rtc_dev_fd;
 }
 
 static int
@@ -179,8 +196,8 @@ busywait_for_rtc_clock_tick(const int rtc_fd) {
   struct tm start_time;
     /* The time when we were called (and started waiting) */
   struct tm nowtime;
-  int i;  /* local loop index */
   int rc;
+  struct timeval begin, now;
 
   if (debug)
     printf(_("Waiting in loop for time from %s to change\n"),
@@ -191,24 +208,25 @@ busywait_for_rtc_clock_tick(const int rtc_fd) {
     return 1;
 
   /* Wait for change.  Should be within a second, but in case something
-     weird happens, we have a limit on this loop to reduce the impact
-     of this failure.
-     */
-  for (i = 0;
-       (rc = do_rtc_read_ioctl(rtc_fd, &nowtime)) == 0
-        && start_time.tm_sec == nowtime.tm_sec;
-       i++)
-    if (i >= 1000000) {
+   * weird happens, we have a time limit (1.5s) on this loop to reduce the
+   * impact of this failure.
+   */
+  gettimeofday(&begin, NULL);
+  do {
+    rc = do_rtc_read_ioctl(rtc_fd, &nowtime);
+    if (rc || start_time.tm_sec != nowtime.tm_sec)
+      break;
+    gettimeofday(&now, NULL);
+    if (time_diff(now, begin) > 1.5) {
       fprintf(stderr, _("Timed out waiting for time change.\n"));
       return 2;
     }
+  } while(1);
 
   if (rc)
     return 3;
   return 0;
 }
-
-
 
 static int
 synchronize_to_clock_tick_rtc(void) {
@@ -218,14 +236,14 @@ synchronize_to_clock_tick_rtc(void) {
 int rtc_fd;  /* File descriptor of /dev/rtc */
 int ret;
 
-  rtc_fd = open(rtc_dev_name, O_RDONLY);
+  rtc_fd = open_rtc();
   if (rtc_fd == -1) {
     outsyserr(_("open() of %s failed"), rtc_dev_name);
     ret = 1;
   } else {
     int rc;  /* Return code from ioctl */
     /* Turn on update interrupts (one per second) */
-#if defined(__alpha__) || defined(__sparc__) || defined(__x86_64__)
+#if defined(__alpha__) || defined(__sparc__)
     /* Not all alpha kernels reject RTC_UIE_ON, but probably they should. */
     rc = -1;
     errno = EINVAL;
@@ -286,7 +304,6 @@ int ret;
 		"failed unexpectedly"), rtc_dev_name);
       ret = 1;
     }
-    close(rtc_fd);
   }
   return ret;
 }
@@ -294,15 +311,14 @@ int ret;
 
 static int
 read_hardware_clock_rtc(struct tm *tm) {
-	int rtc_fd;
+	int rtc_fd, rc;
 
 	rtc_fd = open_rtc_or_exit();
 
 	/* Read the RTC time/date, return answer via tm */
-	do_rtc_read_ioctl(rtc_fd, tm);
+	rc = do_rtc_read_ioctl(rtc_fd, tm);
 
-	close(rtc_fd);
-	return 0;
+	return rc;
 }
 
 
@@ -349,7 +365,6 @@ set_hardware_clock_rtc(const struct tm *new_broken_time) {
 	if (debug)
 		printf(_("ioctl(%s) was successful.\n"), ioctlname);
 
-	close(rtc_fd);
 	return 0;
 }
 
@@ -371,10 +386,8 @@ static struct clock_ops rtc = {
 struct clock_ops *
 probe_for_rtc_clock(){
 	int rtc_fd = open_rtc();
-	if (rtc_fd >= 0) {
-		close(rtc_fd);
+	if (rtc_fd >= 0)
 		return &rtc;
-	}
 	if (debug)
 		outsyserr(_("Open of %s failed"), rtc_dev_name);
 	return NULL;
@@ -407,7 +420,6 @@ get_epoch_rtc(unsigned long *epoch_p, int silent) {
   if (ioctl(rtc_fd, RTC_EPOCH_READ, epoch_p) == -1) {
     if (!silent)
       outsyserr(_("ioctl(RTC_EPOCH_READ) to %s failed"), rtc_dev_name);
-    close(rtc_fd);
     return 1;
   }
 
@@ -415,7 +427,6 @@ get_epoch_rtc(unsigned long *epoch_p, int silent) {
 	  printf(_("we have read epoch %ld from %s "
 		 "with RTC_EPOCH_READ ioctl.\n"), *epoch_p, rtc_dev_name);
 
-  close(rtc_fd);
   return 0;
 }
 
@@ -459,10 +470,8 @@ set_epoch_rtc(unsigned long epoch) {
 	      "does not have the RTC_EPOCH_SET ioctl.\n"), rtc_dev_name);
     else
       outsyserr(_("ioctl(RTC_EPOCH_SET) to %s failed"), rtc_dev_name);
-    close(rtc_fd);
     return 1;
   }
 
-  close(rtc_fd);
   return 0;
 }
