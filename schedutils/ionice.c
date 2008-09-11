@@ -18,6 +18,8 @@
 
 #include "nls.h"
 
+static int tolerant;
+
 static inline int ioprio_set(int which, int who, int ioprio)
 {
 	return syscall(SYS_ioprio_set, which, who, ioprio);
@@ -45,25 +47,76 @@ enum {
 
 const char *to_prio[] = { "none", "realtime", "best-effort", "idle", };
 
+static void ioprio_print(int pid)
+{
+	int ioprio, ioclass;
+
+	ioprio = ioprio_get(IOPRIO_WHO_PROCESS, pid);
+
+	if (ioprio == -1)
+		err(EXIT_FAILURE, _("ioprio_get failed"));
+	else {
+		ioclass = ioprio >> IOPRIO_CLASS_SHIFT;
+		if (ioclass != IOPRIO_CLASS_IDLE) {
+			ioprio = ioprio & 0xff;
+			printf("%s: prio %d\n", to_prio[ioclass], ioprio);
+		} else
+			printf("%s\n", to_prio[ioclass]);
+	}
+}
+
+
+static void ioprio_setpid(pid_t pid, int ioprio, int ioclass)
+{
+	int rc = ioprio_set(IOPRIO_WHO_PROCESS, pid,
+			ioprio | ioclass << IOPRIO_CLASS_SHIFT);
+
+	if (rc == -1 && !tolerant)
+		err(EXIT_FAILURE, _("ioprio_set failed"));
+}
+
 static void usage(int rc)
 {
 	fprintf(stdout, _(
-	"\nionice - sets or gets process io scheduling class and priority.\n\n"
-	"Usage: ionice [OPTIONS] [COMMAND [ARG]...]\n\n"
+	"\nionice - sets or gets process io scheduling class and priority.\n"
+	"\nUsage:\n"
+	"  ionice [ options ] -p <pid> [<pid> ...]\n"
+	"  ionoce [ options ] <command> [<arg> ...]\n"
+	"\nOptions:\n"
 	"  -n <classdata>      class data (0-7, lower being higher prio)\n"
 	"  -c <class>          scheduling class\n"
 	"                      1: realtime, 2: best-effort, 3: idle\n"
-	"  -p <pid>            process pid\n"
-	"  -t                  ignore failures, run command unconditionally\n"
+	"  -t                  ignore failures\n"
 	"  -h                  this help\n\n"));
-
 	exit(rc);
+}
+
+static long getnum(const char *str)
+{
+	long num;
+	char *end = NULL;
+
+	if (str == NULL || *str == '\0')
+		goto err;
+	errno = 0;
+	num = strtol(str, &end, 10);
+
+	if (errno || (end && *end))
+		goto err;
+
+	return num;
+err:
+	if (errno)
+		err(EXIT_SUCCESS, _("cannot parse number '%s'"), str);
+	else
+		errx(EXIT_SUCCESS, _("cannot parse number '%s'"), str);
+	return 0;
 }
 
 int main(int argc, char *argv[])
 {
-	int ioprio = 4, set = 0, tolerant = 0, ioprio_class = IOPRIO_CLASS_BE;
-	int c, pid = 0;
+	int ioprio = 4, set = 0, ioclass = IOPRIO_CLASS_BE, c;
+	pid_t pid = 0;
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
@@ -72,15 +125,15 @@ int main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "+n:c:p:th")) != EOF) {
 		switch (c) {
 		case 'n':
-			ioprio = strtol(optarg, NULL, 10);
+			ioprio = getnum(optarg);
 			set |= 1;
 			break;
 		case 'c':
-			ioprio_class = strtol(optarg, NULL, 10);
+			ioclass = getnum(optarg);
 			set |= 2;
 			break;
 		case 'p':
-			pid = strtol(optarg, NULL, 10);
+			pid = getnum(optarg);
 			break;
 		case 't':
 			tolerant = 1;
@@ -92,9 +145,9 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	switch (ioprio_class) {
+	switch (ioclass) {
 		case IOPRIO_CLASS_NONE:
-			ioprio_class = IOPRIO_CLASS_BE;
+			ioclass = IOPRIO_CLASS_BE;
 			break;
 		case IOPRIO_CLASS_RT:
 		case IOPRIO_CLASS_BE:
@@ -105,32 +158,28 @@ int main(int argc, char *argv[])
 			ioprio = 7;
 			break;
 		default:
-			errx(EXIT_FAILURE, _("bad prio class %d"), ioprio_class);
+			errx(EXIT_FAILURE, _("bad prio class %d"), ioclass);
 	}
 
 	if (!set) {
-		if (!pid && argv[optind])
-			pid = strtol(argv[optind], NULL, 10);
+		ioprio_print(pid);
 
-		ioprio = ioprio_get(IOPRIO_WHO_PROCESS, pid);
-
-		if (ioprio == -1)
-			err(EXIT_FAILURE, _("ioprio_get failed"));
-		else {
-			ioprio_class = ioprio >> IOPRIO_CLASS_SHIFT;
-			if (ioprio_class != IOPRIO_CLASS_IDLE) {
-				ioprio = ioprio & 0xff;
-				printf("%s: prio %d\n", to_prio[ioprio_class], ioprio);
-			} else
-				printf("%s\n", to_prio[ioprio_class]);
+		for(; argv[optind]; ++optind) {
+			pid = getnum(argv[optind]);
+			ioprio_print(pid);
 		}
 	} else {
-		if (ioprio_set(IOPRIO_WHO_PROCESS, pid, ioprio | ioprio_class << IOPRIO_CLASS_SHIFT) == -1) {
-			if (!tolerant)
-				err(EXIT_FAILURE, _("ioprio_set failed"));
-		}
+		if (pid) {
+			ioprio_setpid(pid, ioprio, ioclass);
 
-		if (argv[optind]) {
+			for(; argv[optind]; ++optind)
+			{
+				pid = getnum(argv[optind]);
+				ioprio_setpid(pid, ioprio, ioclass);
+			}
+		}
+		else if (argv[optind]) {
+			ioprio_setpid(0, ioprio, ioclass);
 			execvp(argv[optind], &argv[optind]);
 			/* execvp should never return */
 			err(EXIT_FAILURE, _("execvp failed"));
