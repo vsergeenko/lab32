@@ -1,4 +1,4 @@
-# Dutch translations for util-linux-ng.
+# Dutch translations for util-linux-ng-2.14.1-rc2.
 # This file is distributed under the same license as the util-linux-ng package.
 #
 # block    -> blok
@@ -12,10 +12,10 @@
 # Benno Schulenberg <benno@vertaalt.nl>, 2006, 2007, 2008.
 msgid ""
 msgstr ""
-"Project-Id-Version: util-linux-ng-2.14-rc2\n"
+"Project-Id-Version: util-linux-ng-2.14.1-rc2\n"
 "Report-Msgid-Bugs-To: Karel Zak <kzak@redhat.com>\n"
 "POT-Creation-Date: 2008-08-22 12:23+0200\n"
-"PO-Revision-Date: 2008-07-01 19:55+0200\n"
+"PO-Revision-Date: 2008-08-22 22:37+0200\n"
 "Last-Translator: Benno Schulenberg <benno@vertaalt.nl>\n"
 "Language-Team: Dutch <vertaling@vrijschrift.org>\n"
 "MIME-Version: 1.0\n"
@@ -912,16 +912,16 @@ msgstr "Waarschuwing: bestandsgroottes afgekapt tot %lu MB (minus 1 byte).\n"
 msgid ""
 "warning: uids truncated to %u bits.  (This may be a security concern.)\n"
 msgstr ""
-"Waarschuwing: UIDs afgekapt tot %u bits.  (Dit kan een veiligheidsprobleem "
-"zijn.)\n"
+"Waarschuwing: UID's afgekapt tot %u bits.\n"
+"(Dit kan een veiligheidsprobleem zijn.)\n"
 
 #: disk-utils/mkfs.cramfs.c:938
 #, c-format
 msgid ""
 "warning: gids truncated to %u bits.  (This may be a security concern.)\n"
 msgstr ""
-"Waarschuwing: GIDs afgekapt tot %u bits.  (Dit kan een veiligheidsprobleem "
-"zijn.)\n"
+"Waarschuwing: GID's afgekapt tot %u bits.\n"
+"(Dit kan een veiligheidsprobleem zijn.)\n"
 
 #: disk-utils/mkfs.cramfs.c:943
 #, c-format
@@ -2097,7 +2097,7 @@ msgstr "Kan niet het type van een lege partitie wijzigen"
 
 #: fdisk/cfdisk.c:2880 fdisk/cfdisk.c:2886
 msgid "No more partitions"
-msgstr "Geen verdere partities"
+msgstr "Geen partities meer over"
 
 #: fdisk/cfdisk.c:2893
 msgid "Illegal command"
@@ -4416,11 +4416,11 @@ msgstr "DOS secundair"
 
 #: fdisk/i386_sys_types.c:100
 msgid "VMware VMFS"
-msgstr ""
+msgstr "VMware VMFS"
 
 #: fdisk/i386_sys_types.c:101
 msgid "VMware VMKCORE"
-msgstr ""
+msgstr "VMware vmkcore"
 
 #: fdisk/i386_sys_types.c:105
 msgid "LANstep"
@@ -9203,7 +9203,7 @@ msgstr "bytes"
 
 #: sys-utils/ipcs.c:322
 msgid "nattch"
-msgstr "nattch"
+msgstr "gehecht"
 
 #: sys-utils/ipcs.c:322
 msgid "status"
@@ -9215,7 +9215,7 @@ msgstr "status"
 #: sys-utils/ipcs.c:618 sys-utils/ipcs.c:647 sys-utils/ipcs.c:649
 #: sys-utils/ipcs.c:651 sys-utils/ipcs.c:675
 msgid "Not set"
-msgstr "Niet ingesteld"
+msgstr "(geen)"
 
 #: sys-utils/ipcs.c:375
 msgid "dest"
@@ -9368,20 +9368,20 @@ msgstr "------ Berichtwachtrijen: verzend/ontvang/wijzigingstijden --------\n"
 
 #: sys-utils/ipcs.c:526
 msgid "send"
-msgstr "verzend"
+msgstr "verzending"
 
 #: sys-utils/ipcs.c:526
 msgid "recv"
-msgstr "ontvang"
+msgstr "ontvangst"
 
 #: sys-utils/ipcs.c:526
 msgid "change"
-msgstr "wijzig"
+msgstr "wijziging"
 
 #: sys-utils/ipcs.c:530
 #, c-format
 msgid "------ Message Queues PIDs --------\n"
-msgstr "------ Berichtwachtrijen: PIDs --------\n"
+msgstr "------ Berichtwachtrijen: PID's --------\n"
 
 #: sys-utils/ipcs.c:532
 msgid "lspid"
@@ -9398,7 +9398,7 @@ msgstr "------ Berichtwachtrijen --------\n"
 
 #: sys-utils/ipcs.c:539
 msgid "used-bytes"
-msgstr "gebruikte bytes"
+msgstr "gebruikt"
 
 #: sys-utils/ipcs.c:539
 msgid "messages"
@@ -10497,27 +10497,3 @@ msgstr "Invoerregel is te lang\n"
 #, c-format
 msgid "Out of memory when growing buffer.\n"
 msgstr "Onvoldoende geheugen beschikbaar tijdens groeien van buffer\n"
-
-#~ msgid "%-10s %-10s %-10s %-10s %-10s %-10s\n"
-#~ msgstr "%-10s %-10s %-10s %-10s %-10s %-10s\n"
-
-#~ msgid "%-10s %-10s %-20s %-20s %-20s\n"
-#~ msgstr "%-10s %-10s %-20s %-20s %-20s\n"
-
-#~ msgid "%-10s %-10s %-10s %-10s\n"
-#~ msgstr "%-10s %-10s %-10s %-10s\n"
-
-#~ msgid "%-10s %-10s %-10s %-10s %-10s %-10s %-12s\n"
-#~ msgstr "%-10s %-10s %-9s %-10s %-10s %-10s %-12s\n"
-
-#~ msgid "%-8s %-10s %-26.24s %-26.24s\n"
-#~ msgstr "%-8s %-10s %-26.24s %-26.24s\n"
-
-#~ msgid "%-10s %-10s %-10s %-10s %-10s\n"
-#~ msgstr "%-10s %-10s %-10s %-10s %-10s\n"
-
-#~ msgid "%-8s %-10s %-20s %-20s %-20s\n"
-#~ msgstr "%-8s %-10s %-20s %-20s %-20s\n"
-
-#~ msgid "%-10s %-10s %-10s %-10s %-12s %-12s\n"
-#~ msgstr "%-10s %-10s %-10s %-10s %-12s %-12s\n"

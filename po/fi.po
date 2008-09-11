@@ -1,6 +1,7 @@
 # Finnish messages for util-linux
-# Copyright © 2002, 2003, 2005, 2007 Lauri Nurmi <lanurmi@iki.fi>
-# Lauri Nurmi <lanurmi@iki.fi>, 2002, 2003, 2005, 2007.
+# This file is distributed under the same license as the util-linux-ng package.
+# Copyright © 2002, 2003, 2005, 2007, 2008 Lauri Nurmi <lanurmi@iki.fi>
+# Lauri Nurmi <lanurmi@iki.fi>, 2002, 2003, 2005, 2007, 2008.
 #
 # Permission is granted to freely copy and distribute
 # this file and modified versions, provided, that this
@@ -11,16 +12,12 @@
 # ja levittää vapaasti edellyttäen, että tätä otsikkoa
 # ei poisteta, ja muutetut versiot merkitään muutetuiksi.
 #
-# NOTE: This file (version 2.13-rc3) intentionally *appears to* 
-#       have fewer translated messages than the earlier 
-#       version -- no need to worry.
-#
 msgid ""
 msgstr ""
-"Project-Id-Version: util-linux-ng 2.13-rc3\n"
+"Project-Id-Version: util-linux-ng 2.14.1-rc2\n"
 "Report-Msgid-Bugs-To: Karel Zak <kzak@redhat.com>\n"
 "POT-Creation-Date: 2008-08-22 12:23+0200\n"
-"PO-Revision-Date: 2007-10-17 20:21+0300\n"
+"PO-Revision-Date: 2008-08-25 23:03+0300\n"
 "Last-Translator: Lauri Nurmi <lanurmi@iki.fi>\n"
 "Language-Team: Finnish <translation-team-fi@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -104,9 +101,8 @@ msgid "Available commands:\n"
 msgstr "Käytettävissä olevat komennot:\n"
 
 #: disk-utils/blockdev.c:68
-#, fuzzy
 msgid "get size in 512-byte sectors"
-msgstr "hae koko tavuina"
+msgstr "hae koko 512-tavuisina sektoreina"
 
 #: disk-utils/blockdev.c:201
 #, c-format
@@ -119,9 +115,9 @@ msgid "%s requires an argument\n"
 msgstr "%s vaatii argumentin\n"
 
 #: disk-utils/blockdev.c:255
-#, fuzzy, c-format
+#, c-format
 msgid "%s failed.\n"
-msgstr "siirtyminen epäonnistui"
+msgstr "%s epäonnistui.\n"
 
 #: disk-utils/blockdev.c:292
 #, c-format
@@ -552,9 +548,9 @@ msgid "need terminal for interactive repairs"
 msgstr "vuorovaikutteisiin korjauksiin tarvitaan pääte"
 
 #: disk-utils/fsck.minix.c:1320
-#, fuzzy, c-format
+#, c-format
 msgid "unable to open '%s': %s"
-msgstr "laitetta ”%s” ei voi avata"
+msgstr "laitetta ”%s” ei voi avata: %s"
 
 #: disk-utils/fsck.minix.c:1335
 #, c-format
@@ -822,14 +818,14 @@ msgstr ""
 " tulostied   tulostiedosto\n"
 
 #: disk-utils/mkfs.cramfs.c:336
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Very long (%zu bytes) filename `%s' found.\n"
 " Please increase MAX_INPUT_NAMELEN in mkcramfs.c and recompile.  Exiting.\n"
 msgstr ""
-"Löytyi hyvin pitkä tiedostonimi ”%2$s” (%1$u tavua).\n"
-" Kasvata vakiota MAX_INPUT_NAMELEN tiedostossa mkcramfs.c ja käännä "
-"uudelleen. Poistutaan.\n"
+"Löytyi hyvin pitkä tiedostonimi ”%2$s” (%1$zu tavua).\n"
+" Kasvata MAX_INPUT_NAMELEN-arvoa tiedostossa mkcramfs.c ja käännä uudelleen. "
+"Poistutaan.\n"
 
 #: disk-utils/mkfs.cramfs.c:464
 #, c-format
@@ -842,17 +838,17 @@ msgid "AIEEE: block \"compressed\" to > 2*blocklength (%ld)\n"
 msgstr "AIEEE: ”tiivistetyn” lohkon koko > 2*lohkokoko (%ld)\n"
 
 #: disk-utils/mkfs.cramfs.c:646
-#, fuzzy, c-format
+#, c-format
 msgid "%6.2f%% (%+ld bytes)\t%s\n"
-msgstr "%6.2f%% (%+d tavua)\t%s\n"
+msgstr "%6.2f%% (%+ld tavua)\t%s\n"
 
 #: disk-utils/mkfs.cramfs.c:829
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "warning: guestimate of required size (upper bound) is %lldMB, but maximum "
 "image size is %uMB.  We might die prematurely.\n"
 msgstr ""
-"varoitus: arviokoko (yläraja) on %Ld Mt, mutta suurin kuvakoko on %u Mt. "
+"varoitus: arviokoko (yläraja) on %lld Mt, mutta suurin kuvakoko on %u Mt. "
 "Prosessi saattaa päättyä ennenaikaisesti.\n"
 
 #: disk-utils/mkfs.cramfs.c:870
@@ -861,19 +857,19 @@ msgid "Including: %s\n"
 msgstr "Sisällytetään: %s\n"
 
 #: disk-utils/mkfs.cramfs.c:876
-#, fuzzy, c-format
+#, c-format
 msgid "Directory data: %zd bytes\n"
-msgstr "Hakemistodata: %d tavua\n"
+msgstr "Hakemistodata: %zd tavua\n"
 
 #: disk-utils/mkfs.cramfs.c:884
-#, fuzzy, c-format
+#, c-format
 msgid "Everything: %zd kilobytes\n"
-msgstr "Kaikki: %d kilotavua\n"
+msgstr "Kaikki: %zd kilotavua\n"
 
 #: disk-utils/mkfs.cramfs.c:889
-#, fuzzy, c-format
+#, c-format
 msgid "Super block: %zd bytes\n"
-msgstr "Superlohko: %d tavua\n"
+msgstr "Superlohko: %zd tavua\n"
 
 #: disk-utils/mkfs.cramfs.c:896
 #, c-format
@@ -881,15 +877,15 @@ msgid "CRC: %x\n"
 msgstr "CRC: %x\n"
 
 #: disk-utils/mkfs.cramfs.c:901
-#, fuzzy, c-format
+#, c-format
 msgid "not enough space allocated for ROM image (%lld allocated, %zu used)\n"
 msgstr ""
-"ROM-kuvalle ei ole varattu riittävästi tilaa (%Ld varattu, %d käytetty)\n"
+"ROM-kuvalle ei ole varattu riittävästi tilaa (%lld varattu, %zu käytetty)\n"
 
 #: disk-utils/mkfs.cramfs.c:913
-#, fuzzy, c-format
+#, c-format
 msgid "ROM image write failed (%zd %zd)\n"
-msgstr "ROM-kuvan kirjoitus epäonnistui (%d %d)\n"
+msgstr "ROM-kuvan kirjoitus epäonnistui (%zd %zd)\n"
 
 #: disk-utils/mkfs.cramfs.c:922
 #, c-format
@@ -1107,10 +1103,12 @@ msgid "no uuid\n"
 msgstr "ei uuid:tä\n"
 
 #: disk-utils/mkswap.c:332
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Usage: %s [-c] [-v0|-v1] [-pPAGESZ] [-L label] [-U UUID] /dev/name [blocks]\n"
-msgstr "Käyttö: %s [-c] [-v0|-v1] [-pSIVUKOKO] [-L nimiö] /dev/nimi [lohkot]\n"
+msgstr ""
+"Käyttö: %s [-c] [-v0|-v1] [-pSIVUKOKO] [-L nimiö] [-U UUID] /dev/nimi "
+"[lohkot]\n"
 
 #: disk-utils/mkswap.c:355
 msgid "too many bad pages"
@@ -1137,11 +1135,8 @@ msgid "%1$s: warning: ignore -U (UUIDs are unsupported by %1$s)\n"
 msgstr ""
 
 #: disk-utils/mkswap.c:569
-#, fuzzy
 msgid "error: UUID parsing failed"
-msgstr ""
-"\n"
-"Virhe suljettaessa tiedostoa\n"
+msgstr "virhe: UUID:n jäsennys epäonnistui"
 
 #: disk-utils/mkswap.c:579
 #, c-format
@@ -1149,9 +1144,9 @@ msgid "%s: error: Nowhere to set up swap on?\n"
 msgstr "%s: virhe: Sivutustilan kohde?\n"
 
 #: disk-utils/mkswap.c:597
-#, fuzzy, c-format
+#, c-format
 msgid "%s: error: size %lu KiB is larger than device size %lu KiB\n"
-msgstr "%s: virhe: koko %lu on suurempi kuin laitteen koko %lu\n"
+msgstr "%s: virhe: koko %lu KiB on suurempi kuin laitteen koko %lu KiB\n"
 
 #: disk-utils/mkswap.c:618
 #, c-format
@@ -1159,14 +1154,14 @@ msgid "%s: error: unknown version %d\n"
 msgstr "%s: virhe: tuntematon versio %d\n"
 
 #: disk-utils/mkswap.c:625
-#, fuzzy, c-format
+#, c-format
 msgid "%s: error: swap area needs to be at least %ld KiB\n"
-msgstr "%s: virhe: sivutusalueen on oltava vähintään %ld kt:n kokoinen\n"
+msgstr "%s: virhe: sivutusalueen on oltava vähintään %ld KiB:n kokoinen\n"
 
 #: disk-utils/mkswap.c:642
-#, fuzzy, c-format
+#, c-format
 msgid "%s: warning: truncating swap area to %ld KiB\n"
-msgstr "%s: varoitus: typistetään sivutusalue kokoon %ld kt\n"
+msgstr "%s: varoitus: typistetään sivutusalue kokoon %ld KiB\n"
 
 #: disk-utils/mkswap.c:648
 #, c-format
@@ -1188,7 +1183,7 @@ msgid "fatal: first page unreadable"
 msgstr "vakavaa: ensimmäinen sivu on lukukelvoton"
 
 #: disk-utils/mkswap.c:697
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s: Device '%s' contains a valid Sun disklabel.\n"
 "This probably means creating v0 swap would destroy your partition table.\n"
@@ -1196,8 +1191,10 @@ msgid ""
 "use the -f option to force it.\n"
 msgstr ""
 "%s: Laitteella ”%s” on kelvollinen Sun-levynimiö.\n"
-"Tämä tarkoittaa todennäköisesti sitä, että v0-sivutuksen luominen tuhoaisi\n"
-"osiotaulun. Sivutusta ei luotu. Jos todella haluat luoda v0-sivutuksen\n"
+"Tämä tarkoittaa todennäköisesti sitä, että v0-sivutusalueen luominen "
+"tuhoaisi\n"
+"osiotaulun. Sivutusaluetta ei luotu. Jos todella haluat luoda v0-"
+"sivutusalueen\n"
 "kyseiselle laitteelle, käytä valitsinta -f sen pakottamiseen.\n"
 
 #: disk-utils/mkswap.c:721
@@ -1205,9 +1202,9 @@ msgid "Unable to set up swap-space: unreadable"
 msgstr "Sivutustilaa ei voi luoda: ei luettavissa"
 
 #: disk-utils/mkswap.c:722
-#, fuzzy, c-format
+#, c-format
 msgid "Setting up swapspace version %d, size = %llu KiB\n"
-msgstr "Asetetaan sivutustila, versio %d, koko = %llu kt\n"
+msgstr "Asetetaan sivutustila, versio %d, koko = %llu KiB\n"
 
 #: disk-utils/mkswap.c:731
 msgid "unable to rewind swap-device"
@@ -1386,7 +1383,6 @@ msgid "Menu item too long. Menu may look odd."
 msgstr "Liian pitkä valikon kohta. Valikko voi näyttää oudolta."
 
 #: fdisk/cfdisk.c:1220
-#, fuzzy
 msgid "Menu without direction. Defaulting to horizontal."
 msgstr "Valikko ilman suuntaa. Käytetään oletuksena vaakasuuntaa."
 
@@ -1638,19 +1634,17 @@ msgstr ""
 "----\n"
 
 #: fdisk/cfdisk.c:2212
-#, fuzzy
 msgid "         ---Starting----      ----Ending-----    Start     Number of\n"
-msgstr "         ----Alku----         ----Loppu----    Alku-     Sektorien\n"
+msgstr "         ----Alku----         ----Loppu----      Alku-     Sektorien\n"
 
 #: fdisk/cfdisk.c:2213
-#, fuzzy
 msgid " # Flags Head Sect  Cyl   ID  Head Sect  Cyl     Sector    Sectors\n"
-msgstr " # Liput Päät Sekt Syl   ID  Päät Sekt Syl    sektori    määrä\n"
+msgstr " # Liput Päät Sekt  Syl   ID  Päät Sekt  Syl     sektori   määrä\n"
 
 #: fdisk/cfdisk.c:2214
-#, fuzzy
 msgid "-- ----- ---- ---- ----- ---- ---- ---- ----- ----------- -----------\n"
-msgstr "-- ----- ---- ---- ---- ---- ---- ---- ---- ----------- ------------\n"
+msgstr ""
+"-- ----- ---- ---- ----- ---- ---- ---- ----- ----------- -----------\n"
 
 #: fdisk/cfdisk.c:2247
 msgid "Raw"
@@ -5832,7 +5826,7 @@ msgid "%s from %s\n"
 msgstr "%s paketista %s\n"
 
 #: hwclock/hwclock.c:1210
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "hwclock - query and set the hardware clock (RTC)\n"
 "\n"
@@ -5894,6 +5888,7 @@ msgstr ""
 "                epoch-arvon nollakohta\n"
 "  --noadjfile   ei käytetä tiedostoa /etc/adjtime. Vaatii joko valitsimen\n"
 "                --utc tai --localtime käyttämistä\n"
+"  --adjfile=polku hienosäätötiedoston polku (oletus on /etc/adjtime)\n"
 
 #: hwclock/hwclock.c:1240
 #, c-format
@@ -5942,7 +5937,7 @@ msgstr ""
 "molempia.\n"
 
 #: hwclock/hwclock.c:1468
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s: The --adjfile and --noadjfile options are mutually exclusive.  You "
 "specified both.\n"
@@ -6206,14 +6201,14 @@ msgid "%s: input overrun"
 msgstr "%s: syötteen ylivuoto"
 
 #: login-utils/agetty.c:1203
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Usage: %s [-8hiLmUw] [-l login_program] [-t timeout] [-I initstring] [-H "
 "login_host] baud_rate,... line [termtype]\n"
 "or\t[-hiLmw] [-l login_program] [-t timeout] [-I initstring] [-H login_host] "
 "line baud_rate,... [termtype]\n"
 msgstr ""
-"Käyttö: %s [-8hiLmw] [-l kirjautumisohjelma] [-t aikakatkaisu] [-I "
+"Käyttö: %s [-8hiLmUw] [-l kirjautumisohjelma] [-t aikakatkaisu] [-I "
 "alustuskomennot] [-H kirjautumiskone] linjanopeus,... linja [term.tyyppi]\n"
 "tai\t[-hiLmw] [-l kirjautumisohjelma] [-t aikakatkaisu] [-I alustuskomennot] "
 "[-H kirjautumiskone] linja linjanopeus,... [term.tyyppi]\n"
@@ -6279,9 +6274,9 @@ msgid "Changing finger information for %s.\n"
 msgstr "Vaihdetaan käyttäjän %s finger-tiedot.\n"
 
 #: login-utils/chfn.c:189 login-utils/chsh.c:188 login-utils/login.c:547
-#, fuzzy, c-format
+#, c-format
 msgid "%s: PAM failure, aborting: %s\n"
-msgstr "login: PAM-virhe, keskeytetään: %s\n"
+msgstr "%s: PAM-virhe, keskeytetään: %s\n"
 
 #: login-utils/chfn.c:212 login-utils/chsh.c:211 login-utils/login.c:798
 #: login-utils/newgrp.c:85 login-utils/simpleinit.c:340 mount/lomount.c:707
@@ -6443,9 +6438,9 @@ msgid "%s: \"%s\" is not listed in /etc/shells.\n"
 msgstr "%s: ”%s” ei ole listattuna tiedostossa /etc/shells.\n"
 
 #: login-utils/chsh.c:379
-#, fuzzy, c-format
+#, c-format
 msgid "%s: Use -l option to see list.\n"
-msgstr "%s: käytä -l -valitsinta nähdäksesi listan\n"
+msgstr "%s: Valitsin -l näyttää listan.\n"
 
 #: login-utils/chsh.c:386
 #, c-format
@@ -6458,9 +6453,9 @@ msgid "No known shells.\n"
 msgstr "Ei tunnettuja kuoria.\n"
 
 #: login-utils/islocal.c:87
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open %s for reading, exiting."
-msgstr "tiedostoa %s ei voi avata lukua varten"
+msgstr "Tiedostoa %s ei voi avata lukua varten, poistutaan."
 
 #: login-utils/last.c:148
 msgid "usage: last [-#] [-f file] [-t tty] [-h hostname] [user ...]\n"
@@ -7131,9 +7126,9 @@ msgid "%s: can't read temporary file.\n"
 msgstr "%s: väliaikaistiedostoa ei voi avata.\n"
 
 #: misc-utils/cal.c:346 misc-utils/cal.c:358
-#, fuzzy, c-format
+#, c-format
 msgid "illegal day value: use 1-%d"
-msgstr "virheellinen vuoden arvo: käytä 1-9999"
+msgstr "virheellinen päivän arvo: käytä 1-%d"
 
 #: misc-utils/cal.c:350
 msgid "illegal month value: use 1-12"
@@ -7149,9 +7144,9 @@ msgid "%s %d"
 msgstr "%s %d"
 
 #: misc-utils/cal.c:839
-#, fuzzy, c-format
+#, c-format
 msgid "usage: cal [-13smjyV] [[[day] month] year]\n"
-msgstr "käyttö: cal [-13smjyV] [[kuukausi] vuosi]\n"
+msgstr "käyttö: cal [-13smjyV] [[[päivä] kuukausi] vuosi]\n"
 
 #: misc-utils/ddate.c:203
 #, c-format
@@ -7312,9 +7307,9 @@ msgid "Script started, file is %s\n"
 msgstr "Skripti käynnistetty, tiedosto on %s\n"
 
 #: misc-utils/script.c:244
-#, fuzzy, c-format
+#, c-format
 msgid "%s: write error %d: %s\n"
-msgstr "virhe kirjoitettaessa %s\n"
+msgstr "%s: kirjoitusvirhe %d: %s\n"
 
 #: misc-utils/script.c:304
 #, c-format
@@ -7322,9 +7317,9 @@ msgid "Script started on %s"
 msgstr "Skripti käynnistetty %s"
 
 #: misc-utils/script.c:347
-#, fuzzy, c-format
+#, c-format
 msgid "%s: write error: %s\n"
-msgstr "virhe kirjoitettaessa %s\n"
+msgstr "%s: kirjoitusvirhe: %s\n"
 
 #: misc-utils/script.c:354
 #, fuzzy, c-format
@@ -7371,9 +7366,8 @@ msgid "divisor '%s'"
 msgstr ""
 
 #: misc-utils/scriptreplay.c:104
-#, fuzzy
 msgid "write to stdout failed"
-msgstr "Tiedoston %s avaaminen epäonnistui"
+msgstr "kirjoittaminen vakiotulosteeseen epäonnistui"
 
 #: misc-utils/scriptreplay.c:110
 #, c-format
@@ -7401,9 +7395,9 @@ msgid "failed to read timing file %s"
 msgstr "ioctl() ei onnistunut lukemaan aikaa kohteesta %s"
 
 #: misc-utils/scriptreplay.c:166
-#, fuzzy, c-format
+#, c-format
 msgid "timings file %s: %lu: expected format"
-msgstr "%s: Odottamaton tiedoston loppu (EOF) tiedostossa %s\n"
+msgstr ""
 
 #: misc-utils/setterm.c:763
 #, c-format
@@ -7562,9 +7556,9 @@ msgid "  [ -regtabs [1-160] ]\n"
 msgstr "  [ -regtabs [1-160] ]\n"
 
 #: misc-utils/setterm.c:804
-#, fuzzy, c-format
+#, c-format
 msgid "  [ -blank [0-60|force|poke] ]\n"
-msgstr "  [ -blank [0-60] ]\n"
+msgstr "  [ -blank [0-60|force|poke] ]\n"
 
 #: misc-utils/setterm.c:805
 #, c-format
@@ -7794,9 +7788,9 @@ msgid "error changing mode of %s: %s\n"
 msgstr "virhe muutettaessa tiedoston %s tilaa: %s\n"
 
 #: mount/fstab.c:880
-#, fuzzy, c-format
+#, c-format
 msgid "error changing owner of %s: %s\n"
-msgstr "virhe muutettaessa tiedoston %s tilaa: %s\n"
+msgstr "virhe muutettaessa tiedoston %s omistajaa: %s\n"
 
 #: mount/fstab.c:891
 #, c-format
@@ -7804,19 +7798,19 @@ msgid "can't rename %s to %s: %s\n"
 msgstr "nimeäminen %s -> %s ei onnistu: %s\n"
 
 #: mount/lomount.c:356
-#, fuzzy, c-format
+#, c-format
 msgid ", offset %<PRIu64>"
-msgstr ", siirtymä %d"
+msgstr ", siirtymä %<PRIu64>"
 
 #: mount/lomount.c:359
-#, fuzzy, c-format
+#, c-format
 msgid ", sizelimit %<PRIu64>"
-msgstr ", kokoraja %lld"
+msgstr ", kokoraja %<PRIu64>"
 
 #: mount/lomount.c:367
-#, fuzzy, c-format
+#, c-format
 msgid ", encryption %s (type %<PRIu32>)"
-msgstr ", salaus %s (tyyppi %d)"
+msgstr ", salaus %s (tyyppi %<PRIu32>)"
 
 #: mount/lomount.c:380
 #, c-format
@@ -7840,9 +7834,9 @@ msgstr "loop: laitetta %s ei voi avata: %s\n"
 
 #: mount/lomount.c:418 mount/lomount.c:449 mount/lomount.c:514
 #: mount/lomount.c:563
-#, fuzzy, c-format
+#, c-format
 msgid "%s: /dev directory does not exist."
-msgstr "%s: käyttäjä ”%s” ei ole olemassa.\n"
+msgstr "%s: /dev-hakemistoa ei ole olemassa."
 
 #: mount/lomount.c:429 mount/lomount.c:576
 #, c-format
@@ -7952,12 +7946,12 @@ msgstr "mount: muunnettiin %s ”%s” arvoon ”%s”\n"
 #: mount/mount.c:504
 #, c-format
 msgid "mount: according to mtab, %s is already mounted on %s"
-msgstr "mount: tiedoston mtab mukaan %s on jo liitetty pisteeseen %s"
+msgstr "mount: mtab-tiedoston mukaan %s on jo liitetty pisteeseen %s"
 
 #: mount/mount.c:509
 #, c-format
 msgid "mount: according to mtab, %s is mounted on %s"
-msgstr "mount: tiedoston mtab mukaan %s on liitetty pisteeseen %s"
+msgstr "mount: mtab-tiedoston mukaan %s on liitetty pisteeseen %s"
 
 #: mount/mount.c:529
 #, c-format
@@ -7975,14 +7969,14 @@ msgid "mount: error changing mode of %s: %s"
 msgstr "mount: virhe muutettaessa tiedoston %s tilaa: %s"
 
 #: mount/mount.c:637
-#, fuzzy, c-format
+#, c-format
 msgid "mount: cannot set group id: %s"
-msgstr "mount: nopeutta ei voi asettaa: %s"
+msgstr "mount: ryhmä-id:tä voi asettaa: %s"
 
 #: mount/mount.c:640
-#, fuzzy, c-format
+#, c-format
 msgid "mount: cannot set user id: %s"
-msgstr "mount: nopeutta ei voi asettaa: %s"
+msgstr "mount: käyttäjä-id:tä ei voi asettaa: %s"
 
 #: mount/mount.c:679 mount/mount.c:1594
 #, c-format
@@ -8037,9 +8031,10 @@ msgid "mount: skipping the setup of a loop device\n"
 msgstr "mount: ohitetaan loop-laitteen asettaminen\n"
 
 #: mount/mount.c:920
-#, fuzzy, c-format
+#, c-format
 msgid "mount: according to mtab %s is already mounted on %s as loop"
-msgstr "mount: tiedoston mtab mukaan %s on jo liitetty pisteeseen %s"
+msgstr ""
+"mount: mtab-tiedoston mukaan %s on jo liitetty pisteeseen %s loop-laitteena"
 
 #: mount/mount.c:930
 #, c-format
@@ -8167,13 +8162,14 @@ msgid "mount: %s not mounted already, or bad option"
 msgstr "mount: %s ei ole vielä liitetty, tai virheellinen valitsin"
 
 #: mount/mount.c:1246
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "mount: wrong fs type, bad option, bad superblock on %s,\n"
 "       missing codepage or helper program, or other error"
 msgstr ""
-"mount: väärä tiedostojärjestelmätyyppi, virheellinen valitsin, viallinen \n"
-"       superlohko laitteella %s, puuttuva koodisivu, tai muu virhe"
+"mount: väärä tiedostojärjestelmän tyyppi, virheellinen valitsin, viallinen \n"
+"       superlohko laitteella %s, puuttuva koodisivu tai apuohjelma, tai muu "
+"virhe"
 
 #: mount/mount.c:1253
 msgid ""
@@ -8442,6 +8438,15 @@ msgid ""
 " %1$s -V                            display version\n"
 "\n"
 msgstr ""
+"\n"
+"Käyttö:\n"
+" %1$s -a [-e] [-v]                  ota käyttöön kaikki /etc/fstabin\n"
+"                                     sivutusalueet\n"
+" %1$s [-p priorit.] [-v] <polku>    ota käyttöön annettu sivutusalue\n"
+" %1$s -s                            näytä yhteenveto sivutuskäytöstä\n"
+" %1$s -h                            näytä ohje\n"
+" %1$s -V                            näytä versio\n"
+"\n"
 
 #: mount/swapon.c:89
 #, c-format
@@ -8454,21 +8459,28 @@ msgid ""
 " %1$s -V                           display version\n"
 "\n"
 msgstr ""
+"\n"
+"Käyttö:\n"
+" %1$s -a [-v]                      poista käytöstä kaikki sivutusalueet\n"
+" %1$s [-v] <polku>               poista käytöstä annettu sivutusalue\n"
+" %1$s -h                           näytä ohje\n"
+" %1$s -V                           näytä versio\n"
+"\n"
 
 #: mount/swapon.c:121
-#, fuzzy, c-format
+#, c-format
 msgid "%s: %s: unexpected file format\n"
-msgstr "%s: Odottamaton tiedoston loppu (EOF) tiedostossa %s\n"
+msgstr "%s: %s: odottamaton tiedostomuoto\n"
 
 #: mount/swapon.c:202
-#, fuzzy, c-format
+#, c-format
 msgid "%s: cannot fork: %s\n"
-msgstr "%s: Haarauttaminen ei onnistu\n"
+msgstr "%s: haarauttaminen ei onnistu: %s\n"
 
 #: mount/swapon.c:228
-#, fuzzy, c-format
+#, c-format
 msgid "%s: waitpid: %s\n"
-msgstr "%s: avaaminen epäonnistui: %s\n"
+msgstr "%s: waitpid: %s\n"
 
 #: mount/swapon.c:248 mount/swapon.c:348
 #, c-format
@@ -8518,14 +8530,14 @@ msgid "umount: compiled without support for -f\n"
 msgstr "umount: käännetty ilman tukea valitsimelle -f\n"
 
 #: mount/umount.c:111
-#, fuzzy, c-format
+#, c-format
 msgid "umount: cannot set group id: %s"
-msgstr "mount: nopeutta ei voi asettaa: %s"
+msgstr "umount: ryhmä-id:tä ei voi asettaa: %s"
 
 #: mount/umount.c:114
-#, fuzzy, c-format
+#, c-format
 msgid "umount: cannot set user id: %s"
-msgstr "mount: nopeutta ei voi asettaa: %s"
+msgstr "umount: käyttäjä-id:tä ei voi asettaa: %s"
 
 #: mount/umount.c:139
 #, c-format
@@ -8635,7 +8647,7 @@ msgstr "%s ei löytynyt tiedostosta mtab\n"
 #: mount/umount.c:487
 #, c-format
 msgid "umount: %s is not mounted (according to mtab)"
-msgstr "umount: %s ei ole liitetty (tiedoston mtab mukaan)"
+msgstr "umount: %s ei ole liitetty (mtab-tiedoston mukaan)"
 
 #: mount/umount.c:511
 #, c-format
@@ -9472,9 +9484,9 @@ msgid "speed %d unsupported"
 msgstr ""
 
 #: sys-utils/ldattach.c:242
-#, fuzzy, c-format
+#, c-format
 msgid "cannot set terminal attributes for %s"
-msgstr "laitteen %s kokoa ei voi hakea"
+msgstr ""
 
 #: sys-utils/ldattach.c:249
 #, fuzzy
@@ -9484,7 +9496,7 @@ msgstr "Levyasemalla ei voi siirtyä"
 #: sys-utils/ldattach.c:255
 #, fuzzy
 msgid "cannot daemonize"
-msgstr "laitteen %s kokoa ei voi hakea"
+msgstr "laitetta %s ei voi avata"
 
 #: sys-utils/rdev.c:69
 msgid "usage: rdev [ -rv ] [ -o OFFSET ] [ IMAGE [ VALUE [ OFFSET ] ] ]"
@@ -10389,28 +10401,6 @@ msgstr "Muisti loppui kasvatettaessa puskuria.\n"
 #~ msgid "%-10s %-10s %-10s %-10s %-12s %-12s\n"
 #~ msgstr "%-10s %-10s %-10s %-10s %-12s %-12s\n"
 
-#, fuzzy
-#~ msgid "chfn: PAM Failure, aborting: %s\n"
-#~ msgstr "login: PAM-virhe, keskeytetään: %s\n"
-
-#~ msgid "Can't read %s, exiting."
-#~ msgstr "Tiedostoa %s ei voi lukea, poistutaan."
-
-#~ msgid "login: PAM Failure, aborting: %s\n"
-#~ msgstr "login: PAM-virhe, keskeytetään: %s\n"
-
-#~ msgid "mount: backgrounding \"%s\"\n"
-#~ msgstr "mount: siirretään taustalle ”%s”\n"
-
-#~ msgid "mount: giving up \"%s\"\n"
-#~ msgstr "mount: luovutetaan ”%s”\n"
-
-#~ msgid "`%s': bad directory: '.' isn't first\n"
-#~ msgstr "”%s”: viallinen hakemisto: ”.” ei ole ensimmäisenä\n"
-
-#~ msgid "`%s': bad directory: '..' isn't second\n"
-#~ msgstr "”%s”: viallinen hakemisto: ”..” ei ole toisena\n"
-
 #~ msgid "calling open_tty\n"
 #~ msgstr "kutsutaan open_tty\n"
 
@@ -10453,11 +10443,17 @@ msgstr "Muisti loppui kasvatettaessa puskuria.\n"
 #~ msgid "term_io 2\n"
 #~ msgstr "term_io 2\n"
 
-#~ msgid "Password error."
-#~ msgstr "Salasanavirhe."
+#~ msgid "chfn: PAM Failure, aborting: %s\n"
+#~ msgstr "chfn: PAM-virhe, keskeytetään: %s\n"
 
 #~ msgid "Warning: \"%s\" is not listed in /etc/shells\n"
 #~ msgstr "Varoitus: ”%s” ei ole listattuna tiedostossa /etc/shells\n"
+
+#~ msgid "Can't read %s, exiting."
+#~ msgstr "Tiedostoa %s ei voi lukea, poistutaan."
+
+#~ msgid "login: PAM Failure, aborting: %s\n"
+#~ msgstr "login: PAM-virhe, keskeytetään: %s\n"
 
 #~ msgid "timeout = %d, quiet = %d, reboot = %d\n"
 #~ msgstr "aikaraja = %d, hiljaisuus = %d, uudelleenkäynnistys = %d\n"
@@ -10473,6 +10469,12 @@ msgstr "Muisti loppui kasvatettaessa puskuria.\n"
 
 #~ msgid "%s: could not find any device /dev/loop#"
 #~ msgstr "%s: ei löytynyt yhtään laitetta /dev/loop#"
+
+#~ msgid "mount: backgrounding \"%s\"\n"
+#~ msgstr "mount: siirretään taustalle ”%s”\n"
+
+#~ msgid "mount: giving up \"%s\"\n"
+#~ msgstr "mount: luovutetaan ”%s”\n"
 
 #~ msgid ""
 #~ "usage: %s [-hV]\n"
@@ -10512,6 +10514,15 @@ msgstr "Muisti loppui kasvatettaessa puskuria.\n"
 
 #~ msgid "Unknown option `%c' ignored"
 #~ msgstr "Tuntematon valitsin ”%c” jätetty huomiotta"
+
+#~ msgid "`%s': bad directory: '.' isn't first\n"
+#~ msgstr "”%s”: viallinen hakemisto: ”.” ei ole ensimmäisenä\n"
+
+#~ msgid "`%s': bad directory: '..' isn't second\n"
+#~ msgstr "”%s”: viallinen hakemisto: ”..” ei ole toisena\n"
+
+#~ msgid "Password error."
+#~ msgstr "Salasanavirhe."
 
 #~ msgid "%s from util-linux-%s\n"
 #~ msgstr "%s paketista util-linux-%s\n"

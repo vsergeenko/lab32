@@ -1,15 +1,15 @@
 # Vietnamese translation for Util-Linux-NG.
 # Copyright © 2008 Free Software Foundation, Inc.
-# This file is distributed under the same license as the util-linux-ng-2.14-rc2 package.
+# This file is distributed under the same license as the util-linux-ng package.
 # Phan Vinh Thinh <teppi82@gmail.com>, 2005-2007
 # Clytie Siddall <clytie@riverland.net.au>, 2007-2008.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: util-linux-ng 2.14-rc2\n"
+"Project-Id-Version: util-linux-ng 2.14.1-rc2\n"
 "Report-Msgid-Bugs-To: Karel Zak <kzak@redhat.com>\n"
 "POT-Creation-Date: 2008-08-22 12:23+0200\n"
-"PO-Revision-Date: 2008-05-02 21:36+0930\n"
+"PO-Revision-Date: 2008-09-08 18:21+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -4390,11 +4390,11 @@ msgstr "DOS phụ"
 
 #: fdisk/i386_sys_types.c:100
 msgid "VMware VMFS"
-msgstr ""
+msgstr "VMware VMFS"
 
 #: fdisk/i386_sys_types.c:101
 msgid "VMware VMKCORE"
-msgstr ""
+msgstr "VMware VMKCORE"
 
 # Name: don't translate/Tên: đừng dịch
 #: fdisk/i386_sys_types.c:105
@@ -10475,27 +10475,3 @@ msgstr "Dòng nhập vào quá dài.\n"
 #, c-format
 msgid "Out of memory when growing buffer.\n"
 msgstr "Tràn bộ nhớ khi tăng buffer.\n"
-
-#~ msgid "%-10s %-10s %-10s %-10s %-10s %-10s\n"
-#~ msgstr "%-10s %-10s %-10s %-10s %-10s %-10s\n"
-
-#~ msgid "%-10s %-10s %-20s %-20s %-20s\n"
-#~ msgstr "%-10s %-10s %-20s %-20s %-20s\n"
-
-#~ msgid "%-10s %-10s %-10s %-10s\n"
-#~ msgstr "%-10s %-10s %-10s %-10s\n"
-
-#~ msgid "%-10s %-10s %-10s %-10s %-10s %-10s %-12s\n"
-#~ msgstr "%-10s %-10s %-10s %-10s %-10s %-10s %-12s\n"
-
-#~ msgid "%-8s %-10s %-26.24s %-26.24s\n"
-#~ msgstr "%-8s %-10s %-26.24s %-26.24s\n"
-
-#~ msgid "%-10s %-10s %-10s %-10s %-10s\n"
-#~ msgstr "%-10s %-10s %-10s %-10s %-10s\n"
-
-#~ msgid "%-8s %-10s %-20s %-20s %-20s\n"
-#~ msgstr "%-8s %-10s %-20s %-20s %-20s\n"
-
-#~ msgid "%-10s %-10s %-10s %-10s %-12s %-12s\n"
-#~ msgstr "%-10s %-10s %-10s %-10s %-12s %-12s\n"
