@@ -775,7 +775,7 @@ read_extended(int ext) {
 
 		if (!get_nr_sects(pe->part_table) &&
 		    (partitions > 5 || ptes[4].part_table->sys_ind)) {
-			printf("omitting empty partition (%d)\n", i+1);
+			printf(_("omitting empty partition (%d)\n"), i+1);
 			delete_partition(i);
 			goto remove; 	/* numbering changed */
 		}
@@ -1207,7 +1207,8 @@ read_int(unsigned int low, unsigned int dflt, unsigned int high,
 				 */
 				if (!display_in_cyl_units)
 					i *= heads * sectors;
-			} else if (*(line_ptr + 1) == 'B' &&
+			} else if (*line_ptr &&
+				   *(line_ptr + 1) == 'B' &&
 				   *(line_ptr + 2) == '\0') {
 				/*
 				 * 10^N
@@ -1220,7 +1221,8 @@ read_int(unsigned int low, unsigned int dflt, unsigned int high,
 					absolute = 1000000000;
 				else
 					absolute = -1;
-			} else if (*(line_ptr + 1) == '\0') {
+			} else if (*line_ptr &&
+				   *(line_ptr + 1) == '\0') {
 				/*
 				 * 2^N
 				 */
@@ -1470,7 +1472,7 @@ change_sysid(void) {
 	/* If sgi_label then don't use get_existing_partition,
 	   let the user select a partition, since get_existing_partition()
 	   only works for Linux like partition tables. */
-	if (!sgi_label) { 
+	if (!sgi_label) {
 		i = get_existing_partition(0, partitions);
 	} else {
 		i = get_partition(0, partitions);
@@ -1779,7 +1781,7 @@ fix_partition_table_order(void) {
 	if (i)
 		fix_chain_of_logicals();
 
-	printf("Done.\n");
+	printf(_("Done.\n"));
 
 }
 
@@ -2049,7 +2051,7 @@ add_partition(int n, int sys) {
 	do {
 		temp = start;
 		for (i = 0; i < partitions; i++) {
-			int lastplusoff;
+			unsigned long long lastplusoff;
 
 			if (start == ptes[i].offset)
 				start += sector_offset;
@@ -2065,7 +2067,7 @@ add_partition(int n, int sys) {
 			read = 0;
 		}
 		if (!read && start == temp) {
-			unsigned int i = start;
+			unsigned long long i = start;
 
 			start = read_int(cround(i), cround(i), cround(limit),
 					 0, mesg);
@@ -2289,11 +2291,9 @@ reread_partition_table(int leave) {
         }
 
 	if (i) {
-		printf(_("\nWARNING: Re-reading the partition table "
-			 "failed with error %d: %s.\n"
-			 "The kernel still uses the old table.\n"
-			 "The new table will be used "
-			 "at the next reboot.\n"),
+		printf(_("\nWARNING: Re-reading the partition table failed with error %d: %s.\n"
+			 "The kernel still uses the old table. The new table will be used at\n"
+			 "the next reboot or after you run partprobe(8) or kpartx(8)\n"),
 			errno, strerror(errno));
 	}
 
@@ -2553,7 +2553,8 @@ static void
 tryprocpt(void) {
 	FILE *procpt;
 	char line[100], ptname[100], devname[120];
-	int ma, mi, sz;
+	int ma, mi;
+	unsigned long long sz;
 
 	procpt = fopen(PROC_PARTITIONS, "r");
 	if (procpt == NULL) {
@@ -2562,7 +2563,7 @@ tryprocpt(void) {
 	}
 
 	while (fgets(line, sizeof(line), procpt)) {
-		if (sscanf (line, " %d %d %d %[^\n ]",
+		if (sscanf (line, " %d %d %llu %100[^\n ]",
 			    &ma, &mi, &sz, ptname) != 4)
 			continue;
 		snprintf(devname, sizeof(devname), "/dev/%s", ptname);
@@ -2599,7 +2600,7 @@ main(int argc, char **argv) {
 	 *  fdisk [-b sectorsize] [-u] device
 	 *
 	 * Options -C, -H, -S set the geometry.
-	 * 
+	 *
 	 */
 	while ((c = getopt(argc, argv, "b:C:H:lsS:uvV")) != -1) {
 		switch (c) {

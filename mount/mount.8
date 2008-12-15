@@ -65,8 +65,11 @@ The standard form of the
 .B mount
 command, is
 .RS
+
 .br
 .BI "mount \-t" " type device dir"
+.br
+
 .RE
 This tells the kernel to attach the file system found on
 .I device
@@ -82,25 +85,25 @@ the pathname
 refers to the root of the file system on
 .IR device .
 
+.B The listing and help.
+.RS
 Three forms of invocation do not actually mount anything:
-.RS
-.br
+.TP
 .B "mount \-h"
-.RE
-prints a help message;
-.RS
-.br
+prints a help message
+.TP
 .B "mount \-V"
-.RE
-prints a version string; and just
-.RS
+prints a version string
+.TP
 .BI "mount [-l] [-t" " type" ]
-.RE
 lists all mounted file systems (of type
 .IR type ).
 The option \-l adds the (ext2, ext3 and XFS) labels in this listing.
 See below.
+.RE
 
+.B The bind mounts.
+.RS
 .\" In fact since 2.3.99. At first the syntax was mount -t bind.
 Since Linux 2.4.0 it is possible to remount part of the
 file hierarchy somewhere else. The call is
@@ -118,6 +121,7 @@ or fstab entry is:
 .br
 .B "/olddir  /newdir  none  bind"
 .RE
+
 After this call the same contents is accessible in two places.
 One can also remount a single file (on a single file).
 
@@ -138,7 +142,10 @@ or shortoption
 Note that the filesystem mount options will remain the same as those
 on the original mount point, and cannot be changed by passing the -o
 option along with --bind/--rbind.
+.RE
 
+.B The move operation.
+.RS
 Since Linux 2.5.1 it is possible to atomically move a mounted tree
 to another place. The call is
 .RS
@@ -150,7 +157,10 @@ or shortoption
 .br
 .B "mount -M olddir newdir"
 .RE
+.RE
 
+.B The shared subtrees operations.
+.RS
 Since Linux 2.6.15 it is possible to mark a mount and its submounts as shared,
 private, slave or unbindable. A shared mount provides ability to create mirrors
 of that mount such that mounts and umounts within any of the mirrors propagate
@@ -181,10 +191,25 @@ mounts under a given mountpoint.
 .br
 .B "mount --make-rprivate mountpoint"
 .br
-.B
-"mount --make-runbindable mountpoint"
+.B "mount --make-runbindable mountpoint"
 .br
 .RE
+.RE
+
+.B The device indication.
+.RS
+Most devices are indicated by a file name (of a block special device), like
+.IR /dev/sda1 ,
+but there are other possibilities. For example, in the case of an NFS mount,
+.I device
+may look like
+.IR knuth.cwi.nl:/dir .
+It is possible to indicate a block special device using its
+volume
+.B LABEL
+or
+.B UUID
+(see the \-L and \-U options below).
 
 The
 .I proc
@@ -197,24 +222,18 @@ can be used instead of a device specification.
 is less fortunate: the error message `none busy' from
 .B umount
 can be confusing.)
+.RE
 
-Most devices are indicated by a file name (of a block special device), like
-.IR /dev/sda1 ,
-but there are other possibilities. For example, in the case of an NFS mount,
-.I device
-may look like
-.IR knuth.cwi.nl:/dir .
-It is possible to indicate a block special device using its
-volume label or UUID (see the \-L and \-U options below).
-
+.B The /etc/fstab, /etc/mtab and /proc/mounts files.
+.RS
 The file
 .I /etc/fstab
 (see
 .BR fstab (5)),
 may contain lines describing what devices are usually
-mounted where, using which options. This file is used in three ways:
+mounted where, using which options.
 .LP
-(i) The command
+The command
 .RS
 .br
 .BI "mount \-a [\-t " type "] [\-O " optlist ]
@@ -229,11 +248,47 @@ keyword. Adding the
 option will make mount fork, so that the
 filesystems are mounted simultaneously.
 .LP
-(ii) When mounting a file system mentioned in
+When mounting a file system mentioned in
 .IR fstab ,
 it suffices to give only the device, or only the mount point.
-.LP
-(iii) Normally, only the superuser can mount file systems.
+
+
+The programs
+.B mount
+and
+.B umount
+maintain a list of currently mounted file systems in the file
+.IR /etc/mtab .
+If no arguments are given to
+.BR mount ,
+this list is printed.
+
+When the
+.I proc
+filesystem is mounted (say at
+.IR /proc ),
+the files
+.I /etc/mtab
+and
+.I /proc/mounts
+have very similar contents. The former has somewhat
+more information, such as the mount options used,
+but is not necessarily up-to-date (cf. the
+.B \-n
+option below). It is possible to replace
+.I /etc/mtab
+by a symbolic link to
+.IR /proc/mounts ,
+and especially when you have very large numbers of mounts
+things will be much faster with that symlink,
+but some information is lost that way, and in particular
+working with the loop device will be less convenient,
+and using the "user" option will fail.
+.RE
+
+.B The non-superuser mounts.
+.RS
+Normally, only the superuser can mount file systems.
 However, when
 .I fstab
 contains the
@@ -278,44 +333,13 @@ The
 .B group
 option is similar, with the restriction that the user must be
 member of the group of the special file.
+.RE
 
-The programs
-.B mount
-and
-.B umount
-maintain a list of currently mounted file systems in the file
-.IR /etc/mtab .
-If no arguments are given to
-.BR mount ,
-this list is printed.
-
-When the
-.I proc
-filesystem is mounted (say at
-.IR /proc ),
-the files
-.I /etc/mtab
-and
-.I /proc/mounts
-have very similar contents. The former has somewhat
-more information, such as the mount options used,
-but is not necessarily up-to-date (cf. the
-.B \-n
-option below). It is possible to replace
-.I /etc/mtab
-by a symbolic link to
-.IR /proc/mounts ,
-and especially when you have very large numbers of mounts
-things will be much faster with that symlink,
-but some information is lost that way, and in particular
-working with the loop device will be less convenient,
-and using the "user" option will fail.
-
-.SH OPTIONS
-The full set of options used by an invocation of
+.SH COMMAND LINE OPTIONS
+The full set of mount options used by an invocation of
 .B mount
 is determined by first extracting the
-options for the file system from the
+mount options for the file system from the
 .I fstab
 table, then applying any options specified by the
 .B \-o
@@ -323,7 +347,7 @@ argument, and finally applying a
 .BR \-r " or " \-w
 option, when present.
 
-Options available for the
+Command line options available for the
 .B mount
 command:
 .TP
@@ -592,178 +616,67 @@ that are either ext2 or have the _netdev option specified.
 .B \-o
 Options are specified with a
 .B \-o
-flag followed by a comma separated string of options.
+flag followed by a comma separated string of options. For example:
+.RS
+.RS
+.B "mount LABEL=mydisk \-o noatime,nouser"
+.RE
+
+For more details, see
+.B FILESYSTEM INDEPENDENT MOUNT OPTIONS
+and
+.B FILESYSTEM SPECIFIC MOUNT OPTIONS
+sections.
+.RE
+.TP
+.B \-B, \-\-bind
+Remount a subtree somewhere else (so that its contents are available
+in both places). See above.
+.TP
+.B \-R, \-\-rbind
+Remount a subtree and all possible submounts somewhere else (so that its
+contents are available in both places). See above.
+.TP
+.B \-M, \-\-move
+Move a subtree to some other place. See above.
+.RE
+
+.SH FILESYSTEM INDEPENDENT MOUNT OPTIONS
 Some of these options are only useful when they appear in the
 .I /etc/fstab
-file.  The following options apply to any file system that is being
+file.
+
+Some of these options could be enabled or disabled by default
+in the system kernel. To check the current setting see the options
+in /proc/mounts.
+
+The following options apply to any file system that is being
 mounted (but not every file system actually honors them - e.g., the
 .B sync
 option today has effect only for ext2, ext3, fat, vfat and ufs):
-.RS
+
 .TP
 .B async
-All I/O to the file system should be done asynchronously.
+All I/O to the file system should be done asynchronously. (See also the
+.B sync
+option.)
 .TP
 .B atime
 Update inode access time for each access. This is the default.
+.TP
+.B noatime
+Do not update inode access times on this file system (e.g, for faster
+access on the news spool to speed up news servers).
 .TP
 .B auto
 Can be mounted with the
 .B \-a
 option.
 .TP
-.B defaults
-Use default options:
-.BR rw ", " suid ", " dev ", " exec ", " auto ", " nouser ", and " async.
-.TP
-.B dev
-Interpret character or block special devices on the file system.
-.TP
-.B exec
-Permit execution of binaries.
-.TP
-.B group
-Allow an ordinary (i.e., non-root) user to mount the file system if one
-of his groups matches the group of the device.
-This option implies the options
-.BR nosuid " and " nodev
-(unless overridden by subsequent options, as in the option line
-.BR group,dev,suid ).
-.TP
-.B encryption
-Specifies an encryption algorithm to use.  Used in conjunction with the
-.BR loop " option."
-.TP
-.B keybits
-Specifies the key size to use for an encryption algorithm. Used in conjunction
-with the 
-.BR loop " and " encryption " options."
-.B nofail
-Do not report errors for this device if it does not exist.
-.TP
-.B mand
-Allow mandatory locks on this filesystem. See
-.BR fcntl (2).
-.TP
-.B _netdev
-The filesystem resides on a device that requires network access
-(used to prevent the system from attempting to mount these filesystems
-until the network has been enabled on the system).
-.TP
-.B noatime
-Do not update inode access times on this file system (e.g, for faster
-access on the news spool to speed up news servers).
-.TP
-.B nodiratime
-Do not update directory inode access times on this filesystem.
-.TP
-.B relatime
-Update inode access times relative to modify or change time.  Access
-time is only updated if the previous access time was earlier than the
-current modify or change time. (Similar to noatime, but doesn't break
-mutt or other applications that need to know if a file has been read
-since the last time it was modified.)
-.TP
-.B norelatime
-Do not use
-.B realatime
-feature (e.g, for systems where the feature is enabled by default, for
-more details see mount options in /proc/mounts).
-.TP
 .B noauto
 Can only be mounted explicitly (i.e., the
 .B \-a
 option will not cause the file system to be mounted).
-.TP
-.B nodev
-Do not interpret character or block special devices on the file
-system.
-.TP
-.B noexec
-Do not allow direct execution of any binaries on the mounted file system.
-(Until recently it was possible to run binaries anyway using a command like
-/lib/ld*.so /mnt/binary. This trick fails since Linux 2.4.25 / 2.6.0.)
-.TP
-.B nomand
-Do not allow mandatory locks on this filesystem.
-.TP
-.B nosuid
-Do not allow set-user-identifier or set-group-identifier bits to take
-effect. (This seems safe, but is in fact rather unsafe if you have
-suidperl(1) installed.)
-.TP
-.B nouser
-Forbid an ordinary (i.e., non-root) user to mount the file system.
-This is the default.
-.TP
-.B owner
-Allow an ordinary (i.e., non-root) user to mount the file system if he
-is the owner of the device.
-This option implies the options
-.BR nosuid " and " nodev
-(unless overridden by subsequent options, as in the option line
-.BR owner,dev,suid ).
-.TP
-.B remount
-Attempt to remount an already-mounted file system.  This is commonly
-used to change the mount flags for a file system, especially to make a
-readonly file system writeable. It does not change device or mount point.
-
-The remount functionality follows the standard way how the mount command works
-with options from fstab. It means the mount command doesn't read fstab (or
-mtab) only when a
-.IR device
-and
-.IR dir
-are fully specified.
-
-.BR "mount -o remount,rw /dev/foo /dir"
-
-After this call all old mount options are replaced and arbitrary stuff from
-fstab is ignored, except the loop= option which is internally generated and
-maintained by the mount command.
-
-.BR "mount -o remount,rw  /dir"
-
-After this call mount reads fstab (or mtab) and merges these options with
-options from command line (
-.B -o
-).
-.TP
-.B ro
-Mount the file system read-only.
-.TP
-.B rw
-Mount the file system read-write.
-.TP
-.B suid
-Allow set-user-identifier or set-group-identifier bits to take
-effect.
-.TP
-.B sync
-All I/O to the file system should be done synchronously. In case of media with limited number of write cycles 
-(e.g. some flash drives) "sync" may cause life-cycle shortening.
-.TP
-.B dirsync
-All directory updates within the file system should be done synchronously.
-This affects the following system calls: creat, link, unlink, symlink,
-mkdir, rmdir, mknod and rename.
-.TP
-.B user
-Allow an ordinary user to mount the file system.
-The name of the mounting user is written to mtab so that he can unmount
-the file system again.
-This option implies the options
-.BR noexec ", " nosuid ", and " nodev
-(unless overridden by subsequent options, as in the option line
-.BR user,exec,dev,suid ).
-.TP
-.B users
-Allow every user to mount and unmount the file system.
-This option implies the options
-.BR noexec ", " nosuid ", and " nodev
-(unless overridden by subsequent options, as in the option line
-.BR users,exec,dev,suid ).
 .TP
 \fBcontext=\fP\fIcontext\fP, \fBfscontext=\fP\fIcontext\fP and \fBdefcontext=\fP\fIcontext\fP
 The
@@ -806,20 +719,164 @@ You can set the default security context for unlabeled files using
 option. This overrides the value set for unlabeled files in the policy and requires a
 file system that supports xattr labeling.
 
-For more details see
+For more details, see
 .BR selinux (8)
-.RE
+
 .TP
-.B \-B, \-\-bind
-Remount a subtree somewhere else (so that its contents are available
-in both places). See above.
+.B defaults
+Use default options:
+.BR rw ", " suid ", " dev ", " exec ", " auto ", " nouser ", and " async.
 .TP
-.B \-R, \-\-rbind
-Remount a subtree and all possible submounts somewhere else (so that its
-contents are available in both places). See above.
+.B dev
+Interpret character or block special devices on the file system.
 .TP
-.B \-M, \-\-move
-Move a subtree to some other place. See above.
+.B nodev
+Do not interpret character or block special devices on the file
+system.
+.TP
+.B diratime
+Update directory inode access times on this filesystem. This is the default.
+.TP
+.B nodiratime
+Do not update directory inode access times on this filesystem.
+.TP
+.B dirsync
+All directory updates within the file system should be done synchronously.
+This affects the following system calls: creat, link, unlink, symlink,
+mkdir, rmdir, mknod and rename.
+.TP
+.B exec
+Permit execution of binaries.
+.TP
+.B noexec
+Do not allow direct execution of any binaries on the mounted file system.
+(Until recently it was possible to run binaries anyway using a command like
+/lib/ld*.so /mnt/binary. This trick fails since Linux 2.4.25 / 2.6.0.)
+.TP
+.B group
+Allow an ordinary (i.e., non-root) user to mount the file system if one
+of his groups matches the group of the device.
+This option implies the options
+.BR nosuid " and " nodev
+(unless overridden by subsequent options, as in the option line
+.BR group,dev,suid ).
+.TP
+.B encryption
+Specifies an encryption algorithm to use.  Used in conjunction with the
+.BR loop " option."
+.TP
+.B keybits
+Specifies the key size to use for an encryption algorithm. Used in conjunction
+with the 
+.BR loop " and " encryption " options."
+.B nofail
+Do not report errors for this device if it does not exist.
+.B iversion
+Every time the inode is modified, the i_version field will be incremented.
+.TP
+.B noiversion
+Do not increment the i_version inode field.
+.TP
+.B mand
+Allow mandatory locks on this filesystem. See
+.BR fcntl (2).
+.TP
+.B nomand
+Do not allow mandatory locks on this filesystem.
+.TP
+.B _netdev
+The filesystem resides on a device that requires network access
+(used to prevent the system from attempting to mount these filesystems
+until the network has been enabled on the system).
+.TP
+.B nofail
+Do not report errors for this device if it does not exist.
+.TP
+.B relatime
+Update inode access times relative to modify or change time.  Access
+time is only updated if the previous access time was earlier than the
+current modify or change time. (Similar to noatime, but doesn't break
+mutt or other applications that need to know if a file has been read
+since the last time it was modified.)
+.TP
+.B norelatime
+Do not use
+.B relatime
+feature (e.g, for systems where the feature is enabled by default, for
+more details see mount options in /proc/mounts).
+.TP
+.B suid
+Allow set-user-identifier or set-group-identifier bits to take
+effect.
+.TP
+.B nosuid
+Do not allow set-user-identifier or set-group-identifier bits to take
+effect. (This seems safe, but is in fact rather unsafe if you have
+suidperl(1) installed.)
+.TP
+.B owner
+Allow an ordinary (i.e., non-root) user to mount the file system if he
+is the owner of the device.
+This option implies the options
+.BR nosuid " and " nodev
+(unless overridden by subsequent options, as in the option line
+.BR owner,dev,suid ).
+.TP
+.B remount
+Attempt to remount an already-mounted file system.  This is commonly
+used to change the mount flags for a file system, especially to make a
+readonly file system writeable. It does not change device or mount point.
+
+The remount functionality follows the standard way how the mount command works
+with options from fstab. It means the mount command doesn't read fstab (or
+mtab) only when a
+.IR device
+and
+.IR dir
+are fully specified.
+
+.BR "mount -o remount,rw /dev/foo /dir"
+
+After this call all old mount options are replaced and arbitrary stuff from
+fstab is ignored, except the loop= option which is internally generated and
+maintained by the mount command.
+
+.BR "mount -o remount,rw  /dir"
+
+After this call mount reads fstab (or mtab) and merges these options with
+options from command line (
+.B -o
+).
+.TP
+.B ro
+Mount the file system read-only.
+.TP
+.B rw
+Mount the file system read-write.
+.TP
+.B sync
+All I/O to the file system should be done synchronously. In case of media with limited number of write cycles 
+(e.g. some flash drives) "sync" may cause life-cycle shortening.
+.TP
+.B user
+Allow an ordinary user to mount the file system.
+The name of the mounting user is written to mtab so that he can unmount
+the file system again.
+This option implies the options
+.BR noexec ", " nosuid ", and " nodev
+(unless overridden by subsequent options, as in the option line
+.BR user,exec,dev,suid ).
+.TP
+.B nouser
+Forbid an ordinary (i.e., non-root) user to mount the file system.
+This is the default.
+.TP
+.B users
+Allow every user to mount and unmount the file system.
+This option implies the options
+.BR noexec ", " nosuid ", and " nodev
+(unless overridden by subsequent options, as in the option line
+.BR users,exec,dev,suid ).
 
 .SH "FILESYSTEM SPECIFIC MOUNT OPTIONS"
 The following options apply only to certain file systems.
@@ -1143,7 +1200,28 @@ The default is the umask of the current process.
 The value is given in octal.
 .\" Present since Linux 2.5.43.
 .TP
-.BI check= value 
+.BI allow_utime= value
+This option controls the permission check of mtime/atime.
+.RS
+.TP
+.B 20
+If current process is in group of file's group ID, you can change timestamp.
+.TP
+.B 2
+Other users can change timestamp.
+.PP
+The default is set from `dmask' option. (If the directory is writable,
+.B utime(2)
+is also allowed. I.e. ~dmask & 022)
+
+Normally
+.B utime(2)
+checks current process is owner of the file, or it has
+CAP_FOWNER capability.  But FAT filesystem doesn't have uid/gid on disk, so
+normal check is too unflexible. With this option you can relax it.
+.RE
+.TP
+.BI check= value
 Three different levels of pickyness can be chosen:
 .RS
 .TP
@@ -1238,7 +1316,27 @@ Turn on the
 flag.  Attempts to chown or chmod files do not return errors,
 although they fail. Use with caution!
 .TP
-.B "sys_immutable, showexec, dots, nodots, dotsOK=[yes|no]"
+.B showexec
+If set, the execute permission bits of the file will be allowed only if
+the extension part of the name is .EXE, .COM, or .BAT. Not set by default.
+.TP
+.B sys_immutable
+If set, ATTR_SYS attribute on FAT is handled as IMMUTABLE flag on Linux.
+Not set by default.
+.TP
+.B flush
+If set, the filesystem will try to flush to disk more early than normal.
+Not set by default.
+.TP
+.B usefree
+Use the "free clusters" value stored on FSINFO. It'll
+be used to determine number of free clusters without
+scanning disk. But it's not used by default, because
+recent Windows don't update it correctly in some
+case. If you are sure the "free clusters" on FSINFO is
+correct, by this option you can avoid scanning disk.
+.TP
+.B "dots, nodots, dotsOK=[yes|no]"
 Various misguided attempts to force Unix or DOS conventions
 onto a FAT file system.
 
@@ -1524,8 +1622,6 @@ There are no mount options.
 
 .SH "Mount options for reiserfs"
 Reiserfs is a journaling filesystem.
-The reiserfs mount options are more fully described at
-.IR http://www.namesys.com/mount-options.html .
 .TP
 .BR conv
 Instructs version 3.6 reiserfs software to mount a version 3.5 file system,
@@ -1634,26 +1730,79 @@ and the current version of
 None.
 
 .SH "Mount options for tmpfs"
-The following parameters accept a suffix
+.TP
+.BI size= nbytes
+Override default maximum size of the filesystem.
+The size is given in bytes, and rounded down to entire pages.
+The default is half of the memory. The size parameter also accepts a suffix %
+to limit this tmpfs instance to that percentage of your physical RAM:
+the default, when neither size nor nr_blocks is specified, is size=50%
+.TP
+.B nr_blocks=
+The same as size, but in blocks of PAGE_CACHE_SIZE
+.TP
+.B nr_inodes=
+The maximum number of inodes for this instance. The default
+is half of the number of your physical RAM pages, or (on a
+machine with highmem) the number of lowmem RAM pages,
+whichever is the lower.
+.PP
+The tmpfs mount options for sizing (
+.BR size ,
+.BR nr_blocks ,
+and
+.BR nr_inodes )
+accept a suffix
 .BR k ,
 .B m
 or
 .B g
 for Ki, Mi, Gi (binary kilo, mega and giga) and can be changed on remount.
-.TP
-.BI size= nbytes
-Override default maximum size of the filesystem.
-The size is given in bytes, and rounded down to entire pages.
-The default is half of the memory.
-.TP
-.B nr_blocks=
-Set number of blocks.
-.TP
-.B nr_inodes=
-Set number of inodes.
+
 .TP
 .B mode=
 Set initial permissions of the root directory.
+.TP
+.B uid=
+The user id.
+.TP
+.B gid=
+The group id.
+.TP
+.B mpol=[default|prefer:Node|bind:NodeList|interleave|interleave:NodeList]
+Set the NUMA memory allocation policy for all files in that
+instance (if the kernel CONFIG_NUMA is enabled) - which can be adjusted on the
+fly via 'mount -o remount ...'
+.RS
+.TP
+.B default
+prefers to allocate memory from the local node
+.TP
+.B prefer:Node
+prefers to allocate memory from the given Node
+.TP
+.B bind:NodeList
+allocates memory only from nodes in NodeList
+.TP
+.B interleave
+prefers to allocate from each node in turn
+.TP
+.B interleave:NodeList
+allocates from each node of NodeList in turn.
+.PP
+The NodeList format is a comma-separated list of decimal numbers and ranges, a
+range being two hyphen-separated decimal numbers, the smallest and largest node
+numbers in the range.  For example, mpol=bind:0-3,5,7,9-15
+
+Note that trying to mount a tmpfs with an mpol option will fail if the
+running kernel does not support NUMA; and will fail if its nodelist
+specifies a node which is not online.  If your system relies on that
+tmpfs being mounted, but from time to time runs a kernel built without
+NUMA capability (perhaps a safe recovery kernel), or with fewer nodes
+online, then it is advisable to omit the mpol option from automatic
+mount options.  It can be added later, when the tmpfs is already mounted
+on MountPoint, by 'mount -o remount,mpol=Policy:NodeList MountPoint'.
+.PE
 
 .SH "Mount options for udf"
 udf is the "Universal Disk Format" filesystem defined by the Optical
@@ -1809,26 +1958,27 @@ disabled.
 Defines the behaviour for creation and display of filenames which fit into
 8.3 characters. If a long name for a file exists, it will always be
 preferred display. There are four modes:
+:
 .RS
 .TP
 .I lower
-Force the short name to lower case upon display; store a long name when 
-the short name is not all upper case.
+Force the short name to lower case upon display; store a long name when
+the short name is not all upper case. This mode is the default.
 .TP
 .I win95
 Force the short name to upper case upon display; store a long name when
 the short name is not all upper case.
 .TP
 .I winnt
-Display the shortname as is; store a long name when the short name is 
+Display the shortname as is; store a long name when the short name is
 not all lower case or all upper case.
 .TP
 .I mixed
 Display the short name as is; store a long name when the short name is not
 all upper case.
 .RE
+.TP
 
-The default is "lower".
 
 .SH "Mount options for usbfs"
 .TP

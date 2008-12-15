@@ -102,23 +102,20 @@
 #include <utmp.h>
 #include <setjmp.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/syslog.h>
 #include <sys/sysmacros.h>
+#include <linux/major.h>
 #include <netdb.h>
 #ifdef HAVE_LIBAUDIT
 # include <libaudit.h>
 #endif
+
 #include "pathnames.h"
 #include "my_crypt.h"
 #include "login.h"
 #include "xstrncpy.h"
 #include "nls.h"
 
-#include <sys/sysmacros.h>
-#include <linux/major.h>
-
-#include <utmp.h>
 
 #ifdef HAVE_SECURITY_PAM_MISC_H
 #  include <security/pam_appl.h>
@@ -1435,7 +1432,13 @@ dolastlog(int quiet) {
 	    lseek(fd, (off_t)pwd->pw_uid * sizeof(ll), SEEK_SET);
 	}
 	memset((char *)&ll, 0, sizeof(ll));
-	time(&ll.ll_time);
+
+	{
+		time_t t;
+		time(&t);
+		ll.ll_time = t; /* ll_time is always 32bit */
+	}
+
 	xstrncpy(ll.ll_line, tty_name, sizeof(ll.ll_line));
 	if (hostname)
 	    xstrncpy(ll.ll_host, hostname, sizeof(ll.ll_host));

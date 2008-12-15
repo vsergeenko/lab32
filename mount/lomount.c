@@ -621,7 +621,7 @@ xgetpass(int pfd, const char *prompt) {
 			pass = realloc(tmppass, buflen);
 			if (pass == NULL) {
 				/* realloc failed. Stop reading. */
-				error("Out of memory while reading passphrase");
+				error(_("Out of memory while reading passphrase"));
 				pass = tmppass; /* the old buffer hasn't changed */
 				break;
 			}
@@ -646,6 +646,12 @@ digits_only(const char *s) {
 	return 1;
 }
 
+/*
+ * return codes:
+ *	0	- success
+ *	1	- error
+ *	2	- error (EBUSY)
+ */
 int
 set_loop(const char *device, const char *file, unsigned long long offset,
 	 unsigned long long sizelimit, const char *encryption, int pfd, int *options,
@@ -667,12 +673,16 @@ set_loop(const char *device, const char *file, unsigned long long offset,
 
 	mode = (*options & SETLOOP_RDONLY) ? O_RDONLY : O_RDWR;
 	if ((ffd = open(file, mode)) < 0) {
-		if (!(*options & SETLOOP_RDONLY) && errno == EROFS)
+		if (!(*options & SETLOOP_RDONLY) &&
+		    (errno == EROFS || errno == EACCES))
 			ffd = open(file, mode = O_RDONLY);
 		if (ffd < 0) {
 			perror(file);
 			return 1;
 		}
+		if (verbose)
+			printf(_("warning: %s: is write-protected, using read-only.\n"),
+					file);
 		*options |= SETLOOP_RDONLY;
 	}
 	if ((fd = open(device, mode)) < 0) {
@@ -1082,7 +1092,7 @@ main(int argc, char **argv) {
 			return -1;
 		if (argc == optind) {
 			if (verbose)
-				printf("Loop device is %s\n", device);
+				printf(_("Loop device is %s\n"), device);
 			printf("%s\n", device);
 			return 0;
 		}
@@ -1108,7 +1118,7 @@ main(int argc, char **argv) {
 			res = set_loop(device, file, off, slimit, encryption, pfd, &ro, keysz, hash_pass);
 			if (res == 2 && find) {
 				if (verbose)
-					printf("stolen loop=%s...trying again\n",
+					printf(_("stolen loop=%s...trying again\n"),
 						device);
 				free(device);
 				if (!(device = find_unused_loop_device()))
@@ -1116,11 +1126,16 @@ main(int argc, char **argv) {
 			}
 		} while (find && res == 2);
 
-		if (verbose && res == 0)
-			printf("Loop device is %s\n", device);
-
-		if (res == 0 && showdev && find)
-			printf("%s\n", device);
+		if (device) {
+			if (res == 2)
+				error(_("%s: %s: device is busy"), progname, device);
+			else if (res == 0) {
+				if (verbose)
+					printf(_("Loop device is %s\n"), device);
+				if (showdev && find)
+					printf("%s\n", device);
+			}
+		}
 	}
 	return res;
 }

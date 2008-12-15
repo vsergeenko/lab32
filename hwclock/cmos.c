@@ -216,30 +216,7 @@ set_cmos_access(int Jensen, int funky_toy) {
 #endif
 
 
-
-
-#ifdef __i386__
-
-/*
- * Try to do CMOS access atomically, so that no other processes
- * can get a time slice while we are reading or setting the clock.
- * (Also, if the kernel time is synchronized with an external source,
- *  the kernel itself will fiddle with the RTC every 11 minutes.)
- */
-
-static unsigned long
-atomic(const char *name, unsigned long (*op)(unsigned long),
-       unsigned long arg)
-{
-  unsigned long v;
-  __asm__ volatile ("cli");
-  v = (*op)(arg);
-  __asm__ volatile ("sti");
-  return v;
-}
-
-#elif __alpha__
-
+#if __alpha__
 /*
  * The Alpha doesn't allow user-level code to disable interrupts (for
  * good reasons).  Instead, we ensure atomic operation by performing
@@ -267,12 +244,14 @@ atomic(const char *name, unsigned long (*op)(unsigned long),
   fprintf(stderr, _("%s: atomic %s failed for 1000 iterations!"), progname, name);
   exit(1);
 }
-
 #else
 
 /*
  * Hmmh, this isn't very atomic.  Maybe we should force an error
  * instead?
+ *
+ * TODO: optimize the access to CMOS by mlockall(MCL_CURRENT)
+ *       and SCHED_FIFO
  */
 static unsigned long
 atomic(const char *name, unsigned long (*op)(unsigned long),
@@ -291,10 +270,10 @@ unsigned long cmos_read(unsigned long reg)
     unsigned char v = reg | 0x80;
     lseek(dev_port_fd, clock_ctl_addr, 0);
     if (write(dev_port_fd, &v, 1) == -1 && debug)
-      printf("cmos_read(): write to control address %X failed: %s\n", clock_ctl_addr, strerror(errno));
+      printf(_("cmos_read(): write to control address %X failed: %s\n"), clock_ctl_addr, strerror(errno));
     lseek(dev_port_fd, clock_data_addr, 0);
     if (read(dev_port_fd, &v, 1) == -1 && debug)
-      printf("cmos_read(): read data address %X failed: %s\n", clock_data_addr, strerror(errno));
+      printf(_("cmos_read(): read data address %X failed: %s\n"), clock_data_addr, strerror(errno));
     return v;
   } else {
     /* We only want to read CMOS data, but unfortunately
@@ -325,11 +304,11 @@ unsigned long cmos_write(unsigned long reg, unsigned long val)
     unsigned char v = reg | 0x80;
     lseek(dev_port_fd, clock_ctl_addr, 0);
     if (write(dev_port_fd, &v, 1) == -1 && debug)
-      printf("cmos_write(): write to control address %X failed: %s\n", clock_ctl_addr, strerror(errno));
+      printf(_("cmos_write(): write to control address %X failed: %s\n"), clock_ctl_addr, strerror(errno));
     v = (val & 0xff);
     lseek(dev_port_fd, clock_data_addr, 0);
     if (write(dev_port_fd, &v, 1) == -1 && debug)
-      printf("cmos_write(): write to data address %X failed: %s\n", clock_data_addr, strerror(errno));
+      printf(_("cmos_write(): write to data address %X failed: %s\n"), clock_data_addr, strerror(errno));
   } else {
     outb (reg, clock_ctl_addr);
     outb (val, clock_data_addr);

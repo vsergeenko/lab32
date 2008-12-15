@@ -30,9 +30,9 @@
 #include <getopt.h>
 #include <time.h>
 #include <sys/file.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+
 #include "xstrncpy.h"
 #include "nls.h"
 #include "pathnames.h"
@@ -72,7 +72,6 @@
 #ifdef	SYSV_STYLE
 #define	ISSUE "/etc/issue"		/* displayed before the login prompt */
 #include <sys/utsname.h>
-#include <time.h>
 #endif
 
 #define LOGIN " login: "		/* login prompt */
@@ -891,11 +890,13 @@ do_prompt(op, tp)
 		  case 'd':
 		  case 't':
 		    {
-		      char *weekday[] = { "Sun", "Mon", "Tue", "Wed", "Thu",
-					  "Fri", "Sat" };
-		      char *month[] = { "Jan", "Feb", "Mar", "Apr", "May",
-					"Jun", "Jul", "Aug", "Sep", "Oct",
-					"Nov", "Dec" };
+		      char *weekday[] = { N_("Sun"), N_("Mon"), N_("Tue"),
+					  N_("Wed"), N_("Thu"), N_("Fri"),
+					  N_("Sat") };
+		      char *month[] = { N_("Jan"), N_("Feb"), N_("Mar"),
+					N_("Apr"), N_("May"), N_("Jun"),
+					N_("Jul"), N_("Aug"), N_("Sep"),
+					N_("Oct"), N_("Nov"), N_("Dec") };
 		      time_t now;
 		      struct tm *tm;
 

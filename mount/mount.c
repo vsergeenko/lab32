@@ -54,7 +54,7 @@ static int fake = 0;
 /* True if we are allowed to call /sbin/mount.${FSTYPE} */
 static int external_allowed = 1;
 
-/* Don't write a entry in /etc/mtab (-n).  */
+/* Don't write an entry in /etc/mtab (-n).  */
 static int nomtab = 0;
 
 /* True for explicit readonly (-r).  */
@@ -173,6 +173,10 @@ static const struct opt_map opt_map[] = {
 #ifdef MS_NOATIME
   { "atime",	0, 1, MS_NOATIME },	/* Update access time */
   { "noatime",	0, 0, MS_NOATIME },	/* Do not update access time */
+#endif
+#ifdef MS_I_VERSION
+  { "iversion",	0, 0, MS_I_VERSION },	/* Update inode I_version time */
+  { "noiversion", 0, 1, MS_I_VERSION },	/* Don't update inode I_version time */
 #endif
 #ifdef MS_NODIRATIME
   { "diratime",	0, 1, MS_NODIRATIME },	/* Update dir access times */

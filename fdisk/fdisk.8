@@ -52,7 +52,7 @@ The
 is usually /dev/sda, /dev/sdb or so. A device name refers to the entire disk.
 The old systems without libata (a library used inside the Linux kernel to
 support ATA host controllers and devices) make a difference between IDE and
-SCSI disks. In partition case a device name is /dev/hd* (IDE) or /dev/sd*
+SCSI disks. In such a case the device name will be /dev/hd* (IDE) or /dev/sd*
 (SCSI).
 
 The
@@ -243,9 +243,11 @@ The option `dump partition table to file' is missing.
 .\" and many others.
 .SH "SEE ALSO"
 .BR cfdisk (8),
+.BR sfdisk (8),
 .BR mkfs (8),
 .BR parted (8),
-.BR sfdisk (8)
+.BR partprobe (8),
+.BR kpartx (8)
 .SH AVAILABILITY
 The fdisk command is part of the util-linux-ng package and is available from
 ftp://ftp.kernel.org/pub/linux/utils/util-linux-ng/.
