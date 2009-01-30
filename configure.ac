@@ -1,4 +1,4 @@
-AC_INIT(util-linux-ng, 2.14.1, kzak@redhat.com)
+AC_INIT(util-linux-ng, 2.14.2-rc2, kzak@redhat.com)
 
 AC_PREREQ(2.60)
 
@@ -175,7 +175,7 @@ AC_DEFUN([UTIL_PKG_STATIC], [
 ])
 
 # These default values should work in most cases:
-: ${BLKID_LIBS='-lblkid'}
+: ${BLKID_LIBS='-lblkid -luuid'}
 : ${VOLUMEID_LIBS='-lvolume_id'}
 
 # ... but for static build, we need to consult pkg-config:

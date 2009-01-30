@@ -342,6 +342,19 @@ logaudit(const char *tty, const char *username, const char *hostname,
 # define logaudit(tty, username, hostname, pwd, status)
 #endif /* HAVE_LIBAUDIT */
 
+#ifdef HAVE_SECURITY_PAM_MISC_H
+/* encapsulate stupid "void **" pam_get_item() API */
+int
+get_pam_username(pam_handle_t *pamh, char **name)
+{
+	const void *item = (void *) *name;
+	int rc;
+	rc = pam_get_item(pamh, PAM_USER, &item);
+	*name = (char *) item;
+	return rc;
+}
+#endif
+
 int
 main(int argc, char **argv)
 {
@@ -591,7 +604,7 @@ main(int argc, char **argv)
 	int failcount=0;
 
 	/* if we didn't get a user on the command line, set it to NULL */
-	pam_get_item(pamh,  PAM_USER, (const void **) &username);
+	get_pam_username(pamh, &username);
 
 	/* there may be better ways to deal with some of these
 	   conditions, but at least this way I don't think we'll
@@ -605,7 +618,7 @@ main(int argc, char **argv)
 	       (retcode == PAM_USER_UNKNOWN) ||
 	       (retcode == PAM_CRED_INSUFFICIENT) ||
 	       (retcode == PAM_AUTHINFO_UNAVAIL))) {
-	    pam_get_item(pamh, PAM_USER, (const void **) &username);
+	    get_pam_username(pamh, &username);
 
 	    syslog(LOG_NOTICE,_("FAILED LOGIN %d FROM %s FOR %s, %s"),
 		   failcount, hostname, username, pam_strerror(pamh, retcode));
@@ -618,7 +631,7 @@ main(int argc, char **argv)
 	}
 
 	if (retcode != PAM_SUCCESS) {
-	    pam_get_item(pamh, PAM_USER, (const void **) &username);
+	    get_pam_username(pamh, &username);
 
 	    if (retcode == PAM_MAXTRIES)
 		syslog(LOG_NOTICE,_("TOO MANY LOGIN TRIES (%d) FROM %s FOR "
@@ -654,7 +667,7 @@ main(int argc, char **argv)
      * Grab the user information out of the password file for future usage
      * First get the username that we are actually using, though.
      */
-    retcode = pam_get_item(pamh, PAM_USER, (const void **) &username);
+    retcode = get_pam_username(pamh, &username);
     PAM_FAIL_CHECK;
 
     if (!username || !*username) {
@@ -1422,7 +1435,13 @@ dolastlog(int quiet) {
 	    lseek(fd, (off_t)pwd->pw_uid * sizeof(ll), SEEK_SET);
 	}
 	memset((char *)&ll, 0, sizeof(ll));
-	time(&ll.ll_time);
+
+	{
+		time_t t;
+		time(&t);
+		ll.ll_time = t; /* ll_time is always 32bit */
+	}
+
 	xstrncpy(ll.ll_line, tty_name, sizeof(ll.ll_line));
 	if (hostname)
 	    xstrncpy(ll.ll_host, hostname, sizeof(ll.ll_host));

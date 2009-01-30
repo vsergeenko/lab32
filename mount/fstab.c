@@ -30,9 +30,12 @@ static int var_mtab_is_a_symlink = 0;
 
 static void
 get_mtab_info(void) {
-	struct stat mtab_stat;
-
 	if (!have_mtab_info) {
+		struct stat mtab_stat;
+
+		var_mtab_does_not_exist = 0;
+		var_mtab_is_a_symlink = 0;
+
 		if (lstat(_PATH_MOUNTED, &mtab_stat))
 			var_mtab_does_not_exist = 1;
 		else if (S_ISLNK(mtab_stat.st_mode))
@@ -285,6 +288,16 @@ getmntoptfile (const char *file) {
 	return NULL;
 }
 
+/* compares "quoted" or 'quoted' with unquoted */
+static int
+streq_quoted(const char *quoted, const char *unquoted)
+{
+	if (*quoted == '"' || *quoted == '\'')
+		return !strncmp(quoted + 1, unquoted, strlen(quoted) - 2);
+
+	return streq(quoted, unquoted);
+}
+
 static int
 has_label(const char *device, const char *label) {
 	const char *devlabel;
@@ -294,7 +307,7 @@ has_label(const char *device, const char *label) {
 	if (!devlabel)
 		return 0;
 
-	ret = !strcmp(label, devlabel);
+	ret = streq_quoted(label, devlabel);
 	my_free(devlabel);
 	return ret;
 }
@@ -308,7 +321,7 @@ has_uuid(const char *device, const char *uuid){
 	if (!devuuid)
 		return 0;
 
-	ret = !strcmp(uuid, devuuid);
+	ret = streq_quoted(uuid, devuuid);
 	my_free(devuuid);
 	return ret;
 }
@@ -323,7 +336,7 @@ getfs_by_specdir (const char *spec, const char *dir) {
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt) {
 		/* dir */
 		if (!streq(mc->m.mnt_dir, dir)) {
-			char *dr = canonicalize_mountpoint(mc->m.mnt_dir);
+			char *dr = canonicalize(mc->m.mnt_dir);
 			int ok = 0;
 
 			if (streq(dr, dir))
@@ -335,7 +348,7 @@ getfs_by_specdir (const char *spec, const char *dir) {
 
 		/* spec */
 		if (!streq(mc->m.mnt_fsname, spec)) {
-			char *fs = canonicalize(mc->m.mnt_fsname);
+			char *fs = canonicalize_spec(mc->m.mnt_fsname);
 			int ok = 0;
 
 			if (streq(fs, spec))
@@ -369,7 +382,7 @@ getfs_by_dir (const char *dir) {
 		if (streq(mc->m.mnt_dir, dir))
 			return mc;
 
-	cdir = canonicalize_mountpoint(dir);
+	cdir = canonicalize(dir);
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt) {
 		if (streq(mc->m.mnt_dir, cdir)) {
 			free(cdir);
@@ -402,7 +415,7 @@ getfs_by_spec (const char *spec) {
 		return mc;
 	}
 
-	cspec = canonicalize(spec);
+	cspec = canonicalize_spec(spec);
 	mc = getfs_by_devname(cspec);
 	free(cspec);
 
@@ -433,7 +446,7 @@ getfs_by_devname (const char *devname) {
 				strncmp(mc->m.mnt_fsname, "UUID=", 5) == 0)
 			continue;
 
-		fs = canonicalize(mc->m.mnt_fsname);
+		fs = canonicalize_spec(mc->m.mnt_fsname);
 		if (streq(fs, devname)) {
 			free(fs);
 			return mc;
@@ -453,7 +466,7 @@ getfs_by_uuid (const char *uuid) {
 	mc0 = fstab_head();
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt)
 		if (strncmp (mc->m.mnt_fsname, "UUID=", 5) == 0
-		    && streq(mc->m.mnt_fsname + 5, uuid))
+		    && streq_quoted(mc->m.mnt_fsname + 5, uuid))
 			return mc;
 	return NULL;
 }
@@ -466,7 +479,7 @@ getfs_by_label (const char *label) {
 	mc0 = fstab_head();
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt)
 		if (strncmp (mc->m.mnt_fsname, "LABEL=", 6) == 0
-		    && streq(mc->m.mnt_fsname + 6, label))
+		    && streq_quoted(mc->m.mnt_fsname + 6, label))
 			return mc;
 	return NULL;
 }
@@ -919,7 +932,8 @@ void my_endmntent (mntFILE *mfp) { }
 int my_addmntent (mntFILE *mfp, struct my_mntent *mnt) { return 0; }
 
 char *canonicalize (const char *path) {  return NULL; }
-char *canonicalize_mountpoint (const char *path) { return NULL; }
+char *canonicalize_spec (const char *path) { return NULL; }
+int is_pseudo_fs(const char *type) { return 0; };
 
 int
 main(int argc, char **argv)

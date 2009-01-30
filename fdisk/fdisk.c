@@ -761,7 +761,7 @@ read_extended(int ext) {
 
 		if (!get_nr_sects(pe->part_table) &&
 		    (partitions > 5 || ptes[4].part_table->sys_ind)) {
-			printf("omitting empty partition (%d)\n", i+1);
+			printf(_("omitting empty partition (%d)\n"), i+1);
 			delete_partition(i);
 			goto remove; 	/* numbering changed */
 		}
@@ -1193,7 +1193,8 @@ read_int(unsigned int low, unsigned int dflt, unsigned int high,
 				 */
 				if (!display_in_cyl_units)
 					i *= heads * sectors;
-			} else if (*(line_ptr + 1) == 'B' &&
+			} else if (*line_ptr &&
+				   *(line_ptr + 1) == 'B' &&
 				   *(line_ptr + 2) == '\0') {
 				/*
 				 * 10^N
@@ -1206,7 +1207,8 @@ read_int(unsigned int low, unsigned int dflt, unsigned int high,
 					absolute = 1000000000;
 				else
 					absolute = -1;
-			} else if (*(line_ptr + 1) == '\0') {
+			} else if (*line_ptr &&
+				   *(line_ptr + 1) == '\0') {
 				/*
 				 * 2^N
 				 */
@@ -1763,7 +1765,7 @@ fix_partition_table_order(void) {
 	if (i)
 		fix_chain_of_logicals();
 
-	printf("Done.\n");
+	printf(_("Done.\n"));
 
 }
 
@@ -2033,7 +2035,7 @@ add_partition(int n, int sys) {
 	do {
 		temp = start;
 		for (i = 0; i < partitions; i++) {
-			int lastplusoff;
+			unsigned int lastplusoff;
 
 			if (start == ptes[i].offset)
 				start += sector_offset;

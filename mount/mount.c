@@ -55,7 +55,7 @@ static int fake = 0;
 /* True if we are allowed to call /sbin/mount.${FSTYPE} */
 static int external_allowed = 1;
 
-/* Don't write a entry in /etc/mtab (-n).  */
+/* Don't write an entry in /etc/mtab (-n).  */
 static int nomtab = 0;
 
 /* True for explicit readonly (-r).  */
@@ -175,6 +175,10 @@ static const struct opt_map opt_map[] = {
   { "atime",	0, 1, MS_NOATIME },	/* Update access time */
   { "noatime",	0, 0, MS_NOATIME },	/* Do not update access time */
 #endif
+#ifdef MS_I_VERSION
+  { "iversion",	0, 0, MS_I_VERSION },	/* Update inode I_version time */
+  { "noiversion", 0, 1, MS_I_VERSION },	/* Don't update inode I_version time */
+#endif
 #ifdef MS_NODIRATIME
   { "diratime",	0, 1, MS_NODIRATIME },	/* Update dir access times */
   { "nodiratime", 0, 0, MS_NODIRATIME },/* Do not update dir access times */
@@ -250,7 +254,7 @@ print_one (const struct my_mntent *me) {
 		printf (" type %s", me->mnt_type);
 	if (me->mnt_opts != NULL)
 		printf (" (%s)", me->mnt_opts);
-	if (list_with_volumelabel) {
+	if (list_with_volumelabel && is_pseudo_fs(me->mnt_type) == 0) {
 		const char *devname = fsprobe_get_devname(me->mnt_fsname);
 
 		if (devname) {
@@ -339,7 +343,7 @@ append_context(const char *optname, char *optdata, char **extra_opts)
 	security_context_t raw = NULL;
 	char *data = NULL;
 
-	if (!is_selinux_enabled())
+	if (is_selinux_enabled() != 1)
 		/* ignore the option if we running without selinux */
 		return 0;
 
@@ -350,8 +354,8 @@ append_context(const char *optname, char *optdata, char **extra_opts)
 	data = *optdata =='"' ? strip_quotes(optdata) : optdata;
 
 	if (selinux_trans_to_raw_context(
-			(security_context_t) data, &raw)==-1 ||
-			raw==NULL)
+			(security_context_t) data, &raw) == -1 ||
+			raw == NULL)
 		return -1;
 
 	if (verbose)
@@ -431,6 +435,10 @@ parse_opt(char *opt, int *mask, char **extra_opts) {
 		if (append_context("defcontext=", opt+11, extra_opts) == 0)
 			return;
 	}
+	if (strncmp(opt, "rootcontext=", 12) == 0 && *(opt+12)) {
+		if (append_context("rootcontext=", opt+12, extra_opts) == 0)
+			return;
+	}
 #endif
 	*extra_opts = append_opt(*extra_opts, opt, NULL);
 }
@@ -508,9 +516,11 @@ fix_opts_string (int flags, const char *extra_opts, const char *user) {
 }
 
 static int
-already (const char *spec, const char *node) {
+already (const char *spec0, const char *node0) {
 	struct mntentchn *mc;
 	int ret = 1;
+	char *spec = canonicalize_spec(spec0);
+	char *node = canonicalize(node0);
 
 	if ((mc = getmntfile(node)) != NULL)
 		error (_("mount: according to mtab, "
@@ -522,6 +532,10 @@ already (const char *spec, const char *node) {
 		       spec, mc->m.mnt_dir);
 	else
 		ret = 0;
+
+	free(spec);
+	free(node);
+
 	return ret;
 }
 
@@ -849,7 +863,7 @@ is_mounted_same_loopfile(const char *node0, const char *loopfile, unsigned long 
 	char *node;
 	int res = 0;
 
-	node = canonicalize_mountpoint(node0);
+	node = canonicalize(node0);
 
 	/* Search for mountpoint node in mtab,
 	 * procceed if any of these has the loop option set or
@@ -992,8 +1006,8 @@ update_mtab_entry(const char *spec, const char *node, const char *type,
 		  const char *opts, int flags, int freq, int pass) {
 	struct my_mntent mnt;
 
-	mnt.mnt_fsname = canonicalize (spec);
-	mnt.mnt_dir = canonicalize_mountpoint (node);
+	mnt.mnt_fsname = is_pseudo_fs(type) ? xstrdup(spec) : canonicalize(spec);
+	mnt.mnt_dir = canonicalize (node);
 	mnt.mnt_type = type;
 	mnt.mnt_opts = opts;
 	mnt.mnt_freq = freq;
@@ -1087,6 +1101,7 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
   int loop = 0;
   const char *loopdev = 0, *loopfile = 0;
   struct stat statbuf;
+  int retries = 0;	/* Nr of retries for mount in case of ENOMEDIUM */
 
   /* copies for freeing on exit */
   const char *opts1, *spec1, *node1, *types1, *extra_opts1;
@@ -1149,6 +1164,7 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
       goto out;
   }
 
+mount_retry:
   block_signals (SIG_BLOCK);
 
   if (!fake) {
@@ -1378,6 +1394,17 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
       }
       break;
     }
+    case ENOMEDIUM:
+      if (retries < CRDOM_NOMEDIUM_RETRIES) {
+	      if (verbose)
+		      printf(_("mount: no medium found on %s ...trying again\n"),
+				 spec);
+              sleep(3);
+	      ++retries;
+              goto mount_retry;
+      }
+      error(_("mount: no medium found on %s"), spec);
+      break;
     default:
       error ("mount: %s", strerror (mnt_err)); break;
     }
@@ -1385,6 +1412,27 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
   res = EX_FAIL;
 
  out:
+
+#ifdef HAVE_LIBSELINUX
+  if (res != EX_FAIL && verbose && is_selinux_enabled() > 0) {
+      security_context_t raw = NULL, def = NULL;
+
+      if (getfilecon(node, &raw) > 0 &&
+		     security_get_initial_context("file", &def) == 0) {
+
+	  if (!selinux_file_context_cmp(raw, def))
+	      printf(_("mount: %s does not contain SELinux labels.\n"
+                   "       You just mounted an file system that supports labels which does not\n"
+                   "       contain labels, onto an SELinux box. It is likely that confined\n"
+                   "       applications will generate AVC messages and not be allowed access to\n"
+                   "       this file system.  For more details see restorecon(8) and mount(8).\n"),
+                   node);
+      }
+      freecon(raw);
+      freecon(def);
+  }
+#endif
+
   my_free(extra_opts1);
   my_free(spec1);
   my_free(node1);
@@ -1488,7 +1536,7 @@ mounted (const char *spec0, const char *node0) {
 	if (!spec)
 		return ret;
 
-	node = canonicalize_mountpoint(node0);
+	node = canonicalize(node0);
 
 	mc0 = mtab_head();
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt)
