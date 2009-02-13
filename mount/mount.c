@@ -567,7 +567,7 @@ create_mtab (void) {
 		mnt.mnt_freq = mnt.mnt_passno = 0;
 		free(extra_opts);
 
-		if (my_addmntent (mfp, &mnt) == 1) {
+		if (mnt.mnt_fsname && my_addmntent (mfp, &mnt) == 1) {
 			int errsv = errno;
 			die (EX_FILEIO, _("mount: error writing %s: %s"),
 			     _PATH_MOUNTED, strerror (errsv));
