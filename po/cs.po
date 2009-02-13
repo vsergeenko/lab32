@@ -9,14 +9,14 @@
 # Jiří Pavlovský <pavlovsk@ff.cuni.cz>, 1999 - 2001.
 # Petr Písař <petr.pisar@atlas.cz>, 2006.
 # Vladimír Michl <vladimir.michl@seznam.cz>, 2007
-# Petr Pisar <petr.pisar@atlas.cz>, 2007, 2008.
+# Petr Pisar <petr.pisar@atlas.cz>, 2007, 2008, 2009.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: util-linux-ng 2.14.1-rc2\n"
+"Project-Id-Version: util-linux-ng 2.14.2-rc2\n"
 "Report-Msgid-Bugs-To: Karel Zak <kzak@redhat.com>\n"
 "POT-Creation-Date: 2009-01-22 14:07+0100\n"
-"PO-Revision-Date: 2008-12-06 13:42+0100\n"
+"PO-Revision-Date: 2009-01-25 20:09+0100\n"
 "Last-Translator: Petr Pisar <petr.pisar@atlas.cz>\n"
 "Language-Team: Czech <translation-team-cs@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -849,7 +849,7 @@ msgstr ""
 
 #: disk-utils/mkfs.cramfs.c:856
 msgid "ROM image map"
-msgstr ""
+msgstr "Mapa obrazu ROM"
 
 #: disk-utils/mkfs.cramfs.c:870
 #, c-format
@@ -884,7 +884,7 @@ msgstr ""
 
 #: disk-utils/mkfs.cramfs.c:909
 msgid "ROM image"
-msgstr ""
+msgstr "Obraz ROM"
 
 #: disk-utils/mkfs.cramfs.c:913
 #, c-format
@@ -2758,9 +2758,9 @@ msgid "Warning: ignoring extra data in partition table %d\n"
 msgstr "Varování: nadbytečná data v tabulce rozdělení disku %d ignorována.\n"
 
 #: fdisk/fdisk.c:764
-#, fuzzy, c-format
+#, c-format
 msgid "omitting empty partition (%d)\n"
-msgstr "Varování: prázdný diskový oddíl\n"
+msgstr "vynechávám prázdný oddíl (%d)\n"
 
 #: fdisk/fdisk.c:783
 #, c-format
@@ -3069,11 +3069,9 @@ msgstr ""
 "\n"
 
 #: fdisk/fdisk.c:1768
-#, fuzzy, c-format
+#, c-format
 msgid "Done.\n"
-msgstr ""
-"Hotovo\n"
-"\n"
+msgstr "Hotovo.\n"
 
 #: fdisk/fdisk.c:1796
 #, c-format
@@ -3965,13 +3963,13 @@ msgstr ""
 "Smažte/zmenšete nějaké a zkuste to znovu.\n"
 
 #: fdisk/fdisksunlabel.c:446
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "It is highly recommended that the third partition covers the whole disk\n"
 "and is of type `Whole disk'\n"
 msgstr ""
-"Doporučuje se, aby jedenáctý diskový oddíl zaujímal celý\n"
-"prostor disku a byl typu „SGI svazek“\n"
+"Velmi se doporučuje, aby třetí oddíl zaujímal celý prostor disku\n"
+"a byl typu „Celý disk“\n"
 
 #: fdisk/fdisksunlabel.c:474
 #, c-format
@@ -4618,11 +4616,13 @@ msgid "# partition table of %s\n"
 msgstr "# tabulka rozdělení disku pro %s\n"
 
 #: fdisk/sfdisk.c:925
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "unit: sectors\n"
 "\n"
-msgstr "Náhr. sektory SunOS"
+msgstr ""
+"jednotka: sektory\n"
+"\n"
 
 #: fdisk/sfdisk.c:935
 #, c-format
@@ -4687,19 +4687,19 @@ msgid "   Device Boot Start   End    MiB    #blocks   Id  System\n"
 msgstr "Zařízení  Boot Začátek Konec  MiB    Bloků     Id  Systém\n"
 
 #: fdisk/sfdisk.c:1053
-#, fuzzy, c-format
+#, c-format
 msgid " start=%9lu"
-msgstr "začátek"
+msgstr " začátek=%9lu"
 
 #: fdisk/sfdisk.c:1054
-#, fuzzy, c-format
+#, c-format
 msgid ", size=%9lu"
-msgstr "Maxvelikost=%ld\n"
+msgstr ", velikost=%9lu"
 
 #: fdisk/sfdisk.c:1058
-#, fuzzy, c-format
+#, c-format
 msgid ", bootable"
-msgstr "AIX startovací"
+msgstr ", startovací"
 
 #: fdisk/sfdisk.c:1119
 #, c-format
@@ -5028,11 +5028,11 @@ msgstr "Použití: %s [PŘEPÍNAČE] ZAŘÍZENÍ…\n"
 
 #: fdisk/sfdisk.c:2293
 msgid "device: something like /dev/hda or /dev/sda"
-msgstr "zařízení: něco jako /dev/hda či /dev/sda"
+msgstr "Zařízení: něco jako /dev/hda či /dev/sda"
 
 #: fdisk/sfdisk.c:2294
 msgid "useful options:"
-msgstr "užitečné přepínače:"
+msgstr "Užitečné přepínače:"
 
 #: fdisk/sfdisk.c:2295
 msgid "    -s [or --show-size]: list size of a partition"
@@ -5086,11 +5086,11 @@ msgstr "    -n :                 žádné změny nebudou uloženy na disk"
 #: fdisk/sfdisk.c:2306
 msgid ""
 "    -O file :            save the sectors that will be overwritten to file"
-msgstr "    -O SOUBOR :           uloží změněné sektory do SOUBORU"
+msgstr "    -O SOUBOR :          uloží změněné sektory do SOUBORU"
 
 #: fdisk/sfdisk.c:2307
 msgid "    -I file :            restore these sectors again"
-msgstr "    -I SOUBOR :            obnoví tyto sektory ze SOUBORU"
+msgstr "    -I SOUBOR :          obnoví tyto sektory ze SOUBORU"
 
 #: fdisk/sfdisk.c:2308
 msgid "    -v [or --version]:   print version"
@@ -5102,39 +5102,41 @@ msgstr "    -? [či --help]:      vypíše tuto nápovědu"
 
 #: fdisk/sfdisk.c:2310
 msgid "dangerous options:"
-msgstr "nebezpečné přepínače:"
+msgstr "Nebezpečné přepínače:"
 
 #: fdisk/sfdisk.c:2311
 msgid "    -g [or --show-geometry]: print the kernel's idea of the geometry"
 msgstr ""
-"    -g [či --show-geometry]: vypíše informace o geometrii, které\n"
-"                                    udržuje jádro"
+"    -g [či --show-geometry]:\n"
+"                         vypíše informace o geometrii, které udržuje jádro"
 
 #: fdisk/sfdisk.c:2312
 msgid ""
 "    -G [or --show-pt-geometry]: print geometry guessed from the partition "
 "table"
 msgstr ""
-"    -G [či --show-pt-geometry]: vypíše informace o geometrii, která\n"
-"                                byla odhadnuta z tabulky rozdělení disku"
+"    -G [či --show-pt-geometry]:\n"
+"                         vypíše informace o geometrii, která byla odhadnuta\n"
+"                         z tabulky rozdělení disku"
 
 #: fdisk/sfdisk.c:2313
 msgid ""
 "    -x [or --show-extended]: also list extended partitions on output\n"
 "                             or expect descriptors for them on input"
 msgstr ""
-"    -x [či --show-extended]: vypíše informace o rozšířených diskových\n"
-"                             oddílech a na vstupu bude očekávat jejich popis"
+"    -x [či --show-extended]:\n"
+"                         vypíše informace o rozšířených diskových\n"
+"                         oddílech a na vstupu bude očekávat jejich popis"
 
 #: fdisk/sfdisk.c:2315
 msgid ""
 "    -L  [or --Linux]:      do not complain about things irrelevant for Linux"
 msgstr ""
-"    -L  [či --Linux]:      problémy nepodstatné pro Linux budou ignorovány"
+"    -L  [či --Linux]:    problémy nepodstatné pro Linux budou ignorovány"
 
 #: fdisk/sfdisk.c:2316
 msgid "    -q  [or --quiet]:      suppress warning messages"
-msgstr "    -q  [či --quiet]:      nebude vypisovat varovné hlášky"
+msgstr "    -q  [či --quiet]:    nebude vypisovat varovné hlášky"
 
 #: fdisk/sfdisk.c:2317
 msgid "    You can override the detected geometry using:"
@@ -5158,7 +5160,7 @@ msgstr "Ověřování konzistence můžete vypnout pomocí:"
 
 #: fdisk/sfdisk.c:2322
 msgid "    -f  [or --force]:      do what I say, even if it is stupid"
-msgstr "    -f  [či --force]:      akceptuje veškeré - i nesmyslné - požadavky"
+msgstr "    -f  [či --force]:    akceptuje veškeré - i nesmyslné - požadavky"
 
 #: fdisk/sfdisk.c:2328
 msgid "Usage:"
@@ -7233,19 +7235,19 @@ msgid "       %s -l [ signal ]\n"
 msgstr "         %s -l [ signál ]\n"
 
 #: misc-utils/logger.c:67
-#, fuzzy, c-format
+#, c-format
 msgid "logger: openlog: pathname too long\n"
-msgstr "přihlašovací jméno je příliš dlouhé.\n"
+msgstr "protokolování: openlog: cesta je příliš dlouhá\n"
 
 #: misc-utils/logger.c:75
-#, fuzzy, c-format
+#, c-format
 msgid "socket: %s.\n"
-msgstr "VelikostBloku: %d\n"
+msgstr "socket: %s\n"
 
 #: misc-utils/logger.c:80
 #, c-format
 msgid "connect: %s.\n"
-msgstr ""
+msgstr "connect: %s.\n"
 
 #: misc-utils/logger.c:139
 #, c-format
@@ -7926,9 +7928,8 @@ msgstr ""
 "       či zkuste „modprobe loop“.)"
 
 #: mount/lomount.c:611
-#, fuzzy
 msgid "Out of memory while reading passphrase"
-msgstr "Nedostatek paměti pro rostoucí buffer.\n"
+msgstr "Během čtení hesla došla paměť"
 
 #: mount/lomount.c:654
 #, c-format
@@ -7936,9 +7937,9 @@ msgid "warning: %s is already associated with %s\n"
 msgstr "varování: %s je již spojeno s %s\n"
 
 #: mount/lomount.c:670
-#, fuzzy, c-format
+#, c-format
 msgid "warning: %s: is write-protected, using read-only.\n"
-msgstr "mount: %s%s je chráněno proti zápisu, připojuji pouze pro čtení"
+msgstr "varování: %s: je chráněno proti zápisu, připojuji pouze pro čtení.\n"
 
 #: mount/lomount.c:706
 #, c-format
@@ -8021,19 +8022,19 @@ msgstr ""
 "\n"
 
 #: mount/lomount.c:1004 mount/lomount.c:1041
-#, fuzzy, c-format
+#, c-format
 msgid "Loop device is %s\n"
-msgstr "loop: zařízení %s nelze otevřít: %s\n"
+msgstr "Loop zařízení %s\n"
 
 #: mount/lomount.c:1028
-#, fuzzy, c-format
+#, c-format
 msgid "stolen loop=%s...trying again\n"
-msgstr "mount: ukradený loop=%s … zkouším znovu\n"
+msgstr "ukradený loop=%s… zkouším znovu\n"
 
 #: mount/lomount.c:1038
-#, fuzzy, c-format
+#, c-format
 msgid "%s: %s: device is busy"
-msgstr "umount: zařízení %s se právě používá"
+msgstr "%s: %s: zařízení se právě používá"
 
 #: mount/lomount.c:1055
 #, c-format
@@ -8389,14 +8390,14 @@ msgid "mount: %s%s is write-protected, mounting read-only"
 msgstr "mount: %s%s je chráněno proti zápisu, připojuji pouze pro čtení"
 
 #: mount/mount.c:1385
-#, fuzzy, c-format
+#, c-format
 msgid "mount: no medium found on %s ...trying again\n"
-msgstr "mount: ukradený loop=%s … zkouším znovu\n"
+msgstr "mount: v %s nenalezeno žádné médium… zkouším znovu\n"
 
 #: mount/mount.c:1391
-#, fuzzy, c-format
+#, c-format
 msgid "mount: no medium found on %s"
-msgstr "mount: %s je již připojeno na %s\n"
+msgstr "mount: v %s nenalezeno žádné médium"
 
 #: mount/mount.c:1409
 #, c-format
@@ -8407,6 +8408,13 @@ msgid ""
 "       applications will generate AVC messages and not be allowed access to\n"
 "       this file system.  For more details see restorecon(8) and mount(8).\n"
 msgstr ""
+"mount: %s neobsahuje značky SELinuxu.\n"
+"       Právě jste připojili souborový systém, který značky podporuje, ale\n"
+"       neobsahjuje ani jednu, do stroje s podporou SELinuxu. Je "
+"pravděpodobné,\n"
+"       že omezené aplikace budou generovat zprávy AVC a nebude jim dovoleno\n"
+"       přistoupit na tento systém souborů. Další rady lze nalézt\n"
+"       v restorecon(8) a mount(8).\n"
 
 #: mount/mount.c:1488
 #, c-format
@@ -8569,7 +8577,7 @@ msgstr ""
 " %1$s -a [-e] [-v]                  zapne všechny odkládací oblasti\n"
 "                                      uvedené v /etc/fstab\n"
 " %1$s [-p PRIORITA] [-v] ZVLÁŠTNÍ   zapne vybranou odkládací oblast\n"
-" %1$s -s                            vypíše souhrné informace o využití\n"
+" %1$s -s                            vypíše souhrnné informace o využití\n"
 "                                      odkládacích oblastí\n"
 " %1$s -h                            vypíše nápovědu\n"
 " %1$s -V                            vypíše verzi\n"
@@ -9606,7 +9614,7 @@ msgstr "neplatná disciplína linky: %s"
 #: sys-utils/ldattach.c:202
 #, c-format
 msgid "%s is not a serial line"
-msgstr "%s není sériovou liknou"
+msgstr "%s není sériovou linkou"
 
 #: sys-utils/ldattach.c:208
 #, c-format
@@ -9724,14 +9732,15 @@ msgstr ""
 "\t -V            vypíše informace o verzi a skončí\n"
 
 #: sys-utils/readprofile.c:227
-#, fuzzy, c-format
+#, c-format
 msgid "readprofile: error writing %s: %s\n"
-msgstr "mount: chyba při zápisu %s: %s"
+msgstr "readprofile: chyba při zápisu %s: %s\n"
 
 #: sys-utils/readprofile.c:268
 #, c-format
 msgid "Assuming reversed byte order. Use -n to force native byte order.\n"
 msgstr ""
+"Předpokládám opačné pořadí bajtů. Systémové pořadí lze vynutit pomocí -n.\n"
 
 #: sys-utils/readprofile.c:284
 #, c-format
@@ -9968,7 +9977,7 @@ msgstr ""
 " -L, --addr-compat-layout změní způsob, jakým je virtuální paměť "
 "přidělována\n"
 " -X, --read-implies-exec  zapne READ_IMPLIES_EXEC\n"
-" -B, --32bit              zapbe ADDR_LIMIT_32BIT\n"
+" -B, --32bit              zapne ADDR_LIMIT_32BIT\n"
 " -I, --short-inode        zapne SHORT_INODE\n"
 " -S, --whole-seconds      zapne WHOLE_SECONDS\n"
 " -T, --sticky-timeouts    zapne STICKY_TIMEOUTS\n"
@@ -10506,7 +10515,7 @@ msgstr "o „%s“ nelze získat podrobnosti"
 #: text-utils/tailf.c:109
 #, c-format
 msgid "incomplete write to \"%s\" (written %ld, expected %ld)\n"
-msgstr "neúplný zápos do „%s“ (zapsáno %ld, očekáváno %ld)\n"
+msgstr "neúplný zápis do „%s“ (zapsáno %ld, očekáváno %ld)\n"
 
 #: text-utils/tailf.c:189 text-utils/tailf.c:193
 msgid "invalid number of lines"

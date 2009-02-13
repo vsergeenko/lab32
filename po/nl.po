@@ -1,4 +1,4 @@
-# Dutch translations for util-linux-ng-2.14.1-rc2.
+# Dutch translations for util-linux-ng-2.14.2-rc2.
 # This file is distributed under the same license as the util-linux-ng package.
 #
 # block    -> blok
@@ -9,20 +9,22 @@
 #
 # Taco Witte <tcwitte@cs.uu.nl>, 2002, 2003.
 # Luk Claes <luk.claes@ugent.be>, 2005.
-# Benno Schulenberg <benno@vertaalt.nl>, 2006, 2007, 2008.
+# Benno Schulenberg <benno@vertaalt.nl>, 2006, 2007, 2008, 2009.
 msgid ""
 msgstr ""
-"Project-Id-Version: util-linux-ng-2.14.1-rc2\n"
+"Project-Id-Version: util-linux-ng-2.14.2-rc2\n"
 "Report-Msgid-Bugs-To: Karel Zak <kzak@redhat.com>\n"
 "POT-Creation-Date: 2009-01-22 14:07+0100\n"
-"PO-Revision-Date: 2008-08-22 22:37+0200\n"
+"PO-Revision-Date: 2009-01-31 20:52+0100\n"
 "Last-Translator: Benno Schulenberg <benno@vertaalt.nl>\n"
 "Language-Team: Dutch <vertaling@vrijschrift.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-Language: Dutch\n"
+"X-Poedit-Country: NETHERLANDS\n"
+"X-Poedit-SourceCharset: utf-8\n"
 
 #: disk-utils/blockdev.c:37
 msgid "set read-only"
@@ -857,7 +859,7 @@ msgstr ""
 
 #: disk-utils/mkfs.cramfs.c:856
 msgid "ROM image map"
-msgstr ""
+msgstr "inlezen van ROM-afbeelding"
 
 #: disk-utils/mkfs.cramfs.c:870
 #, c-format
@@ -893,7 +895,7 @@ msgstr ""
 
 #: disk-utils/mkfs.cramfs.c:909
 msgid "ROM image"
-msgstr ""
+msgstr "ROM-afbeelding"
 
 #: disk-utils/mkfs.cramfs.c:913
 #, c-format
@@ -2783,9 +2785,9 @@ msgid "Warning: ignoring extra data in partition table %d\n"
 msgstr "Waarschuwing: extra gegevens in partitietabel %d worden genegeerd\n"
 
 #: fdisk/fdisk.c:764
-#, fuzzy, c-format
+#, c-format
 msgid "omitting empty partition (%d)\n"
-msgstr "Waarschuwing: lege partitie\n"
+msgstr "lege partitie (%d) wordt weggelaten\n"
 
 #: fdisk/fdisk.c:783
 #, c-format
@@ -3096,11 +3098,9 @@ msgstr ""
 "\n"
 
 #: fdisk/fdisk.c:1768
-#, fuzzy, c-format
+#, c-format
 msgid "Done.\n"
-msgstr ""
-"Voltooid\n"
-"\n"
+msgstr "Voltooid.\n"
 
 #: fdisk/fdisk.c:1796
 #, c-format
@@ -3995,13 +3995,13 @@ msgstr ""
 "Verwijder/verklein ze alvorens het opnieuw te proberen.\n"
 
 #: fdisk/fdisksunlabel.c:446
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "It is highly recommended that the third partition covers the whole disk\n"
 "and is of type `Whole disk'\n"
 msgstr ""
-"Het wordt sterk aangeraden om de elfde partitie de gehele schijf\n"
-"te laten beslaan en van het soort 'SGI volumen' te laten zijn.\n"
+"Het wordt sterk aangeraden om de derde partitie de gehele schijf\n"
+"te laten beslaan en van het soort 'Gehele schijf' te laten zijn.\n"
 
 #: fdisk/fdisksunlabel.c:474
 #, c-format
@@ -4657,11 +4657,13 @@ msgid "# partition table of %s\n"
 msgstr "# Partitietabel van %s\n"
 
 #: fdisk/sfdisk.c:925
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "unit: sectors\n"
 "\n"
-msgstr "SunOS alt-sectoren"
+msgstr ""
+"eenheid: sectoren \n"
+"\n"
 
 #: fdisk/sfdisk.c:935
 #, c-format
@@ -4726,19 +4728,19 @@ msgid "   Device Boot Start   End    MiB    #blocks   Id  System\n"
 msgstr " Apparaat Ops Begin  Einde    MiB   #blokken   ID  Systeem\n"
 
 #: fdisk/sfdisk.c:1053
-#, fuzzy, c-format
+#, c-format
 msgid " start=%9lu"
-msgstr "begin"
+msgstr " begin=%9lu"
 
 #: fdisk/sfdisk.c:1054
-#, fuzzy, c-format
+#, c-format
 msgid ", size=%9lu"
-msgstr "MaxGrootte=%ld\n"
+msgstr ", grootte=%9lu"
 
 #: fdisk/sfdisk.c:1058
-#, fuzzy, c-format
+#, c-format
 msgid ", bootable"
-msgstr "AIX opstartbaar"
+msgstr ", opstartbaar"
 
 #: fdisk/sfdisk.c:1119
 #, c-format
@@ -7287,24 +7289,24 @@ msgid "       %s -l [ signal ]\n"
 msgstr "          %s -l [ signaal ]\n"
 
 #: misc-utils/logger.c:67
-#, fuzzy, c-format
+#, c-format
 msgid "logger: openlog: pathname too long\n"
-msgstr "inlognaam is veel te lang\n"
+msgstr "logger: openlog: padnaam is te lang\n"
 
 #: misc-utils/logger.c:75
-#, fuzzy, c-format
+#, c-format
 msgid "socket: %s.\n"
-msgstr "Blokgrootte: %d\n"
+msgstr "socket: %s.\n"
 
 #: misc-utils/logger.c:80
 #, c-format
 msgid "connect: %s.\n"
-msgstr ""
+msgstr "verbinding: %s.\n"
 
 #: misc-utils/logger.c:139
 #, c-format
 msgid "logger: %s: %s.\n"
-msgstr "logger: %s: %s\n"
+msgstr "logger: %s: %s.\n"
 
 #: misc-utils/logger.c:246
 #, c-format
@@ -7980,9 +7982,8 @@ msgstr ""
 "        of misschien een 'modprobe loop' doen?)"
 
 #: mount/lomount.c:611
-#, fuzzy
 msgid "Out of memory while reading passphrase"
-msgstr "Onvoldoende geheugen beschikbaar tijdens groeien van buffer\n"
+msgstr "Onvoldoende geheugen beschikbaar tijdens lezen van wachtwoord"
 
 #: mount/lomount.c:654
 #, c-format
@@ -7990,9 +7991,11 @@ msgid "warning: %s is already associated with %s\n"
 msgstr "waarschuwing: %s is al gerelateerd aan %s\n"
 
 #: mount/lomount.c:670
-#, fuzzy, c-format
+#, c-format
 msgid "warning: %s: is write-protected, using read-only.\n"
-msgstr "mount: %s%s is schrijfbeveiligd en wordt als alleen-lezen aangekoppeld"
+msgstr ""
+"waarschuwing: %s is schrijfbeveiligd en wordt als alleen-lezen "
+"aangekoppeld.\n"
 
 #: mount/lomount.c:706
 #, c-format
@@ -8076,20 +8079,19 @@ msgstr ""
 "  -v | --verbose             gedetailleerde uitvoer produceren\n"
 
 #: mount/lomount.c:1004 mount/lomount.c:1041
-#, fuzzy, c-format
+#, c-format
 msgid "Loop device is %s\n"
-msgstr "loop: kan apparaat %s niet openen: %s\n"
+msgstr "Lus-apparaat is %s\n"
 
 #: mount/lomount.c:1028
-#, fuzzy, c-format
+#, c-format
 msgid "stolen loop=%s...trying again\n"
-msgstr ""
-"mount: lus-apparaat %s is door ander proces afgepakt; ... nieuwe poging\n"
+msgstr "afgepakt lus-apparaat=%s; ... nieuwe poging\n"
 
 #: mount/lomount.c:1038
-#, fuzzy, c-format
+#, c-format
 msgid "%s: %s: device is busy"
-msgstr "mount: %s is bezig"
+msgstr "%s: apparaat %s is bezig"
 
 #: mount/lomount.c:1055
 #, c-format
@@ -8456,15 +8458,14 @@ msgid "mount: %s%s is write-protected, mounting read-only"
 msgstr "mount: %s%s is schrijfbeveiligd en wordt als alleen-lezen aangekoppeld"
 
 #: mount/mount.c:1385
-#, fuzzy, c-format
+#, c-format
 msgid "mount: no medium found on %s ...trying again\n"
-msgstr ""
-"mount: lus-apparaat %s is door ander proces afgepakt; ... nieuwe poging\n"
+msgstr "mount: geen medium gevonden op %s; ... nieuwe poging\n"
 
 #: mount/mount.c:1391
-#, fuzzy, c-format
+#, c-format
 msgid "mount: no medium found on %s"
-msgstr "mount: %s is al aangekoppeld op %s\n"
+msgstr "mount: geen medium gevonden op %s"
 
 #: mount/mount.c:1409
 #, c-format
@@ -8475,6 +8476,14 @@ msgid ""
 "       applications will generate AVC messages and not be allowed access to\n"
 "       this file system.  For more details see restorecon(8) and mount(8).\n"
 msgstr ""
+"mount: %s bevat geen SELinux-labels.\n"
+"    U hebt zojuist op een SELinux-computer een bestandssysteem aangekoppeld "
+"dat\n"
+"    labels ondersteunt maar er geen bevat.  Waarschijnlijk zullen "
+"ingeperkte\n"
+"    programma's AVC-berichten genereren en geen toegang tot dit "
+"bestandssysteem\n"
+"    kunnen krijgen.  Voor meer details zie restorecon(8) en mount(8).\n"
 
 #: mount/mount.c:1488
 #, c-format
@@ -9802,14 +9811,16 @@ msgstr ""
 "  -V         programmaversie tonen\n"
 
 #: sys-utils/readprofile.c:227
-#, fuzzy, c-format
+#, c-format
 msgid "readprofile: error writing %s: %s\n"
-msgstr "mount: fout bij schrijven van %s: %s"
+msgstr "readprofile: fout bij schrijven van %s: %s\n"
 
 #: sys-utils/readprofile.c:268
 #, c-format
 msgid "Assuming reversed byte order. Use -n to force native byte order.\n"
 msgstr ""
+"Omgekeerde byte-volgorde wordt aangenomen.\n"
+"Gebruik '-n' om de werkelijke byte-volgorde te gebruiken.\n"
 
 #: sys-utils/readprofile.c:284
 #, c-format

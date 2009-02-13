@@ -1,22 +1,22 @@
 # Vietnamese translation for Util-Linux-NG.
-# Copyright © 2008 Free Software Foundation, Inc.
+# Copyright © 2009 Free Software Foundation, Inc.
 # This file is distributed under the same license as the util-linux-ng package.
 # Phan Vinh Thinh <teppi82@gmail.com>, 2005-2007
-# Clytie Siddall <clytie@riverland.net.au>, 2007-2008.
+# Clytie Siddall <clytie@riverland.net.au>, 2007-2009.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: util-linux-ng 2.14.1-rc2\n"
+"Project-Id-Version: util-linux-ng 2.14.2-rc2\n"
 "Report-Msgid-Bugs-To: Karel Zak <kzak@redhat.com>\n"
 "POT-Creation-Date: 2009-01-22 14:07+0100\n"
-"PO-Revision-Date: 2008-09-08 18:21+0930\n"
+"PO-Revision-Date: 2009-01-25 23:28+1030\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: LocFactoryEditor 1.7b3\n"
+"X-Generator: LocFactoryEditor 1.8\n"
 
 #: disk-utils/blockdev.c:37
 msgid "set read-only"
@@ -844,7 +844,7 @@ msgstr ""
 
 #: disk-utils/mkfs.cramfs.c:856
 msgid "ROM image map"
-msgstr ""
+msgstr "Sơ đồ ảnh ROM"
 
 #: disk-utils/mkfs.cramfs.c:870
 #, c-format
@@ -878,7 +878,7 @@ msgstr "không đủ khoảng trống phân cấp cho ảnh ROM (phân cấp %ll
 
 #: disk-utils/mkfs.cramfs.c:909
 msgid "ROM image"
-msgstr ""
+msgstr "Ảnh ROM"
 
 #: disk-utils/mkfs.cramfs.c:913
 #, c-format
@@ -2760,9 +2760,9 @@ msgid "Warning: ignoring extra data in partition table %d\n"
 msgstr "Cảnh báo: bỏ qua dữ liệu dự phòng trong bảng phân vùng %d\n"
 
 #: fdisk/fdisk.c:764
-#, fuzzy, c-format
+#, c-format
 msgid "omitting empty partition (%d)\n"
-msgstr "Cảnh báo: phân vùng rỗng\n"
+msgstr "đang bỏ quên phân vùng rỗng (%d)\n"
 
 #: fdisk/fdisk.c:783
 #, c-format
@@ -3078,11 +3078,9 @@ msgstr ""
 "\n"
 
 #: fdisk/fdisk.c:1768
-#, fuzzy, c-format
+#, c-format
 msgid "Done.\n"
-msgstr ""
-"Hoàn thành\n"
-"\n"
+msgstr "Hoàn tất.\n"
 
 #: fdisk/fdisk.c:1796
 #, c-format
@@ -3970,13 +3968,13 @@ msgstr ""
 "Hãy xóa hay thu nhỏ chúng trước khi thử lại.\n"
 
 #: fdisk/fdisksunlabel.c:446
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "It is highly recommended that the third partition covers the whole disk\n"
 "and is of type `Whole disk'\n"
 msgstr ""
-"Rất khuyên dùng khi phân vùng số mười một chứa\n"
-"cả ổ đĩa và có loại « khối tin SGI ».\n"
+"Rất khuyên đặt phân vùng thứ ba chiếm toàn bộ đĩa\n"
+"và có kiểu « Toàn đĩa » (Whole disk).\n"
 
 #: fdisk/fdisksunlabel.c:474
 #, c-format
@@ -4627,11 +4625,13 @@ msgid "# partition table of %s\n"
 msgstr "# bảng phân vùng của %s\n"
 
 #: fdisk/sfdisk.c:925
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "unit: sectors\n"
 "\n"
-msgstr "Rãnh ghi thay thế SunOS"
+msgstr ""
+"đơn vị: rãnh ghi\n"
+"\n"
 
 #: fdisk/sfdisk.c:935
 #, c-format
@@ -4695,19 +4695,19 @@ msgid "   Device Boot Start   End    MiB    #blocks   Id  System\n"
 msgstr "   Thiết bị Khởi động Đầu     MiB    #Khối   Id  Hệ thống\n"
 
 #: fdisk/sfdisk.c:1053
-#, fuzzy, c-format
+#, c-format
 msgid " start=%9lu"
-msgstr "đầu"
+msgstr " đầu=%9lu"
 
 #: fdisk/sfdisk.c:1054
-#, fuzzy, c-format
+#, c-format
 msgid ", size=%9lu"
-msgstr "Cỡ_tối_đa=%ld\n"
+msgstr ", cỡ=%9lu"
 
 #: fdisk/sfdisk.c:1058
-#, fuzzy, c-format
+#, c-format
 msgid ", bootable"
-msgstr "ATX có thể khởi động"
+msgstr ", khởi động được"
 
 #: fdisk/sfdisk.c:1119
 #, c-format
@@ -7245,19 +7245,19 @@ msgid "       %s -l [ signal ]\n"
 msgstr "       %s -l [ tín_hiệu ]\n"
 
 #: misc-utils/logger.c:67
-#, fuzzy, c-format
+#, c-format
 msgid "logger: openlog: pathname too long\n"
-msgstr "tên đăng nhập quá dài.\n"
+msgstr "logger: openlog: tên đường dẫn quá dài\n"
 
 #: misc-utils/logger.c:75
-#, fuzzy, c-format
+#, c-format
 msgid "socket: %s.\n"
-msgstr "Kích cỡ khối: %d\n"
+msgstr "ổ cắm: %s.\n"
 
 #: misc-utils/logger.c:80
 #, c-format
 msgid "connect: %s.\n"
-msgstr ""
+msgstr "kết nối: %s.\n"
 
 #: misc-utils/logger.c:139
 #, c-format
@@ -7958,9 +7958,8 @@ msgstr ""
 "loop'.)"
 
 #: mount/lomount.c:611
-#, fuzzy
 msgid "Out of memory while reading passphrase"
-msgstr "Tràn bộ nhớ khi tăng buffer.\n"
+msgstr "Tràn bộ nhớ khi đọc cụm từ mật khẩu"
 
 #: mount/lomount.c:654
 #, c-format
@@ -7968,9 +7967,9 @@ msgid "warning: %s is already associated with %s\n"
 msgstr "cảnh báo : %s đã liên quan đến %s\n"
 
 #: mount/lomount.c:670
-#, fuzzy, c-format
+#, c-format
 msgid "warning: %s: is write-protected, using read-only.\n"
-msgstr "mount: %s%s được bảo vệ khỏi ghi, đang gắn chỉ đọc"
+msgstr "cảnh báo : %s: được bảo vệ chống ghi nên đặt chỉ-đọc.\n"
 
 #: mount/lomount.c:706
 #, c-format
@@ -8056,19 +8055,19 @@ msgstr ""
 "\n"
 
 #: mount/lomount.c:1004 mount/lomount.c:1041
-#, fuzzy, c-format
+#, c-format
 msgid "Loop device is %s\n"
-msgstr "loop: không mở được thiết bị %s: %s\n"
+msgstr "Thiết bị vòng lặp là %s\n"
 
 #: mount/lomount.c:1028
-#, fuzzy, c-format
+#, c-format
 msgid "stolen loop=%s...trying again\n"
-msgstr "mount: stolen loop=%s (vòng lặp bị ăn cắp) nên thử lại\n"
+msgstr "vòng lặp bị ăn cắp=%s... nên thử lại\n"
 
 #: mount/lomount.c:1038
-#, fuzzy, c-format
+#, c-format
 msgid "%s: %s: device is busy"
-msgstr "mount: %s đang bận"
+msgstr "%s: %s: thiết bị đang bận"
 
 #: mount/lomount.c:1055
 #, c-format
@@ -8432,14 +8431,14 @@ msgid "mount: %s%s is write-protected, mounting read-only"
 msgstr "mount: %s%s được bảo vệ khỏi ghi, đang gắn chỉ đọc"
 
 #: mount/mount.c:1385
-#, fuzzy, c-format
+#, c-format
 msgid "mount: no medium found on %s ...trying again\n"
-msgstr "mount: stolen loop=%s (vòng lặp bị ăn cắp) nên thử lại\n"
+msgstr "mount: không tìm thấy vật chứa trên %s... nên thử lại\n"
 
 #: mount/mount.c:1391
-#, fuzzy, c-format
+#, c-format
 msgid "mount: no medium found on %s"
-msgstr "mount: đã gắn %s trên %s\n"
+msgstr "mount: không tìm thấy vật chứa trên %s"
 
 #: mount/mount.c:1409
 #, c-format
@@ -8450,6 +8449,12 @@ msgid ""
 "       applications will generate AVC messages and not be allowed access to\n"
 "       this file system.  For more details see restorecon(8) and mount(8).\n"
 msgstr ""
+"mount: %s không chứa nhãn kiểu SELinux.\n"
+"\tBạn vừa mới gắn kết một hệ thống tập tin mà hỗ trợ nhãn\n"
+"\tnhưng cũng không có nhãn, đến một máy kiểu SELinux.\n"
+"\tRất có thể là ứng dụng bị giam hãm sẽ tạo thông điệp AVC\n"
+"\tvà không có quyền truy cập đến hệ thống tập tin này.\n"
+"\tĐể tìm chi tiết, xem trang hướng dẫn (man) restorecon(8) và mount(8).\n"
 
 #: mount/mount.c:1488
 #, c-format
@@ -9777,14 +9782,15 @@ msgstr ""
 "\t -V            in ra phiên bản và thoát\n"
 
 #: sys-utils/readprofile.c:227
-#, fuzzy, c-format
+#, c-format
 msgid "readprofile: error writing %s: %s\n"
-msgstr "mount: lỗi ghi nhớ %s: %s"
+msgstr "readprofile: lỗi ghi %s: %s\n"
 
 #: sys-utils/readprofile.c:268
 #, c-format
 msgid "Assuming reversed byte order. Use -n to force native byte order.\n"
 msgstr ""
+"Giả sử thứ tự byte đảo lộn. Dùng « -n » để ép buộc theo thứ tự byte sở hữu.\n"
 
 #: sys-utils/readprofile.c:284
 #, c-format
@@ -10595,4 +10601,4 @@ msgstr "Dòng nhập vào quá dài.\n"
 #: text-utils/ul.c:599
 #, c-format
 msgid "Out of memory when growing buffer.\n"
-msgstr "Tràn bộ nhớ khi tăng buffer.\n"
+msgstr "Tràn bộ nhớ khi tăng vùng đệm.\n"
