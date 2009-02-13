@@ -1,3 +1,32 @@
+util-linux (2.14.2-1) unstable; urgency=low
+
+  [LaMont Jones]
+
+  * mount: segfault when creating mtab and cannot determine fsname. 
+    Closes: #488312
+
+  [Kel Modderman]
+
+  * hwclockfirst.sh: use correct LSB header info.  Closes: #487196
+
+  [Karel Zak]
+
+  * chrt: output buglet when reporting scheduling class
+  * mount: fix typo in volume_id code
+  * docs: update AUTHORS file
+  * docs: update v2.14.2 ReleaseNotes
+  * build-sys: release++ (v2.14.2)
+  * po: merge changes
+
+  [localization folks]
+
+  * po: update vi.po (from translationproject.org) (Clytie Siddall)
+  * po: update cs.po (from translationproject.org) (Petr Pisar)
+  * po: update ja.po (from translationproject.org) (Makoto Kato)
+  * po: update nl.po (from translationproject.org) (Benno Schulenberg)
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 13 Feb 2009 12:25:27 -0700
+
 util-linux (2.14.2~rc2-1) unstable; urgency=low
 
   [Matthias Koenig]
