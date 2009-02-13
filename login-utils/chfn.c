@@ -376,7 +376,7 @@ static void ask_info (oldfp, newfp)
 {
     newfp->full_name = prompt (_("Name"), oldfp->full_name);
     newfp->office = prompt (_("Office"), oldfp->office);
-    newfp->office_phone	= prompt (_("Office Phone"), oldfp->office_phone);
+    newfp->office_phone = prompt (_("Office Phone"), oldfp->office_phone);
     newfp->home_phone = prompt (_("Home Phone"), oldfp->home_phone);
     printf ("\n");
 }

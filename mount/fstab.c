@@ -288,6 +288,16 @@ getmntoptfile (const char *file) {
 	return NULL;
 }
 
+/* compares "quoted" or 'quoted' with unquoted */
+static int
+streq_quoted(const char *quoted, const char *unquoted)
+{
+	if (*quoted == '"' || *quoted == '\'')
+		return !strncmp(quoted + 1, unquoted, strlen(quoted) - 2);
+
+	return streq(quoted, unquoted);
+}
+
 static int
 has_label(const char *device, const char *label) {
 	const char *devlabel;
@@ -297,7 +307,7 @@ has_label(const char *device, const char *label) {
 	if (!devlabel)
 		return 0;
 
-	ret = !strcmp(label, devlabel);
+	ret = streq_quoted(label, devlabel);
 	my_free(devlabel);
 	return ret;
 }
@@ -311,51 +321,44 @@ has_uuid(const char *device, const char *uuid){
 	if (!devuuid)
 		return 0;
 
-	ret = !strcmp(uuid, devuuid);
+	ret = streq_quoted(uuid, devuuid);
 	my_free(devuuid);
 	return ret;
 }
 
-/* Find the entry (SPEC,DIR) in fstab -- spec and dir must be canonicalized! */
+/* Find the entry (DEV,DIR) in fstab -- spec and dir must be canonicalized! */
 struct mntentchn *
-getfs_by_specdir (const char *spec, const char *dir) {
+getfs_by_devdir (const char *dev, const char *dir) {
 	struct mntentchn *mc, *mc0;
 
 	mc0 = fstab_head();
 
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt) {
+		int ok = 1;
+
 		/* dir */
 		if (!streq(mc->m.mnt_dir, dir)) {
-			char *dr = canonicalize_mountpoint(mc->m.mnt_dir);
-			int ok = 0;
-
-			if (streq(dr, dir))
-				ok = 1;
-			free(dr);
-			if (!ok)
-				continue;
+			char *dr = canonicalize(mc->m.mnt_dir);
+			ok = streq(dr, dir);
+			my_free(dr);
 		}
 
 		/* spec */
-		if (!streq(mc->m.mnt_fsname, spec)) {
-			char *fs = canonicalize(mc->m.mnt_fsname);
-			int ok = 0;
+		if (ok && !streq(mc->m.mnt_fsname, dev)) {
+			const char *fs = mc->m.mnt_fsname;
 
-			if (streq(fs, spec))
-				ok = 1;
-			else if (strncmp (fs, "LABEL=", 6) == 0) {
-				if (has_label(spec, fs + 6))
-					ok = 1;
+			if (strncmp (fs, "LABEL=", 6) == 0) {
+				ok = has_label(dev, fs + 6);
+			} else if (strncmp (fs, "UUID=", 5) == 0) {
+				ok = has_uuid(dev, fs + 5);
+			} else {
+				fs = canonicalize_spec(mc->m.mnt_fsname);
+				ok = streq(fs, dev);
+				my_free(fs);
 			}
-			else if (strncmp (fs, "UUID=", 5) == 0) {
-				if (has_uuid(spec, fs + 5))
-					ok = 1;
-			}
-			free(fs);
-			if (!ok)
-				continue;
 		}
-		return mc;
+		if (ok)
+			return mc;
 	}
 
 	return NULL;
@@ -372,7 +375,7 @@ getfs_by_dir (const char *dir) {
 		if (streq(mc->m.mnt_dir, dir))
 			return mc;
 
-	cdir = canonicalize_mountpoint(dir);
+	cdir = canonicalize(dir);
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt) {
 		if (streq(mc->m.mnt_dir, cdir)) {
 			free(cdir);
@@ -405,7 +408,7 @@ getfs_by_spec (const char *spec) {
 		return mc;
 	}
 
-	cspec = canonicalize(spec);
+	cspec = canonicalize_spec(spec);
 	mc = getfs_by_devname(cspec);
 	free(cspec);
 
@@ -436,7 +439,7 @@ getfs_by_devname (const char *devname) {
 				strncmp(mc->m.mnt_fsname, "UUID=", 5) == 0)
 			continue;
 
-		fs = canonicalize(mc->m.mnt_fsname);
+		fs = canonicalize_spec(mc->m.mnt_fsname);
 		if (streq(fs, devname)) {
 			free(fs);
 			return mc;
@@ -456,7 +459,7 @@ getfs_by_uuid (const char *uuid) {
 	mc0 = fstab_head();
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt)
 		if (strncmp (mc->m.mnt_fsname, "UUID=", 5) == 0
-		    && streq(mc->m.mnt_fsname + 5, uuid))
+		    && streq_quoted(mc->m.mnt_fsname + 5, uuid))
 			return mc;
 	return NULL;
 }
@@ -469,7 +472,7 @@ getfs_by_label (const char *label) {
 	mc0 = fstab_head();
 	for (mc = mc0->nxt; mc && mc != mc0; mc = mc->nxt)
 		if (strncmp (mc->m.mnt_fsname, "LABEL=", 6) == 0
-		    && streq(mc->m.mnt_fsname + 6, label))
+		    && streq_quoted(mc->m.mnt_fsname + 6, label))
 			return mc;
 	return NULL;
 }
@@ -922,7 +925,8 @@ void my_endmntent (mntFILE *mfp) { }
 int my_addmntent (mntFILE *mfp, struct my_mntent *mnt) { return 0; }
 
 char *canonicalize (const char *path) {  return NULL; }
-char *canonicalize_mountpoint (const char *path) { return NULL; }
+char *canonicalize_spec (const char *path) { return NULL; }
+int is_pseudo_fs(const char *type) { return 0; };
 
 int
 main(int argc, char **argv)
