@@ -1,4 +1,4 @@
-AC_INIT(util-linux-ng, 2.14, kzak@redhat.com)
+AC_INIT(util-linux-ng, 2.14.2, kzak@redhat.com)
 
 AC_PREREQ(2.60)
 
@@ -73,8 +73,13 @@ AC_CHECK_FUNCS(
 	updwtmp \
 	lchown \
 	inotify_init \
+	versionsort \
 	rpmatch])
 AC_FUNC_FSEEKO
+
+have_versionsort=no
+AC_CHECK_FUNC([versionsort], [have_versionsort=yes])
+AM_CONDITIONAL([HAVE_VERSIONSORT], test "x$have_versionsort" = xyes)
 
 dnl Static compilation
 m4_define([UTIL_STATIC_PROGRAMS], [losetup, mount, umount, fdisk, sfdisk])

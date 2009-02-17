@@ -191,6 +191,22 @@ mounts under a given mountpoint.
 .fi
 .RE
 .RE
+.RE
+
+.B The device indication.
+.RS
+Most devices are indicated by a file name (of a block special device), like
+.IR /dev/sda1 ,
+but there are other possibilities. For example, in the case of an NFS mount,
+.I device
+may look like
+.IR knuth.cwi.nl:/dir .
+It is possible to indicate a block special device using its
+volume
+.B LABEL
+or
+.B UUID
+(see the \-L and \-U options below).
 
 .B The device indication.
 .RS

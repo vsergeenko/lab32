@@ -1,3 +1,191 @@
+util-linux (2.14.2-1) unstable; urgency=low
+
+  [LaMont Jones]
+
+  * mount: segfault when creating mtab and cannot determine fsname. 
+    Closes: #488312
+
+  [Kel Modderman]
+
+  * hwclockfirst.sh: use correct LSB header info.  Closes: #487196
+
+  [Karel Zak]
+
+  * chrt: output buglet when reporting scheduling class
+  * mount: fix typo in volume_id code
+  * docs: update AUTHORS file
+  * docs: update v2.14.2 ReleaseNotes
+  * build-sys: release++ (v2.14.2)
+  * po: merge changes
+
+  [localization folks]
+
+  * po: update vi.po (from translationproject.org) (Clytie Siddall)
+  * po: update cs.po (from translationproject.org) (Petr Pisar)
+  * po: update ja.po (from translationproject.org) (Makoto Kato)
+  * po: update nl.po (from translationproject.org) (Benno Schulenberg)
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 13 Feb 2009 12:25:27 -0700
+
+util-linux (2.14.2~rc2-1) unstable; urgency=low
+
+  [Matthias Koenig]
+
+  * hwclock: omit warning about drift if --noadjfile given
+  * cfdisk: accept yes/no as fallback
+  * fdisk: add some missing includes
+  * losetup: try to set up loop readonly if EACCES
+  * mkfs.minix: fix size detection
+  * mount: retry on ENOMEDIUM
+
+  [Kalev Soikonen]
+
+  * hwclock: unshadow a diagnostic printf
+
+  [maximilian attems]
+
+  * mount: sundries.h add klibc support
+  * use getpagesize()
+
+  [Jakob Unterwurzacher]
+
+  * ionice: Extend the man page to explain the "none" class and cpu-nice
+    inheritance
+
+  [David Brownell]
+
+  * hwclock: remove x86_64-specific bogon
+
+  [Karel Zak]
+
+  * mount: add norealtime to mount.8
+  * selinux: is_selinux_enabled() returns 0, 1 and -1
+  * umount: improve "-d" option for autoclear loops
+  * write: doesn't check for tty group
+  * rtcwake: cleanup return codes
+  * mount: add info about tz=UTC option for FAT to mount.8
+  * build-sys: cleanup sys-utils/Makefile.am
+  * build-sys: fix dmesg.1 installation
+  * mount: add fallback for versionsort()
+  * mount: add docs about utf8=0 for vfat
+  * scriptreplay: new implementation is out-of-sync
+  * docs: update AUTHORS file
+  * docs: update v2.14.1 ReleaseNotes
+  * build-sys: release++ (v2.14.1-rc1)
+  * losetup: remove unnecessary minor number check
+  * fdisk: don't check for GPT when asked for disk size only
+  * docs: update AUTHORS file
+  * docs: update v2.14.1 ReleaseNotes
+  * build-sys: release++ (v2.14.1-rc2)
+  * docs: update v2.14.1 ReleaseNotes
+  * build-sys: release++ (v2.14.1)
+  * mount: mtab created multiple times with -a option
+  * build-sys: add -luuid to BLKID_LIBS
+  * lib: add __BYTE_ORDER to md5.c
+  * include: use __BYTE_ORDER rather than AC specific WORDS_BIGENDIAN
+  * fdisk: cannot create partition with starting beyond 1 TB
+  * fdisk: remove obsolete information from man page
+  * fdisk: fix man page typo
+  * fdisk: support +cylinder notation
+  * hwclock: remove "cli" and "sti" from i386 CMOS code
+  * login: fix warning "dereferencing type-punned pointer will break
+    strict-aliasing rules"
+  * login: fix compiler warning (int32 time() arg)
+  * losetup: add warning about read-only mode
+  * losetup: missing EBUSY error hint message
+  * mount: add info about /proc/mounts to mount.1
+  * mount: add i_version support
+  * mount: reorder list of options in mount.8
+  * mount: sync FAT info in mount.8 with Documentation/filesystems/vfat.txt
+  * mount: sync tmpfs info in mount.8 with Documentation/filesystems/tmpfs.txt
+  * mount: remove link to namesys.com
+  * mount: create separate section for fs-independent options in mount.8
+  * mount: fix typo
+  * mount: use subsections in mount.8 DESCRIPTION
+  * mount: warn on "file_t" selinux context
+  * mount: make file_t SELinux warning optional and shorter
+  * setterm: fix -blank man page
+  * mount: fix mount_static_LDADD
+  * fdisk: remove unnecessary gettext call
+  * refresh gitignore
+  * docs: update AUTHORS file
+  * mount: clean up SPEC canonicalization
+  * mount: add rootcontext= SELinux mount option
+  * docs: update v2.14.2 ReleaseNotes
+  * build-sys: release++ (v2.14.2-rc1)
+  * mount: add info about semantics of read-only mount to mount.8
+  * mount: suggest to use blockdev --setro rather than losetup
+  * mount: finalize support of quoted LABELs/UUIDs
+  * ionice: a little cleanup of "none" description
+  * docs: update AUTHORS file
+  * docs: update v2.14.2 ReleaseNotes
+  * build-sys: release++ (v2.14.2-rc2)
+  * po: merge changes
+
+  [Pedro Ribeiro]
+
+  * fdisk: several strings without gettext calls
+  * logger: several strings without gettext calls
+  * losetup: several strings without gettext strings
+  * mkfs.cramfs: several strings without gettext calls
+  * readprofile: several strings without gettext calls
+
+  [Sam Varshavchik]
+
+  * mount: cleans up mount(8) troff markup
+
+  [Guan Xin]
+
+  * mount: fix typo
+
+  [Arkadiusz Miskiewicz]
+
+  * build-sys: tgets is not in ncurses but in tinfo
+
+  [Gabriel Burt]
+
+  * rtcwake: prefer RTC_WKALM_SET over RTC_ALM_SET
+
+  [Martin Steigerwald]
+
+  * chrt: support CFS SCHED_IDLE priority and document it
+
+  [Samuel Thibault]
+
+  * ldattach: don't compile for non-linux systems
+
+  [Benno Schulenberg]
+
+  * ipcs: ungettextize the spacing of the table headers
+  * po: update nl.po (from translationproject.org)
+
+  [Denis ChengRq]
+
+  * sfdisk: print version should end with a newline
+
+  [Mike Frysinger]
+
+  * more: dont use a.out.h
+  * mount: remove spurious newline from mount.8
+
+  [James Youngman]
+
+  * more: minor fixes to magic()
+
+  [localization folks]
+
+  * po: update id.po (from translationproject.org) (Arif E. Nugroho)
+  * po: update pt_BR.po (from translationproject.org) (Rodrigo Stulzer Lopes)
+  * po: update zh_CN.po (from translationproject.org) (Ray Wang)
+  * po: add zh_CN.po (from translationproject.org) (Ray Wang)
+  * po: update sv.po (from translationproject.org) (Daniel Nylander)
+  * po: update fr.po (from translationproject.org) (Nicolas Provost)
+  * po: update vi.po (from translationproject.org) (Clytie Siddall)
+  * po: update cs.po (from translationproject.org) (Petr Pisar)
+  * po: update fi.po (from translationproject.org) (Lauri Nurmi)
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 30 Jan 2009 08:14:49 -0700
+
 util-linux (2.14-1) unstable; urgency=low
 
   [LaMont Jones]

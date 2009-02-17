@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: util-linux-ng 2.13.1-rc1\n"
 "Report-Msgid-Bugs-To: Karel Zak <kzak@redhat.com>\n"
-"POT-Creation-Date: 2008-05-19 10:56+0200\n"
+"POT-Creation-Date: 2009-01-22 14:07+0100\n"
 "PO-Revision-Date: 2007-11-14 09:20+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -181,7 +181,7 @@ msgstr "användning: %s [ -n ] enhet\n"
 #: disk-utils/fdformat.c:116 disk-utils/fsck.minix.c:1283
 #: disk-utils/isosize.c:181 disk-utils/mkfs.bfs.c:119 disk-utils/mkfs.c:52
 #: disk-utils/mkfs.cramfs.c:788 disk-utils/mkfs.minix.c:575
-#: disk-utils/mkswap.c:514 misc-utils/ddate.c:179 misc-utils/rename.c:79
+#: disk-utils/mkswap.c:510 misc-utils/ddate.c:179 misc-utils/rename.c:79
 #: misc-utils/script.c:147 sys-utils/readprofile.c:197
 #, c-format
 msgid "%s (%s)\n"
@@ -690,7 +690,7 @@ msgstr "för många inoder - max är 512"
 msgid "not enough space, need at least %lu blocks"
 msgstr "inte tillräckligt med utrymme, behöver minst %lu block"
 
-#: disk-utils/mkfs.bfs.c:228 fdisk/fdisk.c:2322
+#: disk-utils/mkfs.bfs.c:228 fdisk/fdisk.c:2324
 #, c-format
 msgid "Device: %s\n"
 msgstr "Enhet: %s\n"
@@ -846,6 +846,10 @@ msgstr ""
 "varning: uppskattning av begärd storlek (övre gräns) är %Ld MB, men maximal "
 "avbildsstorlek är %u MB. Vi kan dö i förtid.\n"
 
+#: disk-utils/mkfs.cramfs.c:856
+msgid "ROM image map"
+msgstr ""
+
 #: disk-utils/mkfs.cramfs.c:870
 #, c-format
 msgid "Including: %s\n"
@@ -877,6 +881,10 @@ msgid "not enough space allocated for ROM image (%lld allocated, %zu used)\n"
 msgstr ""
 "inte tillräckligt med utrymme allokerat för ROM-avbild (%lld allokerat, %d "
 "använt)\n"
+
+#: disk-utils/mkfs.cramfs.c:909
+msgid "ROM image"
+msgstr ""
 
 #: disk-utils/mkfs.cramfs.c:913
 #, fuzzy, c-format
@@ -994,7 +1002,7 @@ msgstr "sökning misslyckades under test av block"
 msgid "Weird values in do_check: probably bugs\n"
 msgstr "Konstiga värden i \"do_check\": troligtvis programfel\n"
 
-#: disk-utils/mkfs.minix.c:511 disk-utils/mkswap.c:378
+#: disk-utils/mkfs.minix.c:511 disk-utils/mkswap.c:374
 msgid "seek failed in check_blocks"
 msgstr "sökning misslyckades i \"check_blocks\""
 
@@ -1051,133 +1059,133 @@ msgstr "kan inte hämta storleken på %s"
 msgid "block size smaller than physical sector size of %s"
 msgstr ""
 
-#: disk-utils/mkfs.minix.c:657
+#: disk-utils/mkfs.minix.c:658
 #, fuzzy, c-format
 msgid "cannot determine size of %s"
 msgstr "kan inte hämta storleken på %s"
 
-#: disk-utils/mkfs.minix.c:661
+#: disk-utils/mkfs.minix.c:666
 #, c-format
 msgid "will not try to make filesystem on '%s'"
 msgstr "kommer inte att försöka skapa filsystem på \"%s\""
 
-#: disk-utils/mkfs.minix.c:663
+#: disk-utils/mkfs.minix.c:668
 #, fuzzy
 msgid "number of blocks too small"
 msgstr "Antal sektorer"
 
-#: disk-utils/mkswap.c:152
+#: disk-utils/mkswap.c:148
 #, c-format
 msgid "Bad user-specified page size %d\n"
 msgstr "Användardefinierade sidstorleken %d är felaktig\n"
 
-#: disk-utils/mkswap.c:160
+#: disk-utils/mkswap.c:156
 #, c-format
 msgid "Using user-specified page size %d, instead of the system value %d\n"
 msgstr ""
 "Använder användardefinierade sidstorleken %d istället för systemvärdet %d\n"
 
-#: disk-utils/mkswap.c:184
+#: disk-utils/mkswap.c:180
 #, c-format
 msgid "Bad swap header size, no label written.\n"
 msgstr "Felaktig storlek på växlingshuvud, ingen etikett skrevs.\n"
 
-#: disk-utils/mkswap.c:194
+#: disk-utils/mkswap.c:190
 #, c-format
 msgid "Label was truncated.\n"
 msgstr "Etiketten var avkapad.\n"
 
-#: disk-utils/mkswap.c:200
+#: disk-utils/mkswap.c:196
 #, c-format
 msgid "no label, "
 msgstr "ingen etikett, "
 
-#: disk-utils/mkswap.c:208
+#: disk-utils/mkswap.c:204
 #, c-format
 msgid "no uuid\n"
 msgstr "inget uuid\n"
 
-#: disk-utils/mkswap.c:332
+#: disk-utils/mkswap.c:328
 #, fuzzy, c-format
 msgid ""
 "Usage: %s [-c] [-v0|-v1] [-pPAGESZ] [-L label] [-U UUID] /dev/name [blocks]\n"
 msgstr ""
 "Användning: %s [-c] [-v0|-v1] [-pSIDSTORLEK] [-L etikett] /dev/namn [block]\n"
 
-#: disk-utils/mkswap.c:355
+#: disk-utils/mkswap.c:351
 msgid "too many bad pages"
 msgstr "för många felaktiga sidor"
 
-#: disk-utils/mkswap.c:369 misc-utils/look.c:182 misc-utils/setterm.c:1183
-#: text-utils/more.c:1983 text-utils/more.c:1994
+#: disk-utils/mkswap.c:365 misc-utils/look.c:182 misc-utils/setterm.c:1183
+#: text-utils/more.c:1982 text-utils/more.c:1993
 msgid "Out of memory"
 msgstr "Slut på minne"
 
-#: disk-utils/mkswap.c:386
+#: disk-utils/mkswap.c:382
 #, c-format
 msgid "one bad page\n"
 msgstr "en felaktig sida\n"
 
-#: disk-utils/mkswap.c:388
+#: disk-utils/mkswap.c:384
 #, c-format
 msgid "%lu bad pages\n"
 msgstr "%lu felaktiga sidor\n"
 
-#: disk-utils/mkswap.c:551
+#: disk-utils/mkswap.c:547
 #, c-format
 msgid "%1$s: warning: ignore -U (UUIDs are unsupported by %1$s)\n"
 msgstr ""
 
-#: disk-utils/mkswap.c:569
+#: disk-utils/mkswap.c:565
 #, fuzzy
 msgid "error: UUID parsing failed"
 msgstr "Fel vid stängning av fil\n"
 
-#: disk-utils/mkswap.c:579
+#: disk-utils/mkswap.c:575
 #, c-format
 msgid "%s: error: Nowhere to set up swap on?\n"
 msgstr "%s: fel: Ingenstans att skapa växlingsutrymme?\n"
 
-#: disk-utils/mkswap.c:597
+#: disk-utils/mkswap.c:593
 #, fuzzy, c-format
 msgid "%s: error: size %lu KiB is larger than device size %lu KiB\n"
 msgstr "%s: fel: storleken %lu är större än enhetsstorleken %lu\n"
 
-#: disk-utils/mkswap.c:618
+#: disk-utils/mkswap.c:614
 #, c-format
 msgid "%s: error: unknown version %d\n"
 msgstr "%s: fel: version %d är okänd\n"
 
-#: disk-utils/mkswap.c:625
+#: disk-utils/mkswap.c:621
 #, fuzzy, c-format
 msgid "%s: error: swap area needs to be at least %ld KiB\n"
 msgstr "%s: fel: växlingsutrymmet måste vara minst %ld kB\n"
 
-#: disk-utils/mkswap.c:642
+#: disk-utils/mkswap.c:638
 #, fuzzy, c-format
 msgid "%s: warning: truncating swap area to %ld KiB\n"
 msgstr "%s: varning: avkortar växlingsutrymmet till %ld kB\n"
 
-#: disk-utils/mkswap.c:648
+#: disk-utils/mkswap.c:644
 #, c-format
 msgid "%s: error: label only with v1 swap area\n"
 msgstr "%s: fel: etikett endast med v1 växlingsutrymme\n"
 
-#: disk-utils/mkswap.c:672
+#: disk-utils/mkswap.c:668
 #, c-format
 msgid "%s: error: will not try to make swapdevice on '%s'\n"
 msgstr "%s: fel: kommer inte att försöka skapa växlingsenhet på \"%s\"\n"
 
-#: disk-utils/mkswap.c:678
+#: disk-utils/mkswap.c:674
 #, c-format
 msgid "%s: error: %s is mounted; will not make swapspace.\n"
 msgstr "%s: fel: %s är monterad; kommer inte att skapa växlingsutrymme.\n"
 
-#: disk-utils/mkswap.c:691 disk-utils/mkswap.c:712
+#: disk-utils/mkswap.c:687 disk-utils/mkswap.c:708
 msgid "fatal: first page unreadable"
 msgstr "ödesdigert: första sidan är oläsbar"
 
-#: disk-utils/mkswap.c:697
+#: disk-utils/mkswap.c:693
 #, fuzzy, c-format
 msgid ""
 "%s: Device '%s' contains a valid Sun disklabel.\n"
@@ -1192,55 +1200,55 @@ msgstr ""
 "växlingsutrymme på den enheten kan du använda flaggan -f för att tvinga\n"
 "fram det.\n"
 
-#: disk-utils/mkswap.c:721
+#: disk-utils/mkswap.c:717
 msgid "Unable to set up swap-space: unreadable"
 msgstr "Kan inte ställa in växlingsutrymme: oläsbart"
 
-#: disk-utils/mkswap.c:722
+#: disk-utils/mkswap.c:718
 #, fuzzy, c-format
 msgid "Setting up swapspace version %d, size = %llu KiB\n"
 msgstr "Ställer in växlingsutrymme version %d, storlek = %llu kB\n"
 
-#: disk-utils/mkswap.c:731
+#: disk-utils/mkswap.c:727
 msgid "unable to rewind swap-device"
 msgstr "kan inte spola tillbaka växlingsenheten"
 
-#: disk-utils/mkswap.c:734
+#: disk-utils/mkswap.c:730
 #, fuzzy, c-format
 msgid "%s: %s: unable to write signature page: %s"
 msgstr "kan inte skriva signatursida"
 
-#: disk-utils/mkswap.c:745
+#: disk-utils/mkswap.c:741
 msgid "fsync failed"
 msgstr "fsync misslyckades"
 
-#: disk-utils/mkswap.c:756
+#: disk-utils/mkswap.c:752
 #, c-format
 msgid "%s: %s: unable to obtain selinux file label: %s\n"
 msgstr "%s: %s: kunde inte få selinux-filetikett: %s\n"
 
-#: disk-utils/mkswap.c:762
+#: disk-utils/mkswap.c:758
 msgid "unable to matchpathcon()"
 msgstr "kunde inte matchpathcon()"
 
-#: disk-utils/mkswap.c:765
+#: disk-utils/mkswap.c:761
 msgid "unable to create new selinux context"
 msgstr "kunde inte skapa nytt selinux-sammanhang"
 
-#: disk-utils/mkswap.c:767
+#: disk-utils/mkswap.c:763
 msgid "couldn't compute selinux context"
 msgstr "kunde inte beräkna selinux-sammanhang"
 
-#: disk-utils/mkswap.c:773
+#: disk-utils/mkswap.c:769
 #, c-format
 msgid "%s: unable to relabel %s to %s: %s\n"
 msgstr "%s: kan inte byta etikett på %s till %s: %s\n"
 
-#: fdisk/cfdisk.c:376 fdisk/cfdisk.c:2074
+#: fdisk/cfdisk.c:376 fdisk/cfdisk.c:2076
 msgid "Unusable"
 msgstr "Oanvändbar"
 
-#: fdisk/cfdisk.c:378 fdisk/cfdisk.c:2076
+#: fdisk/cfdisk.c:378 fdisk/cfdisk.c:2078
 msgid "Free Space"
 msgstr "Ledigt utrymme"
 
@@ -1390,8 +1398,8 @@ msgstr "Ogiltig tangent"
 msgid "Press a key to continue"
 msgstr "Tryck en tangent för att fortsätta"
 
-#: fdisk/cfdisk.c:1421 fdisk/cfdisk.c:2045 fdisk/cfdisk.c:2577
-#: fdisk/cfdisk.c:2579
+#: fdisk/cfdisk.c:1421 fdisk/cfdisk.c:2047 fdisk/cfdisk.c:2579
+#: fdisk/cfdisk.c:2581
 msgid "Primary"
 msgstr "Primär"
 
@@ -1399,8 +1407,8 @@ msgstr "Primär"
 msgid "Create a new primary partition"
 msgstr "Skapa en ny primär partition"
 
-#: fdisk/cfdisk.c:1422 fdisk/cfdisk.c:2045 fdisk/cfdisk.c:2576
-#: fdisk/cfdisk.c:2579
+#: fdisk/cfdisk.c:1422 fdisk/cfdisk.c:2047 fdisk/cfdisk.c:2578
+#: fdisk/cfdisk.c:2581
 msgid "Logical"
 msgstr "Logisk"
 
@@ -1408,7 +1416,7 @@ msgstr "Logisk"
 msgid "Create a new logical partition"
 msgstr "Skapa en ny logisk partition"
 
-#: fdisk/cfdisk.c:1423 fdisk/cfdisk.c:1478 fdisk/cfdisk.c:2250
+#: fdisk/cfdisk.c:1423 fdisk/cfdisk.c:1478 fdisk/cfdisk.c:2252
 msgid "Cancel"
 msgstr "Avbryt"
 
@@ -1510,114 +1518,114 @@ msgstr ""
 msgid "no"
 msgstr "nej"
 
-#: fdisk/cfdisk.c:1881
+#: fdisk/cfdisk.c:1882
 msgid "Did not write partition table to disk"
 msgstr "Skrev inte partitionstabellen till disk"
 
-#: fdisk/cfdisk.c:1883
+#: fdisk/cfdisk.c:1884
 msgid "yes"
 msgstr "ja"
 
-#: fdisk/cfdisk.c:1886
+#: fdisk/cfdisk.c:1888
 msgid "Please enter `yes' or `no'"
 msgstr "Ange \"ja\" eller \"nej\""
 
-#: fdisk/cfdisk.c:1890
+#: fdisk/cfdisk.c:1892
 msgid "Writing partition table to disk..."
 msgstr "Skriver partitionstabell till disk..."
 
-#: fdisk/cfdisk.c:1915 fdisk/cfdisk.c:1919
+#: fdisk/cfdisk.c:1917 fdisk/cfdisk.c:1921
 msgid "Wrote partition table to disk"
 msgstr "Skrev partitionstabell till disk"
 
-#: fdisk/cfdisk.c:1917
+#: fdisk/cfdisk.c:1919
 msgid ""
 "Wrote partition table, but re-read table failed.  Reboot to update table."
 msgstr ""
 "Skrev partitionstabellen, men omläsning av tabellen misslyckades. Starta om "
 "för att uppdatera tabellen."
 
-#: fdisk/cfdisk.c:1927
+#: fdisk/cfdisk.c:1929
 msgid "No primary partitions are marked bootable. DOS MBR cannot boot this."
 msgstr ""
 "Inga primära partitioner är markerade som startbara. DOS huvudstartpost\n"
 "(MBR) kan inte starta detta."
 
-#: fdisk/cfdisk.c:1929
+#: fdisk/cfdisk.c:1931
 msgid ""
 "More than one primary partition is marked bootable. DOS MBR cannot boot this."
 msgstr ""
 "Mer än en primär partition är markerad som startbar. DOS huvudstartpost\n"
 "(MBR) kan inte starta detta."
 
-#: fdisk/cfdisk.c:1987 fdisk/cfdisk.c:2106 fdisk/cfdisk.c:2190
+#: fdisk/cfdisk.c:1989 fdisk/cfdisk.c:2108 fdisk/cfdisk.c:2192
 msgid "Enter filename or press RETURN to display on screen: "
 msgstr "Ange filnamnet eller tryck RETUR för att visa på skärmen: "
 
-#: fdisk/cfdisk.c:1996 fdisk/cfdisk.c:2114 fdisk/cfdisk.c:2198
+#: fdisk/cfdisk.c:1998 fdisk/cfdisk.c:2116 fdisk/cfdisk.c:2200
 #, c-format
 msgid "Cannot open file '%s'"
 msgstr "Kan inte öppna filen \"%s\""
 
-#: fdisk/cfdisk.c:2007
+#: fdisk/cfdisk.c:2009
 #, c-format
 msgid "Disk Drive: %s\n"
 msgstr "Diskenhet: %s\n"
 
-#: fdisk/cfdisk.c:2009
+#: fdisk/cfdisk.c:2011
 msgid "Sector 0:\n"
 msgstr "Sektor 0:\n"
 
-#: fdisk/cfdisk.c:2016
+#: fdisk/cfdisk.c:2018
 #, c-format
 msgid "Sector %d:\n"
 msgstr "Sektor %d:\n"
 
-#: fdisk/cfdisk.c:2036
+#: fdisk/cfdisk.c:2038
 msgid "   None   "
 msgstr "   Ingen  "
 
 # Primär/Logisk antar jag
-#: fdisk/cfdisk.c:2038
+#: fdisk/cfdisk.c:2040
 msgid "   Pri/Log"
 msgstr "   Pri/Log"
 
-#: fdisk/cfdisk.c:2040
+#: fdisk/cfdisk.c:2042
 msgid "   Primary"
 msgstr "   Primär "
 
-#: fdisk/cfdisk.c:2042
+#: fdisk/cfdisk.c:2044
 msgid "   Logical"
 msgstr "   Logisk "
 
-#: fdisk/cfdisk.c:2080 fdisk/fdisk.c:1517 fdisk/fdisk.c:1836
+#: fdisk/cfdisk.c:2082 fdisk/fdisk.c:1519 fdisk/fdisk.c:1838
 #: fdisk/fdisksgilabel.c:240 fdisk/fdisksunlabel.c:618 fdisk/sfdisk.c:650
 msgid "Unknown"
 msgstr "Okänd"
 
-#: fdisk/cfdisk.c:2086 fdisk/cfdisk.c:2554 fdisk/fdisksunlabel.c:44
+#: fdisk/cfdisk.c:2088 fdisk/cfdisk.c:2556 fdisk/fdisksunlabel.c:44
 msgid "Boot"
 msgstr "Start"
 
-#: fdisk/cfdisk.c:2088
+#: fdisk/cfdisk.c:2090
 #, c-format
 msgid "(%02X)"
 msgstr "(%02X)"
 
-#: fdisk/cfdisk.c:2090
+#: fdisk/cfdisk.c:2092
 msgid "None"
 msgstr "Ingen"
 
-#: fdisk/cfdisk.c:2125 fdisk/cfdisk.c:2209
+#: fdisk/cfdisk.c:2127 fdisk/cfdisk.c:2211
 #, c-format
 msgid "Partition Table for %s\n"
 msgstr "Partitionstabell för %s\n"
 
-#: fdisk/cfdisk.c:2127
+#: fdisk/cfdisk.c:2129
 msgid "               First       Last\n"
 msgstr "               Första      Sista\n"
 
-#: fdisk/cfdisk.c:2128
+#: fdisk/cfdisk.c:2130
 msgid ""
 " # Type       Sector      Sector   Offset    Length   Filesystem Type (ID) "
 "Flag\n"
@@ -1625,7 +1633,7 @@ msgstr ""
 " # Typ        Sektor      Sektor   Avstånd   Längd    Filsystemstyp (ID)   "
 "Flagga\n"
 
-#: fdisk/cfdisk.c:2129
+#: fdisk/cfdisk.c:2131
 msgid ""
 "-- ------- ----------- ----------- ------ ----------- -------------------- "
 "----\n"
@@ -1645,472 +1653,472 @@ msgstr ""
 # source you realize that "Start" belongs to "Sector" in another message
 # (the one from the line below in the source).
 #
-#: fdisk/cfdisk.c:2212
+#: fdisk/cfdisk.c:2214
 #, fuzzy
 msgid "         ---Starting----      ----Ending-----    Start     Number of\n"
 msgstr "         ----Start-----      -----Slut-----   Start-    Antal\n"
 
-#: fdisk/cfdisk.c:2213
+#: fdisk/cfdisk.c:2215
 #, fuzzy
 msgid " # Flags Head Sect  Cyl   ID  Head Sect  Cyl     Sector    Sectors\n"
 msgstr " # Flggr  Hvd Sekt Cyl   ID  Hvd  Sekt Cyl     sektor    sektorer\n"
 
-#: fdisk/cfdisk.c:2214
+#: fdisk/cfdisk.c:2216
 #, fuzzy
 msgid "-- ----- ---- ---- ----- ---- ---- ---- ----- ----------- -----------\n"
 msgstr "-- ----- ---- ---- ---- ---- ---- ---- ---- ----------- -----------\n"
 
-#: fdisk/cfdisk.c:2247
+#: fdisk/cfdisk.c:2249
 msgid "Raw"
 msgstr "Rått"
 
-#: fdisk/cfdisk.c:2247
+#: fdisk/cfdisk.c:2249
 msgid "Print the table using raw data format"
 msgstr "Visa tabellen i rått dataformat"
 
-#: fdisk/cfdisk.c:2248 fdisk/cfdisk.c:2351
+#: fdisk/cfdisk.c:2250 fdisk/cfdisk.c:2353
 msgid "Sectors"
 msgstr "Sektorer"
 
-#: fdisk/cfdisk.c:2248
+#: fdisk/cfdisk.c:2250
 msgid "Print the table ordered by sectors"
 msgstr "Visa tabellen sorterad efter sektorer"
 
-#: fdisk/cfdisk.c:2249
+#: fdisk/cfdisk.c:2251
 msgid "Table"
 msgstr "Tabell"
 
-#: fdisk/cfdisk.c:2249
+#: fdisk/cfdisk.c:2251
 msgid "Just print the partition table"
 msgstr "Visa bara partitionstabellen"
 
-#: fdisk/cfdisk.c:2250
+#: fdisk/cfdisk.c:2252
 msgid "Don't print the table"
 msgstr "Visa inte tabellen"
 
-#: fdisk/cfdisk.c:2278
+#: fdisk/cfdisk.c:2280
 msgid "Help Screen for cfdisk"
 msgstr "Hjälpskärm för cfdisk"
 
-#: fdisk/cfdisk.c:2280
+#: fdisk/cfdisk.c:2282
 msgid "This is cfdisk, a curses based disk partitioning program, which"
 msgstr "Det här är cfdisk, ett curses-baserat diskpartitioneringsprogram som"
 
-#: fdisk/cfdisk.c:2281
+#: fdisk/cfdisk.c:2283
 msgid "allows you to create, delete and modify partitions on your hard"
 msgstr "låter dig skapa, ta bort och ändra partitioner på din"
 
-#: fdisk/cfdisk.c:2282
+#: fdisk/cfdisk.c:2284
 msgid "disk drive."
 msgstr "hårddisk."
 
-#: fdisk/cfdisk.c:2284
+#: fdisk/cfdisk.c:2286
 msgid "Copyright (C) 1994-1999 Kevin E. Martin & aeb"
 msgstr "Copyright © 1994-1999 Kevin E. Martin och aeb"
 
-#: fdisk/cfdisk.c:2286
+#: fdisk/cfdisk.c:2288
 msgid "Command      Meaning"
 msgstr "Kommando     Betydelse"
 
-#: fdisk/cfdisk.c:2287
+#: fdisk/cfdisk.c:2289
 msgid "-------      -------"
 msgstr "--------     ---------"
 
-#: fdisk/cfdisk.c:2288
+#: fdisk/cfdisk.c:2290
 msgid "  b          Toggle bootable flag of the current partition"
 msgstr "  b          Slå på/av startbarhetsflaggan på aktuell partition"
 
-#: fdisk/cfdisk.c:2289
+#: fdisk/cfdisk.c:2291
 msgid "  d          Delete the current partition"
 msgstr "  d          Ta bort aktuell partition"
 
-#: fdisk/cfdisk.c:2290
+#: fdisk/cfdisk.c:2292
 msgid "  g          Change cylinders, heads, sectors-per-track parameters"
 msgstr ""
 "  g          Ändra parametrarna för cylindrar, huvuden, sektorer-per-spår"
 
-#: fdisk/cfdisk.c:2291
+#: fdisk/cfdisk.c:2293
 msgid "             WARNING: This option should only be used by people who"
 msgstr "             VARNING: Denna flagga bör endast användas av personer som"
 
-#: fdisk/cfdisk.c:2292
+#: fdisk/cfdisk.c:2294
 msgid "             know what they are doing."
 msgstr "             vet vad de gör."
 
-#: fdisk/cfdisk.c:2293
+#: fdisk/cfdisk.c:2295
 msgid "  h          Print this screen"
 msgstr "  h          Visa denna hjälpskärm"
 
-#: fdisk/cfdisk.c:2294
+#: fdisk/cfdisk.c:2296
 msgid "  m          Maximize disk usage of the current partition"
 msgstr "  m          Maximera diskanvändandet på aktuell partition"
 
-#: fdisk/cfdisk.c:2295
+#: fdisk/cfdisk.c:2297
 msgid "             Note: This may make the partition incompatible with"
 msgstr ""
 "             Obs: Detta kan komma att göra partitionen inkompatibel med"
 
-#: fdisk/cfdisk.c:2296
+#: fdisk/cfdisk.c:2298
 msgid "             DOS, OS/2, ..."
 msgstr "             DOS, OS/2, ..."
 
-#: fdisk/cfdisk.c:2297
+#: fdisk/cfdisk.c:2299
 msgid "  n          Create new partition from free space"
 msgstr "  n          Skapa en ny partition från ledigt utrymme"
 
-#: fdisk/cfdisk.c:2298
+#: fdisk/cfdisk.c:2300
 msgid "  p          Print partition table to the screen or to a file"
 msgstr ""
 "  p          Visa partitionstabellen på skärmen eller skriv den till en fil"
 
-#: fdisk/cfdisk.c:2299
+#: fdisk/cfdisk.c:2301
 msgid "             There are several different formats for the partition"
 msgstr "             Det finns flera olika format på partitionen"
 
-#: fdisk/cfdisk.c:2300
+#: fdisk/cfdisk.c:2302
 msgid "             that you can choose from:"
 msgstr "             som du kan välja mellan:"
 
-#: fdisk/cfdisk.c:2301
+#: fdisk/cfdisk.c:2303
 msgid "                r - Raw data (exactly what would be written to disk)"
 msgstr "                r - Rå data (exakt det som skulle skrivas till disken)"
 
-#: fdisk/cfdisk.c:2302
+#: fdisk/cfdisk.c:2304
 msgid "                s - Table ordered by sectors"
 msgstr "                s - Tabell sorterad efter sektorer"
 
-#: fdisk/cfdisk.c:2303
+#: fdisk/cfdisk.c:2305
 msgid "                t - Table in raw format"
 msgstr "                t - Tabell i rått format"
 
-#: fdisk/cfdisk.c:2304
+#: fdisk/cfdisk.c:2306
 msgid "  q          Quit program without writing partition table"
 msgstr "  q          Avsluta programmet utan att skriva partitionstabellen"
 
-#: fdisk/cfdisk.c:2305
+#: fdisk/cfdisk.c:2307
 msgid "  t          Change the filesystem type"
 msgstr "  t          Byt filsystemstypen"
 
-#: fdisk/cfdisk.c:2306
+#: fdisk/cfdisk.c:2308
 msgid "  u          Change units of the partition size display"
 msgstr "  u          Byt enheter på visningen av partitionsstorlek"
 
-#: fdisk/cfdisk.c:2307
+#: fdisk/cfdisk.c:2309
 msgid "             Rotates through MB, sectors and cylinders"
 msgstr "             Byter mellan MB, sektorer och cylindrar"
 
-#: fdisk/cfdisk.c:2308
+#: fdisk/cfdisk.c:2310
 msgid "  W          Write partition table to disk (must enter upper case W)"
 msgstr ""
 "  W          Skriv partitionstabellen till disk (måste vara ett stort W)"
 
-#: fdisk/cfdisk.c:2309
+#: fdisk/cfdisk.c:2311
 msgid "             Since this might destroy data on the disk, you must"
 msgstr "             Eftersom detta kan förstöra data på disken måste du"
 
-#: fdisk/cfdisk.c:2310
+#: fdisk/cfdisk.c:2312
 msgid "             either confirm or deny the write by entering `yes' or"
 msgstr ""
 "             antingen bekräfta eller avvisa detta genom att ange \"ja\""
 
-#: fdisk/cfdisk.c:2311
+#: fdisk/cfdisk.c:2313
 msgid "             `no'"
 msgstr "             eller \"nej\""
 
-#: fdisk/cfdisk.c:2312
+#: fdisk/cfdisk.c:2314
 msgid "Up Arrow     Move cursor to the previous partition"
 msgstr "Uppil        Flytta markören till föregående partition"
 
-#: fdisk/cfdisk.c:2313
+#: fdisk/cfdisk.c:2315
 msgid "Down Arrow   Move cursor to the next partition"
 msgstr "Nerpil       Flytta markören till nästa partition"
 
-#: fdisk/cfdisk.c:2314
+#: fdisk/cfdisk.c:2316
 msgid "CTRL-L       Redraws the screen"
 msgstr "CTRL+L       Rita om skärmen"
 
-#: fdisk/cfdisk.c:2315
+#: fdisk/cfdisk.c:2317
 msgid "  ?          Print this screen"
 msgstr "  ?          Visa denna skärm"
 
-#: fdisk/cfdisk.c:2317
+#: fdisk/cfdisk.c:2319
 msgid "Note: All of the commands can be entered with either upper or lower"
 msgstr "Obs: Alla kommandon kan anges antingen med små eller stora bokstäver"
 
-#: fdisk/cfdisk.c:2318
+#: fdisk/cfdisk.c:2320
 msgid "case letters (except for Writes)."
 msgstr "(utom för skrivningar med W)."
 
-#: fdisk/cfdisk.c:2349 fdisk/fdisksunlabel.c:234
+#: fdisk/cfdisk.c:2351 fdisk/fdisksunlabel.c:234
 msgid "Cylinders"
 msgstr "Cylindrar"
 
-#: fdisk/cfdisk.c:2349
+#: fdisk/cfdisk.c:2351
 msgid "Change cylinder geometry"
 msgstr "Ändra cylindergeometri"
 
-#: fdisk/cfdisk.c:2350 fdisk/fdisksunlabel.c:232
+#: fdisk/cfdisk.c:2352 fdisk/fdisksunlabel.c:232
 msgid "Heads"
 msgstr "Huvuden"
 
-#: fdisk/cfdisk.c:2350
+#: fdisk/cfdisk.c:2352
 msgid "Change head geometry"
 msgstr "Ändra huvudgeometri"
 
-#: fdisk/cfdisk.c:2351
+#: fdisk/cfdisk.c:2353
 msgid "Change sector geometry"
 msgstr "Ändra sektorgeometri"
 
-#: fdisk/cfdisk.c:2352
+#: fdisk/cfdisk.c:2354
 msgid "Done"
 msgstr "Klar"
 
-#: fdisk/cfdisk.c:2352
+#: fdisk/cfdisk.c:2354
 msgid "Done with changing geometry"
 msgstr "Färdig med geometriändring"
 
-#: fdisk/cfdisk.c:2365
+#: fdisk/cfdisk.c:2367
 msgid "Enter the number of cylinders: "
 msgstr "Ange antalet cylindrar: "
 
-#: fdisk/cfdisk.c:2376 fdisk/cfdisk.c:2947
+#: fdisk/cfdisk.c:2378 fdisk/cfdisk.c:2949
 msgid "Illegal cylinders value"
 msgstr "Ogiltigt antal cylindrar"
 
-#: fdisk/cfdisk.c:2382
+#: fdisk/cfdisk.c:2384
 msgid "Enter the number of heads: "
 msgstr "Ange antalet huvuden: "
 
-#: fdisk/cfdisk.c:2389 fdisk/cfdisk.c:2957
+#: fdisk/cfdisk.c:2391 fdisk/cfdisk.c:2959
 msgid "Illegal heads value"
 msgstr "Ogiltigt antal huvuden"
 
-#: fdisk/cfdisk.c:2395
+#: fdisk/cfdisk.c:2397
 msgid "Enter the number of sectors per track: "
 msgstr "Ange antalet sektorer per spår: "
 
-#: fdisk/cfdisk.c:2402 fdisk/cfdisk.c:2964
+#: fdisk/cfdisk.c:2404 fdisk/cfdisk.c:2966
 msgid "Illegal sectors value"
 msgstr "Ogiltigt antal sektorer"
 
-#: fdisk/cfdisk.c:2505
+#: fdisk/cfdisk.c:2507
 msgid "Enter filesystem type: "
 msgstr "Ange typen av filsystem: "
 
-#: fdisk/cfdisk.c:2523
+#: fdisk/cfdisk.c:2525
 msgid "Cannot change FS Type to empty"
 msgstr "Kan inte ändra filsystemstypen till ett tomt värde"
 
-#: fdisk/cfdisk.c:2525
+#: fdisk/cfdisk.c:2527
 msgid "Cannot change FS Type to extended"
 msgstr "Kan inte ändra filsystemstypen till utökad"
 
-#: fdisk/cfdisk.c:2556
+#: fdisk/cfdisk.c:2558
 #, c-format
 msgid "Unk(%02X)"
 msgstr "Okänd(%02X)"
 
 # Vad är detta?
-#: fdisk/cfdisk.c:2559 fdisk/cfdisk.c:2562
+#: fdisk/cfdisk.c:2561 fdisk/cfdisk.c:2564
 msgid ", NC"
 msgstr ", NC"
 
-#: fdisk/cfdisk.c:2567 fdisk/cfdisk.c:2570
+#: fdisk/cfdisk.c:2569 fdisk/cfdisk.c:2572
 msgid "NC"
 msgstr "NC"
 
-#: fdisk/cfdisk.c:2578
+#: fdisk/cfdisk.c:2580
 msgid "Pri/Log"
 msgstr "Pri/Log"
 
-#: fdisk/cfdisk.c:2585
+#: fdisk/cfdisk.c:2587
 #, c-format
 msgid "Unknown (%02X)"
 msgstr "Okänd (%02X)"
 
-#: fdisk/cfdisk.c:2654
+#: fdisk/cfdisk.c:2656
 #, c-format
 msgid "Disk Drive: %s"
 msgstr "Diskenhet: %s"
 
-#: fdisk/cfdisk.c:2661
+#: fdisk/cfdisk.c:2663
 #, c-format
 msgid "Size: %lld bytes, %lld MB"
 msgstr "Storlek: %lld byte, %lld MB"
 
-#: fdisk/cfdisk.c:2664
+#: fdisk/cfdisk.c:2666
 #, c-format
 msgid "Size: %lld bytes, %lld.%lld GB"
 msgstr "Storlek: %lld byte, %lld,%lld GB"
 
-#: fdisk/cfdisk.c:2668
+#: fdisk/cfdisk.c:2670
 #, c-format
 msgid "Heads: %d   Sectors per Track: %d   Cylinders: %lld"
 msgstr "Huvuden: %d   Sektorer per spår: %d   Cylindrar: %lld"
 
-#: fdisk/cfdisk.c:2672
+#: fdisk/cfdisk.c:2674
 msgid "Name"
 msgstr "Namn"
 
-#: fdisk/cfdisk.c:2673
+#: fdisk/cfdisk.c:2675
 msgid "Flags"
 msgstr "Flaggor"
 
-#: fdisk/cfdisk.c:2674
+#: fdisk/cfdisk.c:2676
 msgid "Part Type"
 msgstr "Part.-typ"
 
-#: fdisk/cfdisk.c:2675
+#: fdisk/cfdisk.c:2677
 msgid "FS Type"
 msgstr "FS-typ"
 
-#: fdisk/cfdisk.c:2676
+#: fdisk/cfdisk.c:2678
 msgid "[Label]"
 msgstr "[Etikett]"
 
-#: fdisk/cfdisk.c:2678
+#: fdisk/cfdisk.c:2680
 msgid "    Sectors"
 msgstr "    Sektorer"
 
-#: fdisk/cfdisk.c:2680
+#: fdisk/cfdisk.c:2682
 msgid "  Cylinders"
 msgstr "  Cylindrar"
 
-#: fdisk/cfdisk.c:2682
+#: fdisk/cfdisk.c:2684
 msgid "  Size (MB)"
 msgstr "  Storlek (MB)"
 
-#: fdisk/cfdisk.c:2684
+#: fdisk/cfdisk.c:2686
 msgid "  Size (GB)"
 msgstr "  Storlek (GB)"
 
-#: fdisk/cfdisk.c:2738
+#: fdisk/cfdisk.c:2740
 msgid "Bootable"
 msgstr "Startbar"
 
-#: fdisk/cfdisk.c:2738
+#: fdisk/cfdisk.c:2740
 msgid "Toggle bootable flag of the current partition"
 msgstr "Slå på/av startbarhetsflaggan på aktuell partition"
 
-#: fdisk/cfdisk.c:2739
+#: fdisk/cfdisk.c:2741
 msgid "Delete"
 msgstr "Ta bort"
 
-#: fdisk/cfdisk.c:2739
+#: fdisk/cfdisk.c:2741
 msgid "Delete the current partition"
 msgstr "Ta bort aktuell partition"
 
-#: fdisk/cfdisk.c:2740
+#: fdisk/cfdisk.c:2742
 msgid "Geometry"
 msgstr "Geometri"
 
-#: fdisk/cfdisk.c:2740
+#: fdisk/cfdisk.c:2742
 msgid "Change disk geometry (experts only)"
 msgstr "Ändra diskgeometri (endast experter)"
 
-#: fdisk/cfdisk.c:2741
+#: fdisk/cfdisk.c:2743
 msgid "Help"
 msgstr "Hjälp"
 
-#: fdisk/cfdisk.c:2741
+#: fdisk/cfdisk.c:2743
 msgid "Print help screen"
 msgstr "Visa hjälpskärm"
 
-#: fdisk/cfdisk.c:2742
+#: fdisk/cfdisk.c:2744
 msgid "Maximize"
 msgstr "Maximera"
 
-#: fdisk/cfdisk.c:2742
+#: fdisk/cfdisk.c:2744
 msgid "Maximize disk usage of the current partition (experts only)"
 msgstr "Maximera diskanvändningen för aktuell partition (endast experter)"
 
-#: fdisk/cfdisk.c:2743
+#: fdisk/cfdisk.c:2745
 msgid "New"
 msgstr "Ny"
 
-#: fdisk/cfdisk.c:2743
+#: fdisk/cfdisk.c:2745
 msgid "Create new partition from free space"
 msgstr "Skapa ny partition från ledigt utrymme"
 
-#: fdisk/cfdisk.c:2744
+#: fdisk/cfdisk.c:2746
 msgid "Print"
 msgstr "Visa"
 
-#: fdisk/cfdisk.c:2744
+#: fdisk/cfdisk.c:2746
 msgid "Print partition table to the screen or to a file"
 msgstr "Visa partitionstabellen på skärmen eller skriv den till en fil"
 
-#: fdisk/cfdisk.c:2745
+#: fdisk/cfdisk.c:2747
 msgid "Quit"
 msgstr "Avsluta"
 
-#: fdisk/cfdisk.c:2745
+#: fdisk/cfdisk.c:2747
 msgid "Quit program without writing partition table"
 msgstr "Avsluta programmet utan att skriva partitionstabellen"
 
-#: fdisk/cfdisk.c:2746
+#: fdisk/cfdisk.c:2748
 msgid "Type"
 msgstr "Typ"
 
-#: fdisk/cfdisk.c:2746
+#: fdisk/cfdisk.c:2748
 msgid "Change the filesystem type (DOS, Linux, OS/2 and so on)"
 msgstr "Ändra filsystemstypen (DOS, Linux, OS/2 och så vidare)"
 
-#: fdisk/cfdisk.c:2747
+#: fdisk/cfdisk.c:2749
 msgid "Units"
 msgstr "Enheter"
 
-#: fdisk/cfdisk.c:2747
+#: fdisk/cfdisk.c:2749
 msgid "Change units of the partition size display (MB, sect, cyl)"
 msgstr ""
 "Byt enheter på visningen av partitionsstorleken (MB, sektorer, cylindrar)"
 
-#: fdisk/cfdisk.c:2748
+#: fdisk/cfdisk.c:2750
 msgid "Write"
 msgstr "Skriv"
 
-#: fdisk/cfdisk.c:2748
+#: fdisk/cfdisk.c:2750
 msgid "Write partition table to disk (this might destroy data)"
 msgstr "Skriv partitionstabellen till disk (detta kan förstöra data)"
 
-#: fdisk/cfdisk.c:2794
+#: fdisk/cfdisk.c:2796
 msgid "Cannot make this partition bootable"
 msgstr "Kan inte göra denna partition startbar"
 
-#: fdisk/cfdisk.c:2804
+#: fdisk/cfdisk.c:2806
 msgid "Cannot delete an empty partition"
 msgstr "Kan inte ta bort en tom partition"
 
-#: fdisk/cfdisk.c:2824 fdisk/cfdisk.c:2826
+#: fdisk/cfdisk.c:2826 fdisk/cfdisk.c:2828
 msgid "Cannot maximize this partition"
 msgstr "Kan inte maximera denna partition"
 
-#: fdisk/cfdisk.c:2834
+#: fdisk/cfdisk.c:2836
 msgid "This partition is unusable"
 msgstr "Denna partition är oanvändbar"
 
-#: fdisk/cfdisk.c:2836
+#: fdisk/cfdisk.c:2838
 msgid "This partition is already in use"
 msgstr "Denna partition används redan"
 
-#: fdisk/cfdisk.c:2853
+#: fdisk/cfdisk.c:2855
 msgid "Cannot change the type of an empty partition"
 msgstr "Kan inte ändra typen på en tom partition"
 
-#: fdisk/cfdisk.c:2880 fdisk/cfdisk.c:2886
+#: fdisk/cfdisk.c:2882 fdisk/cfdisk.c:2888
 msgid "No more partitions"
 msgstr "Inge fler partitioner"
 
-#: fdisk/cfdisk.c:2893
+#: fdisk/cfdisk.c:2895
 msgid "Illegal command"
 msgstr "Ogiltigt kommando"
 
-#: fdisk/cfdisk.c:2903
+#: fdisk/cfdisk.c:2905
 #, c-format
 msgid "Copyright (C) 1994-2002 Kevin E. Martin & aeb\n"
 msgstr "Copyright © 1994-2002 Kevin E. Martin och aeb\n"
 
-#: fdisk/cfdisk.c:2910
+#: fdisk/cfdisk.c:2912
 #, c-format
 msgid ""
 "\n"
@@ -2268,7 +2276,7 @@ msgstr "Det finns ingen *BSD-partition på %s.\n"
 msgid "BSD disklabel command (m for help): "
 msgstr "BSD-disketikettskommando (m för hjälp): "
 
-#: fdisk/fdiskbsdlabel.c:284 fdisk/fdisk.c:2032 fdisk/fdisksgilabel.c:651
+#: fdisk/fdiskbsdlabel.c:284 fdisk/fdisk.c:2034 fdisk/fdisksgilabel.c:651
 #: fdisk/fdisksunlabel.c:428
 #, c-format
 msgid "First %s"
@@ -2419,7 +2427,7 @@ msgstr "sektorer/spår"
 msgid "tracks/cylinder"
 msgstr "spår/cylinder"
 
-#: fdisk/fdiskbsdlabel.c:470 fdisk/fdisk.c:645 fdisk/fdisk.c:1340
+#: fdisk/fdiskbsdlabel.c:470 fdisk/fdisk.c:645 fdisk/fdisk.c:1342
 #: fdisk/sfdisk.c:936
 msgid "cylinders"
 msgstr "cylindrar"
@@ -2480,7 +2488,7 @@ msgstr "Förstartare (bootstrap) installerad på %s.\n"
 msgid "Partition (a-%c): "
 msgstr "Partition (a-%c): "
 
-#: fdisk/fdiskbsdlabel.c:618 fdisk/fdisk.c:2179
+#: fdisk/fdiskbsdlabel.c:618 fdisk/fdisk.c:2181
 #, c-format
 msgid "The maximum number of partitions has been created\n"
 msgstr "Det maximala antalet partitioner har skapats\n"
@@ -2718,7 +2726,7 @@ msgstr "Du måste ställa in"
 msgid "heads"
 msgstr "huvuden"
 
-#: fdisk/fdisk.c:643 fdisk/fdisk.c:1340 fdisk/sfdisk.c:936
+#: fdisk/fdisk.c:643 fdisk/fdisk.c:1342 fdisk/sfdisk.c:936
 msgid "sectors"
 msgstr "sektorer"
 
@@ -2778,6 +2786,11 @@ msgstr "Varning: extra länkpekare i partitionstabell %d\n"
 #, c-format
 msgid "Warning: ignoring extra data in partition table %d\n"
 msgstr "Varning: ignorerar extra data i partitionstabell %d\n"
+
+#: fdisk/fdisk.c:764
+#, fuzzy, c-format
+msgid "omitting empty partition (%d)\n"
+msgstr "Varning: tom partition\n"
 
 #: fdisk/fdisk.c:783
 #, c-format
@@ -2868,86 +2881,86 @@ msgstr "Hexadecimal kod (tryck L för att se koder): "
 msgid "%s (%u-%u, default %u): "
 msgstr "%s (%u-%u, standardvärde %u): "
 
-#: fdisk/fdisk.c:1225
+#: fdisk/fdisk.c:1227
 #, c-format
 msgid "Unsupported suffix: '%s'.\n"
 msgstr ""
 
-#: fdisk/fdisk.c:1226
+#: fdisk/fdisk.c:1228
 #, c-format
 msgid ""
 "Supported: 10^N: KB (KiloByte), MB (MegaByte), GB (GigaByte)\n"
 "            2^N: K  (KibiByte), M  (MebiByte), G  (GibiByte)\n"
 msgstr ""
 
-#: fdisk/fdisk.c:1252
+#: fdisk/fdisk.c:1254
 #, c-format
 msgid "Using default value %u\n"
 msgstr "Använder standardvärdet %u\n"
 
-#: fdisk/fdisk.c:1256
+#: fdisk/fdisk.c:1258
 #, c-format
 msgid "Value out of range.\n"
 msgstr "Värdet är utanför intervallet.\n"
 
-#: fdisk/fdisk.c:1266
+#: fdisk/fdisk.c:1268
 msgid "Partition number"
 msgstr "Partitionsnummer"
 
-#: fdisk/fdisk.c:1277
+#: fdisk/fdisk.c:1279
 #, c-format
 msgid "Warning: partition %d has empty type\n"
 msgstr "Varning: partition %d har tom typ\n"
 
-#: fdisk/fdisk.c:1299 fdisk/fdisk.c:1325
+#: fdisk/fdisk.c:1301 fdisk/fdisk.c:1327
 #, c-format
 msgid "Selected partition %d\n"
 msgstr "Valde partition %d\n"
 
-#: fdisk/fdisk.c:1302
+#: fdisk/fdisk.c:1304
 #, c-format
 msgid "No partition is defined yet!\n"
 msgstr "Ingen partition är definierad än!\n"
 
-#: fdisk/fdisk.c:1328
+#: fdisk/fdisk.c:1330
 #, c-format
 msgid "All primary partitions have been defined already!\n"
 msgstr "Alla primära partitioner har redan definierats!\n"
 
-#: fdisk/fdisk.c:1338
+#: fdisk/fdisk.c:1340
 msgid "cylinder"
 msgstr "cylinder"
 
-#: fdisk/fdisk.c:1338
+#: fdisk/fdisk.c:1340
 msgid "sector"
 msgstr "sektor"
 
-#: fdisk/fdisk.c:1347
+#: fdisk/fdisk.c:1349
 #, c-format
 msgid "Changing display/entry units to %s\n"
 msgstr "Ändrar visnings-/inmatningsenheter till %s\n"
 
-#: fdisk/fdisk.c:1358
+#: fdisk/fdisk.c:1360
 #, c-format
 msgid "WARNING: Partition %d is an extended partition\n"
 msgstr "VARNING: Partition %d är en utökad partition\n"
 
-#: fdisk/fdisk.c:1369
+#: fdisk/fdisk.c:1371
 #, c-format
 msgid "DOS Compatibility flag is set\n"
 msgstr "DOS-kompatibilitetsflagga är satt\n"
 
-#: fdisk/fdisk.c:1373
+#: fdisk/fdisk.c:1375
 #, c-format
 msgid "DOS Compatibility flag is not set\n"
 msgstr "DOS-kompatibilitetsflagga är inte satt\n"
 
-#: fdisk/fdisk.c:1473
+#: fdisk/fdisk.c:1475
 #, c-format
 msgid "Partition %d does not exist yet!\n"
 msgstr "Partition %d finns inte än!\n"
 
-#: fdisk/fdisk.c:1478
+#: fdisk/fdisk.c:1480
 #, c-format
 msgid ""
 "Type 0 means free space to many systems\n"
@@ -2961,7 +2974,7 @@ msgstr ""
 "oklokt. Du kan ta bort en partition\n"
 "genom att använda kommandot \"d\".\n"
 
-#: fdisk/fdisk.c:1487
+#: fdisk/fdisk.c:1489
 #, c-format
 msgid ""
 "You cannot change a partition into an extended one or vice versa\n"
@@ -2970,7 +2983,7 @@ msgstr ""
 "Du kan inte ändra en partition till en utökad partition eller tvärtom\n"
 "Ta bort den först.\n"
 
-#: fdisk/fdisk.c:1496
+#: fdisk/fdisk.c:1498
 #, c-format
 msgid ""
 "Consider leaving partition 3 as Whole disk (5),\n"
@@ -2982,7 +2995,7 @@ msgstr ""
 "gillar det.\n"
 "\n"
 
-#: fdisk/fdisk.c:1502
+#: fdisk/fdisk.c:1504
 #, fuzzy, c-format
 msgid ""
 "Consider leaving partition 9 as volume header (0),\n"
@@ -2994,57 +3007,57 @@ msgstr ""
 "förväntar sig det.\n"
 "\n"
 
-#: fdisk/fdisk.c:1519
+#: fdisk/fdisk.c:1521
 #, c-format
 msgid "Changed system type of partition %d to %x (%s)\n"
 msgstr "Ändrade systemtypen för partition %d till %x (%s)\n"
 
-#: fdisk/fdisk.c:1522
+#: fdisk/fdisk.c:1524
 #, fuzzy, c-format
 msgid "System type of partition %d is unchanged: %x (%s)\n"
 msgstr "Systemtyp för partition %d är oförändrad %x (%s)\n"
 
-#: fdisk/fdisk.c:1574
+#: fdisk/fdisk.c:1576
 #, c-format
 msgid "Partition %d has different physical/logical beginnings (non-Linux?):\n"
 msgstr "Partition %d har olika fysiska/logiska början (icke-Linux?):\n"
 
-#: fdisk/fdisk.c:1576 fdisk/fdisk.c:1584 fdisk/fdisk.c:1593 fdisk/fdisk.c:1603
+#: fdisk/fdisk.c:1578 fdisk/fdisk.c:1586 fdisk/fdisk.c:1595 fdisk/fdisk.c:1605
 #, c-format
 msgid "     phys=(%d, %d, %d) "
 msgstr "     fys=(%d, %d, %d) "
 
-#: fdisk/fdisk.c:1577 fdisk/fdisk.c:1585
+#: fdisk/fdisk.c:1579 fdisk/fdisk.c:1587
 #, c-format
 msgid "logical=(%d, %d, %d)\n"
 msgstr "logisk=(%d, %d, %d)\n"
 
-#: fdisk/fdisk.c:1582
+#: fdisk/fdisk.c:1584
 #, c-format
 msgid "Partition %d has different physical/logical endings:\n"
 msgstr "Partition %d har olika fysiska/logiska slut:\n"
 
-#: fdisk/fdisk.c:1591
+#: fdisk/fdisk.c:1593
 #, c-format
 msgid "Partition %i does not start on cylinder boundary:\n"
 msgstr "Partition %i börjar inte på cylindergräns:\n"
 
-#: fdisk/fdisk.c:1594
+#: fdisk/fdisk.c:1596
 #, c-format
 msgid "should be (%d, %d, 1)\n"
 msgstr "borde vara (%d, %d, 1)\n"
 
-#: fdisk/fdisk.c:1600
+#: fdisk/fdisk.c:1602
 #, c-format
 msgid "Partition %i does not end on cylinder boundary.\n"
 msgstr "Partition %i slutar inte på cylindergräns.\n"
 
-#: fdisk/fdisk.c:1604
+#: fdisk/fdisk.c:1606
 #, c-format
 msgid "should be (%d, %d, %d)\n"
 msgstr "borde vara (%d, %d, %d)\n"
 
-#: fdisk/fdisk.c:1616
+#: fdisk/fdisk.c:1618
 #, c-format
 msgid ""
 "\n"
@@ -3053,7 +3066,7 @@ msgstr ""
 "\n"
 "Disk %s: %ld MB, %lld byte\n"
 
-#: fdisk/fdisk.c:1619
+#: fdisk/fdisk.c:1621
 #, c-format
 msgid ""
 "\n"
@@ -3062,12 +3075,12 @@ msgstr ""
 "\n"
 "Disk %s: %ld,%ld GB, %lld byte\n"
 
-#: fdisk/fdisk.c:1621
+#: fdisk/fdisk.c:1623
 #, c-format
 msgid "%d heads, %llu sectors/track, %d cylinders"
 msgstr "%d huvuden, %llu sektorer/spår, %d cylindrar"
 
-#: fdisk/fdisk.c:1624
+#: fdisk/fdisk.c:1626
 #, c-format
 msgid ", total %llu sectors"
 msgstr ", totalt %llu sektorer"
@@ -3075,12 +3088,12 @@ msgstr ", totalt %llu sektorer"
 # · (centered dot) is normally used as the multiplication sign in Swedish.
 # See "Svenska skrivregler" §260.
 #
-#: fdisk/fdisk.c:1627
+#: fdisk/fdisk.c:1629
 #, c-format
 msgid "Units = %s of %d * %d = %d bytes\n"
 msgstr "Enheter = %s av %d · %d = %d byte\n"
 
-#: fdisk/fdisk.c:1738
+#: fdisk/fdisk.c:1740
 #, c-format
 msgid ""
 "Nothing to do. Ordering is correct already.\n"
@@ -3089,7 +3102,14 @@ msgstr ""
 "Ingenting att göra. Ordningen är redan korrekt.\n"
 "\n"
 
-#: fdisk/fdisk.c:1794
+#: fdisk/fdisk.c:1768
+#, fuzzy, c-format
+msgid "Done.\n"
+msgstr ""
+"Färdig\n"
+"\n"
+
+#: fdisk/fdisk.c:1796
 #, c-format
 msgid ""
 "This doesn't look like a partition table\n"
@@ -3100,16 +3120,16 @@ msgstr ""
 "Du valde nog fel enhet.\n"
 "\n"
 
-#: fdisk/fdisk.c:1807
+#: fdisk/fdisk.c:1809
 #, c-format
 msgid "%*s Boot      Start         End      Blocks   Id  System\n"
 msgstr "%*s Start     Början        Slut     Block    Id  System\n"
 
-#: fdisk/fdisk.c:1808 fdisk/fdisksgilabel.c:223 fdisk/fdisksunlabel.c:600
+#: fdisk/fdisk.c:1810 fdisk/fdisksgilabel.c:223 fdisk/fdisksunlabel.c:600
 msgid "Device"
 msgstr "Enhet"
 
-#: fdisk/fdisk.c:1845
+#: fdisk/fdisk.c:1847
 #, c-format
 msgid ""
 "\n"
@@ -3118,7 +3138,7 @@ msgstr ""
 "\n"
 "Posterna i partitionstabellen är inte i diskordning\n"
 
-#: fdisk/fdisk.c:1855
+#: fdisk/fdisk.c:1857
 #, c-format
 msgid ""
 "\n"
@@ -3129,90 +3149,90 @@ msgstr ""
 "Disk %s: %d huvuden, %llu sektorer, %d cylindrar\n"
 "\n"
 
-#: fdisk/fdisk.c:1857
+#: fdisk/fdisk.c:1859
 #, c-format
 msgid "Nr AF  Hd Sec  Cyl  Hd Sec  Cyl     Start      Size ID\n"
 msgstr "Nr AF  Hd Sek  Cyl  Hd Sek  Cyl     Början     Strl ID\n"
 
-#: fdisk/fdisk.c:1903
+#: fdisk/fdisk.c:1905
 #, c-format
 msgid "Warning: partition %d contains sector 0\n"
 msgstr "Varning: partition %d innehåller sektor 0\n"
 
-#: fdisk/fdisk.c:1906
+#: fdisk/fdisk.c:1908
 #, c-format
 msgid "Partition %d: head %d greater than maximum %d\n"
 msgstr "Partition %d: huvud %d är större än maximala %d\n"
 
-#: fdisk/fdisk.c:1909
+#: fdisk/fdisk.c:1911
 #, c-format
 msgid "Partition %d: sector %d greater than maximum %llu\n"
 msgstr "Partition %d: sektor %d är större än maximala %llu\n"
 
-#: fdisk/fdisk.c:1912
+#: fdisk/fdisk.c:1914
 #, c-format
 msgid "Partitions %d: cylinder %d greater than maximum %d\n"
 msgstr "Partitioner %d: cylinder %d är större än maximala %d\n"
 
-#: fdisk/fdisk.c:1916
+#: fdisk/fdisk.c:1918
 #, c-format
 msgid "Partition %d: previous sectors %d disagrees with total %d\n"
 msgstr ""
 "Partition %d: tidigare sektorer %d stämmer inte överens med totala %d\n"
 
-#: fdisk/fdisk.c:1948
+#: fdisk/fdisk.c:1950
 #, c-format
 msgid "Warning: bad start-of-data in partition %d\n"
 msgstr "Varning: felaktig databörjan på partition %d\n"
 
-#: fdisk/fdisk.c:1956
+#: fdisk/fdisk.c:1958
 #, c-format
 msgid "Warning: partition %d overlaps partition %d.\n"
 msgstr "Varning: partition %d överlappar med partition %d.\n"
 
-#: fdisk/fdisk.c:1976
+#: fdisk/fdisk.c:1978
 #, c-format
 msgid "Warning: partition %d is empty\n"
 msgstr "Varning: partition %d är tom\n"
 
-#: fdisk/fdisk.c:1981
+#: fdisk/fdisk.c:1983
 #, c-format
 msgid "Logical partition %d not entirely in partition %d\n"
 msgstr "Logisk partition %d är inte helt inuti partition %d\n"
 
-#: fdisk/fdisk.c:1987
+#: fdisk/fdisk.c:1989
 #, c-format
 msgid "Total allocated sectors %ld greater than the maximum %lld\n"
 msgstr "Totala antalet allokerade sektorer %ld är större än maximala %lld\n"
 
-#: fdisk/fdisk.c:1990
+#: fdisk/fdisk.c:1992
 #, c-format
 msgid "%lld unallocated sectors\n"
 msgstr "%lld oallokerade sektorer\n"
 
-#: fdisk/fdisk.c:2005 fdisk/fdisksgilabel.c:633 fdisk/fdisksunlabel.c:413
+#: fdisk/fdisk.c:2007 fdisk/fdisksgilabel.c:633 fdisk/fdisksunlabel.c:413
 #, c-format
 msgid "Partition %d is already defined.  Delete it before re-adding it.\n"
 msgstr ""
 "Partition %d är redan definierad. Ta bort den innan du lägger till den "
 "igen.\n"
 
-#: fdisk/fdisk.c:2047
+#: fdisk/fdisk.c:2049
 #, c-format
 msgid "Sector %llu is already allocated\n"
 msgstr "Sektor %llu är redan allokerad\n"
 
-#: fdisk/fdisk.c:2083
+#: fdisk/fdisk.c:2085
 #, c-format
 msgid "No free sectors available\n"
 msgstr "Inga lediga sektorer är tillgängliga\n"
 
-#: fdisk/fdisk.c:2092
+#: fdisk/fdisk.c:2094
 #, c-format
 msgid "Last %1$s, +%2$s or +size{K,M,G}"
 msgstr ""
 
-#: fdisk/fdisk.c:2158
+#: fdisk/fdisk.c:2160
 #, c-format
 msgid ""
 "\tSorry - this fdisk cannot handle AIX disk labels.\n"
@@ -3226,7 +3246,7 @@ msgstr ""
 "\tVARNING: Detta kommer att förstöra det nuvarande innehållet\n"
 "\tpå disken.\n"
 
-#: fdisk/fdisk.c:2167
+#: fdisk/fdisk.c:2169
 #, c-format
 msgid ""
 "\tSorry - this fdisk cannot handle Mac disk labels.\n"
@@ -3240,23 +3260,23 @@ msgstr ""
 "\tVARNING: Detta kommer att förstöra det nuvarande innehållet\n"
 "\tpå disken.\n"
 
-#: fdisk/fdisk.c:2187
+#: fdisk/fdisk.c:2189
 #, c-format
 msgid "You must delete some partition and add an extended partition first\n"
 msgstr ""
 "Du måste ta bort en partition och lägga till en utökad partition först\n"
 
-#: fdisk/fdisk.c:2190
+#: fdisk/fdisk.c:2192
 #, c-format
 msgid "All logical partitions are in use\n"
 msgstr "Alla logiska partitioner används\n"
 
-#: fdisk/fdisk.c:2191
+#: fdisk/fdisk.c:2193
 #, c-format
 msgid "Adding a primary partition\n"
 msgstr "Lägger till en primär partition\n"
 
-#: fdisk/fdisk.c:2196
+#: fdisk/fdisk.c:2198
 #, c-format
 msgid ""
 "Command action\n"
@@ -3267,20 +3287,20 @@ msgstr ""
 "   %s\n"
 "   p   primär partition (1-4)\n"
 
-#: fdisk/fdisk.c:2198
+#: fdisk/fdisk.c:2200
 msgid "l   logical (5 or over)"
 msgstr "l   logisk (5 eller högre)"
 
-#: fdisk/fdisk.c:2198
+#: fdisk/fdisk.c:2200
 msgid "e   extended"
 msgstr "e   utökad"
 
-#: fdisk/fdisk.c:2217
+#: fdisk/fdisk.c:2219
 #, c-format
 msgid "Invalid partition number for type `%c'\n"
 msgstr "Ogiltigt partitionsnummer för typen \"%c\"\n"
 
-#: fdisk/fdisk.c:2253
+#: fdisk/fdisk.c:2255
 #, c-format
 msgid ""
 "The partition table has been altered!\n"
@@ -3289,12 +3309,12 @@ msgstr ""
 "Partitionstabellen har ändrats!\n"
 "\n"
 
-#: fdisk/fdisk.c:2264
+#: fdisk/fdisk.c:2266
 #, c-format
 msgid "Calling ioctl() to re-read partition table.\n"
 msgstr "Anropar ioctl() för att läsa om partitionstabellen.\n"
 
-#: fdisk/fdisk.c:2271
+#: fdisk/fdisk.c:2273
 #, c-format
 msgid ""
 "\n"
@@ -3307,7 +3327,7 @@ msgstr ""
 "Kärnan använder fortfarande den gamla tabellen.\n"
 "Den nya tabellen kommer att användas vid nästa omstart.\n"
 
-#: fdisk/fdisk.c:2281
+#: fdisk/fdisk.c:2283
 #, c-format
 msgid ""
 "\n"
@@ -3319,7 +3339,7 @@ msgstr ""
 "VARNING: Om du har skapat eller ändrat någon DOS 6.x-partition\n"
 "bör du läsa fdisk-manualsidan för ytterligare information.\n"
 
-#: fdisk/fdisk.c:2287
+#: fdisk/fdisk.c:2289
 #, c-format
 msgid ""
 "\n"
@@ -3328,42 +3348,42 @@ msgstr ""
 "\n"
 "Fel vid stängning av fil\n"
 
-#: fdisk/fdisk.c:2291
+#: fdisk/fdisk.c:2293
 #, c-format
 msgid "Syncing disks.\n"
 msgstr "Synkroniserar hårddiskar.\n"
 
-#: fdisk/fdisk.c:2338
+#: fdisk/fdisk.c:2340
 #, c-format
 msgid "Partition %d has no data area\n"
 msgstr "Partition %d har inget dataområde\n"
 
-#: fdisk/fdisk.c:2343
+#: fdisk/fdisk.c:2345
 msgid "New beginning of data"
 msgstr "Ny början utav data"
 
-#: fdisk/fdisk.c:2359
+#: fdisk/fdisk.c:2361
 msgid "Expert command (m for help): "
 msgstr "Expertkommando (m för hjälp): "
 
-#: fdisk/fdisk.c:2372
+#: fdisk/fdisk.c:2374
 msgid "Number of cylinders"
 msgstr "Antal cylindrar"
 
-#: fdisk/fdisk.c:2399
+#: fdisk/fdisk.c:2401
 msgid "Number of heads"
 msgstr "Antal huvuden"
 
-#: fdisk/fdisk.c:2426
+#: fdisk/fdisk.c:2428
 msgid "Number of sectors"
 msgstr "Antal sektorer"
 
-#: fdisk/fdisk.c:2429
+#: fdisk/fdisk.c:2431
 #, c-format
 msgid "Warning: setting sector offset for DOS compatiblity\n"
 msgstr "Varning: ställer in sektoravstånd för DOS-kompatibilitet\n"
 
-#: fdisk/fdisk.c:2488
+#: fdisk/fdisk.c:2490
 #, c-format
 msgid ""
 "\n"
@@ -3376,32 +3396,32 @@ msgstr ""
 "saknar stöd för GPT. Använd GNU Parted.\n"
 "\n"
 
-#: fdisk/fdisk.c:2510
+#: fdisk/fdisk.c:2512
 #, c-format
 msgid "Disk %s doesn't contain a valid partition table\n"
 msgstr "Disk %s innehåller inte en giltig partitionstabell\n"
 
-#: fdisk/fdisk.c:2521
+#: fdisk/fdisk.c:2523
 #, c-format
 msgid "Cannot open %s\n"
 msgstr "Kan inte öppna %s\n"
 
-#: fdisk/fdisk.c:2539 fdisk/sfdisk.c:2605
+#: fdisk/fdisk.c:2541 fdisk/sfdisk.c:2605
 #, c-format
 msgid "cannot open %s\n"
 msgstr "kan inte öppna %s\n"
 
-#: fdisk/fdisk.c:2559
+#: fdisk/fdisk.c:2561
 #, c-format
 msgid "%c: unknown command\n"
 msgstr "%c: okänt kommando\n"
 
-#: fdisk/fdisk.c:2629
+#: fdisk/fdisk.c:2631
 #, c-format
 msgid "This kernel finds the sector size itself - -b option ignored\n"
 msgstr "Denna kärna hittar själv sektorstorleken - flaggan -b ignoreras\n"
 
-#: fdisk/fdisk.c:2633
+#: fdisk/fdisk.c:2635
 #, c-format
 msgid ""
 "Warning: the -b (set sector size) option should be used with one specified "
@@ -3410,16 +3430,16 @@ msgstr ""
 "Varning: flaggan -b (ställ in sektorstorlek) måste användas med en angiven "
 "enhet\n"
 
-#: fdisk/fdisk.c:2694
+#: fdisk/fdisk.c:2695
 #, c-format
 msgid "Detected an OSF/1 disklabel on %s, entering disklabel mode.\n"
 msgstr "Upptäckte en OSF/1-disketikett på %s, går in i disketikettsläge.\n"
 
-#: fdisk/fdisk.c:2704
+#: fdisk/fdisk.c:2705
 msgid "Command (m for help): "
 msgstr "Kommando (m för hjälp): "
 
-#: fdisk/fdisk.c:2720
+#: fdisk/fdisk.c:2721
 #, c-format
 msgid ""
 "\n"
@@ -3428,16 +3448,16 @@ msgstr ""
 "\n"
 "Aktuell startfil är: %s\n"
 
-#: fdisk/fdisk.c:2722
+#: fdisk/fdisk.c:2723
 msgid "Please enter the name of the new boot file: "
 msgstr "Ange namnet på den nya startfilen: "
 
-#: fdisk/fdisk.c:2724
+#: fdisk/fdisk.c:2725
 #, c-format
 msgid "Boot file unchanged\n"
 msgstr "Startfilen oförändrad\n"
 
-#: fdisk/fdisk.c:2797
+#: fdisk/fdisk.c:2798
 #, c-format
 msgid ""
 "\n"
@@ -3993,6 +4013,15 @@ msgid ""
 msgstr ""
 "Andra partitioner täcker redan hela hårddisken.\n"
 "Ta bort/krymp dem innan du försöker igen.\n"
+
+#: fdisk/fdisksunlabel.c:446
+#, fuzzy, c-format
+msgid ""
+"It is highly recommended that the third partition covers the whole disk\n"
+"and is of type `Whole disk'\n"
+msgstr ""
+"Det rekommenderas varmt att den elfte partitionen\n"
+"täcker hela hårddisken och är av typen \"SGI-volym\"\n"
 
 #: fdisk/fdisksunlabel.c:474
 #, c-format
@@ -4651,6 +4680,13 @@ msgstr "okänt format - använder sektorer\n"
 msgid "# partition table of %s\n"
 msgstr "# partitionstabell för %s\n"
 
+#: fdisk/sfdisk.c:925
+#, fuzzy, c-format
+msgid ""
+"unit: sectors\n"
+"\n"
+msgstr "SunOS alt sektorer"
+
 #: fdisk/sfdisk.c:935
 #, c-format
 msgid "unimplemented format - using %s\n"
@@ -4711,6 +4747,21 @@ msgstr ""
 #, c-format
 msgid "   Device Boot Start   End    MiB    #blocks   Id  System\n"
 msgstr "   Enhet Start Början Slut    MiB      Block   Id  System\n"
+
+#: fdisk/sfdisk.c:1053
+#, fuzzy, c-format
+msgid " start=%9lu"
+msgstr "början"
+
+#: fdisk/sfdisk.c:1054
+#, fuzzy, c-format
+msgid ", size=%9lu"
+msgstr "Maxstorlek=%ld\n"
+
+#: fdisk/sfdisk.c:1058
+#, fuzzy, c-format
+msgid ", bootable"
+msgstr "AIX startbar"
 
 #: fdisk/sfdisk.c:1119
 #, c-format
@@ -5515,27 +5566,27 @@ msgstr "klockporten justerades till 0x%x\n"
 msgid "funky TOY!\n"
 msgstr "häftig LEKSAK!\n"
 
-#: hwclock/cmos.c:267
+#: hwclock/cmos.c:244
 #, c-format
 msgid "%s: atomic %s failed for 1000 iterations!"
 msgstr "%s: atomisk %s misslyckades för 1000 iterationer!"
 
-#: hwclock/cmos.c:595
+#: hwclock/cmos.c:574
 #, c-format
 msgid "Cannot open /dev/port: %s"
 msgstr "Kan inte öppna /dev/port: %s"
 
-#: hwclock/cmos.c:602
+#: hwclock/cmos.c:581
 #, c-format
 msgid "I failed to get permission because I didn't try.\n"
 msgstr "Jag misslyckades med att få tillåtelse eftersom jag inte försökte.\n"
 
-#: hwclock/cmos.c:605
+#: hwclock/cmos.c:584
 #, c-format
 msgid "%s is unable to get I/O port access:  the iopl(3) call failed.\n"
 msgstr "%s kan inte få I/O-porttillgång: iopl(3)-anropet misslyckades.\n"
 
-#: hwclock/cmos.c:608
+#: hwclock/cmos.c:587
 #, c-format
 msgid "Probably you need root privileges.\n"
 msgstr "Du behöver troligtvis root-privilegier.\n"
@@ -5790,24 +5841,24 @@ msgstr ""
 "dragningsfaktor på %f sekunder/dag.\n"
 "Justerar dragningsfaktorn med %f sekunder/dag\n"
 
-#: hwclock/hwclock.c:873
+#: hwclock/hwclock.c:872
 #, c-format
 msgid "Time since last adjustment is %d seconds\n"
 msgstr "Tid sedan senaste justeringen är %d sekunder\n"
 
-#: hwclock/hwclock.c:875
+#: hwclock/hwclock.c:874
 #, c-format
 msgid "Need to insert %d seconds and refer time back %.6f seconds ago\n"
 msgstr ""
 "Behöver infoga %d sekunder och referera tillbaka i tiden %.6f sekunder "
 "sedan\n"
 
-#: hwclock/hwclock.c:904
+#: hwclock/hwclock.c:903
 #, c-format
 msgid "Not updating adjtime file because of testing mode.\n"
 msgstr "Uppdaterar inte adjtime-filen eftersom vi är i testläge.\n"
 
-#: hwclock/hwclock.c:905
+#: hwclock/hwclock.c:904
 #, c-format
 msgid ""
 "Would have written the following to %s:\n"
@@ -5816,30 +5867,30 @@ msgstr ""
 "Skulle skrivit följande till %s:\n"
 "%s"
 
-#: hwclock/hwclock.c:929
+#: hwclock/hwclock.c:928
 #, c-format
 msgid "Drift adjustment parameters not updated.\n"
 msgstr "Dragningsjusteringsparametrarna uppdaterades inte.\n"
 
-#: hwclock/hwclock.c:970
+#: hwclock/hwclock.c:969
 #, c-format
 msgid ""
 "The Hardware Clock does not contain a valid time, so we cannot adjust it.\n"
 msgstr ""
 "Hårdvaruklockan innehåller inte giltig tid, så vi kan inte justera den.\n"
 
-#: hwclock/hwclock.c:1002
+#: hwclock/hwclock.c:1000
 #, c-format
 msgid "Needed adjustment is less than one second, so not setting clock.\n"
 msgstr ""
 "Den justering som behövs är mindre än en sekund, så ställer inte klockan.\n"
 
-#: hwclock/hwclock.c:1028
+#: hwclock/hwclock.c:1026
 #, c-format
 msgid "Using %s.\n"
 msgstr "Använder %s.\n"
 
-#: hwclock/hwclock.c:1030
+#: hwclock/hwclock.c:1028
 #, c-format
 msgid "No usable clock interface found.\n"
 msgstr "Inget användbart klockgränssnitt hittades.\n"
@@ -6337,14 +6388,14 @@ msgstr "%s: Kan inte ställa in standardsammanhanget för /etc/passwd"
 msgid "Changing finger information for %s.\n"
 msgstr "Ändrar fingerinformation för %s.\n"
 
-#: login-utils/chfn.c:189 login-utils/chsh.c:188 login-utils/login.c:547
+#: login-utils/chfn.c:189 login-utils/chsh.c:188 login-utils/login.c:560
 #, fuzzy, c-format
 msgid "%s: PAM failure, aborting: %s\n"
 msgstr "chsh: PAM-fel, avbryter: %s\n"
 
-#: login-utils/chfn.c:212 login-utils/chsh.c:211 login-utils/login.c:798
-#: login-utils/newgrp.c:85 login-utils/simpleinit.c:340 mount/lomount.c:681
-#: mount/lomount.c:684
+#: login-utils/chfn.c:212 login-utils/chsh.c:211 login-utils/login.c:811
+#: login-utils/newgrp.c:85 login-utils/simpleinit.c:340 mount/lomount.c:717
+#: mount/lomount.c:720
 msgid "Password: "
 msgstr "Lösenord: "
 
@@ -6565,31 +6616,31 @@ msgstr "ÖDESDIGERT: kan inte återöppna tty: %s"
 msgid "FATAL: bad tty"
 msgstr "ÖDESDIGERT: felaktig tty"
 
-#: login-utils/login.c:411
+#: login-utils/login.c:424
 #, c-format
 msgid "login: -h for super-user only.\n"
 msgstr "login: -h endast för superanvändaren.\n"
 
-#: login-utils/login.c:454
+#: login-utils/login.c:467
 #, c-format
 msgid "usage: login [-fp] [username]\n"
 msgstr "användning: login [-fp] [användarnamn]\n"
 
-#: login-utils/login.c:549
+#: login-utils/login.c:562
 #, c-format
 msgid "Couldn't initialize PAM: %s"
 msgstr "Kunde inte initiera PAM: %s"
 
-#: login-utils/login.c:566
+#: login-utils/login.c:579
 msgid "login: "
 msgstr "användarnamn: "
 
-#: login-utils/login.c:610
+#: login-utils/login.c:623
 #, c-format
 msgid "FAILED LOGIN %d FROM %s FOR %s, %s"
 msgstr "MISSLYCKAD INLOGGNING %d FRÅN %s FÖR %s, %s"
 
-#: login-utils/login.c:615
+#: login-utils/login.c:628
 #, c-format
 msgid ""
 "Login incorrect\n"
@@ -6598,17 +6649,17 @@ msgstr ""
 "Felaktig inloggning\n"
 "\n"
 
-#: login-utils/login.c:624
+#: login-utils/login.c:637
 #, c-format
 msgid "TOO MANY LOGIN TRIES (%d) FROM %s FOR %s, %s"
 msgstr "FÖR MÅNGA INLOGGNINGSFÖRSÖK (%d) FRÅN %s FÖR %s, %s"
 
-#: login-utils/login.c:628
+#: login-utils/login.c:641
 #, c-format
 msgid "FAILED LOGIN SESSION FROM %s FOR %s, %s"
 msgstr "MISSLYCKAD INLOGGNINGSSESSION FRÅN %s FÖR %s, %s"
 
-#: login-utils/login.c:633
+#: login-utils/login.c:646
 #, c-format
 msgid ""
 "\n"
@@ -6617,7 +6668,7 @@ msgstr ""
 "\n"
 "Felaktig inloggning\n"
 
-#: login-utils/login.c:661 login-utils/login.c:668 login-utils/login.c:702
+#: login-utils/login.c:674 login-utils/login.c:681 login-utils/login.c:715
 #, c-format
 msgid ""
 "\n"
@@ -6626,121 +6677,121 @@ msgstr ""
 "\n"
 "Problem med upprättandet av sessionen, avbryter.\n"
 
-#: login-utils/login.c:662
+#: login-utils/login.c:675
 #, c-format
 msgid "NULL user name in %s:%d. Abort."
 msgstr "Användarnamnet är NULL i %s:%d. Avbryter."
 
-#: login-utils/login.c:669
+#: login-utils/login.c:682
 #, c-format
 msgid "Invalid user name \"%s\" in %s:%d. Abort."
 msgstr "Ogiltigt användarnamn \"%s\" i %s:%d. Avbryter."
 
-#: login-utils/login.c:688
+#: login-utils/login.c:701
 #, c-format
 msgid "login: Out of memory\n"
 msgstr "login: Slut på minne\n"
 
-#: login-utils/login.c:732
+#: login-utils/login.c:745
 msgid "Illegal username"
 msgstr "Ogiltigt användarnamn"
 
 # %s blir här "root" i de flesta fall vad jag förstår
-#: login-utils/login.c:775
+#: login-utils/login.c:788
 #, c-format
 msgid "%s login refused on this terminal.\n"
 msgstr "%s-inloggning nekas på denna terminal.\n"
 
-#: login-utils/login.c:780
+#: login-utils/login.c:793
 #, c-format
 msgid "LOGIN %s REFUSED FROM %s ON TTY %s"
 msgstr "INLOGGNING AV %s NEKAS FRÅN %s PÅ TTY %s"
 
-#: login-utils/login.c:784
+#: login-utils/login.c:797
 #, c-format
 msgid "LOGIN %s REFUSED ON TTY %s"
 msgstr "INLOGGNING AV %s NEKAS PÅ TTY %s"
 
-#: login-utils/login.c:838
+#: login-utils/login.c:851
 #, c-format
 msgid "Login incorrect\n"
 msgstr "Felaktig inloggning\n"
 
-#: login-utils/login.c:1063
+#: login-utils/login.c:1076
 #, c-format
 msgid "DIALUP AT %s BY %s"
 msgstr "UPPRINGNING PÅ %s AV %s"
 
-#: login-utils/login.c:1070
+#: login-utils/login.c:1083
 #, c-format
 msgid "ROOT LOGIN ON %s FROM %s"
 msgstr "ROOT-INLOGGNING PÅ %s FRÅN %s"
 
-#: login-utils/login.c:1073
+#: login-utils/login.c:1086
 #, c-format
 msgid "ROOT LOGIN ON %s"
 msgstr "ROOT-INLOGGNING PÅ %s"
 
-#: login-utils/login.c:1076
+#: login-utils/login.c:1089
 #, c-format
 msgid "LOGIN ON %s BY %s FROM %s"
 msgstr "INLOGGNING PÅ %s AV %s FRÅN %s"
 
-#: login-utils/login.c:1079
+#: login-utils/login.c:1092
 #, c-format
 msgid "LOGIN ON %s BY %s"
 msgstr "INLOGGNING PÅ %s AV %s"
 
-#: login-utils/login.c:1100
+#: login-utils/login.c:1113
 #, c-format
 msgid "You have new mail.\n"
 msgstr "Du har ny post.\n"
 
-#: login-utils/login.c:1102
+#: login-utils/login.c:1115
 #, c-format
 msgid "You have mail.\n"
 msgstr "Du har post.\n"
 
-#: login-utils/login.c:1146
+#: login-utils/login.c:1159
 #, c-format
 msgid "login: failure forking: %s"
 msgstr "login: grenande misslyckades: %s"
 
-#: login-utils/login.c:1193
+#: login-utils/login.c:1206
 #, c-format
 msgid "TIOCSCTTY failed: %m"
 msgstr "TIOCSCTTY misslyckades: %m"
 
-#: login-utils/login.c:1199
+#: login-utils/login.c:1212
 msgid "setuid() failed"
 msgstr "setuid() misslyckades"
 
-#: login-utils/login.c:1205
+#: login-utils/login.c:1218
 #, c-format
 msgid "No directory %s!\n"
 msgstr "Katalogen %s finns inte!\n"
 
-#: login-utils/login.c:1209
+#: login-utils/login.c:1222
 #, c-format
 msgid "Logging in with home = \"/\".\n"
 msgstr "Loggar in med hemkatalog = \"/\".\n"
 
-#: login-utils/login.c:1217
+#: login-utils/login.c:1230
 #, c-format
 msgid "login: no memory for shell script.\n"
 msgstr "login: inget minne för skalskript.\n"
 
-#: login-utils/login.c:1244
+#: login-utils/login.c:1257
 #, c-format
 msgid "login: couldn't exec shell script: %s.\n"
 msgstr "login: kunde inte köra skalskript: %s.\n"
 
-#: login-utils/login.c:1247
+#: login-utils/login.c:1260
 #, c-format
 msgid "login: no shell: %s.\n"
 msgstr "login: inget skal: %s.\n"
 
-#: login-utils/login.c:1262
+#: login-utils/login.c:1275
 #, c-format
 msgid ""
 "\n"
@@ -6749,65 +6800,65 @@ msgstr ""
 "\n"
 "%s användarnamn: "
 
-#: login-utils/login.c:1273
+#: login-utils/login.c:1286
 #, c-format
 msgid "login name much too long.\n"
 msgstr "användarnamnet är alldeles för långt.\n"
 
-#: login-utils/login.c:1274
+#: login-utils/login.c:1287
 msgid "NAME too long"
 msgstr "NAMNET är för långt"
 
-#: login-utils/login.c:1281
+#: login-utils/login.c:1294
 #, c-format
 msgid "login names may not start with '-'.\n"
 msgstr "användarnamn får inte börja med \"-\".\n"
 
-#: login-utils/login.c:1291
+#: login-utils/login.c:1304
 #, c-format
 msgid "too many bare linefeeds.\n"
 msgstr "för många tomma nyrader.\n"
 
-#: login-utils/login.c:1292
+#: login-utils/login.c:1305
 msgid "EXCESSIVE linefeeds"
 msgstr "FÖR MÅNGA nyrader"
 
-#: login-utils/login.c:1324
+#: login-utils/login.c:1337
 #, c-format
 msgid "Login timed out after %d seconds\n"
 msgstr "Inloggning gjorde time-out efter %d sekunder\n"
 
-#: login-utils/login.c:1412
+#: login-utils/login.c:1425
 #, c-format
 msgid "Last login: %.*s "
 msgstr "Senaste inloggning: %.*s "
 
-#: login-utils/login.c:1416
+#: login-utils/login.c:1429
 #, c-format
 msgid "from %.*s\n"
 msgstr "från %.*s\n"
 
-#: login-utils/login.c:1419
+#: login-utils/login.c:1432
 #, c-format
 msgid "on %.*s\n"
 msgstr "på %.*s\n"
 
-#: login-utils/login.c:1439
+#: login-utils/login.c:1458
 #, c-format
 msgid "LOGIN FAILURE FROM %s, %s"
 msgstr "MISSLYCKAD INLOGGNING FRÅN %s, %s"
 
-#: login-utils/login.c:1442
+#: login-utils/login.c:1461
 #, c-format
 msgid "LOGIN FAILURE ON %s, %s"
 msgstr "MISSLYCKAD INLOGGNING PÅ %s, %s"
 
-#: login-utils/login.c:1446
+#: login-utils/login.c:1465
 #, c-format
 msgid "%d LOGIN FAILURES FROM %s, %s"
 msgstr "%d MISSLYCKADE INLOGGNINGAR FRÅN %s, %s"
 
-#: login-utils/login.c:1449
+#: login-utils/login.c:1468
 #, c-format
 msgid "%d LOGIN FAILURES ON %s, %s"
 msgstr "%d MISSLYCKADE INLOGGNINGAR PÅ %s, %s"
@@ -7047,7 +7098,7 @@ msgstr "öppnande av katalog misslyckades\n"
 msgid "fork failed\n"
 msgstr "grening misslyckades\n"
 
-#: login-utils/simpleinit.c:539 text-utils/more.c:1630
+#: login-utils/simpleinit.c:539 text-utils/more.c:1629
 msgid "exec failed\n"
 msgstr "körning misslyckades\n"
 
@@ -7256,6 +7307,21 @@ msgstr "användning: %s [ -s signal | -p ] [ -a ] pid ...\n"
 msgid "       %s -l [ signal ]\n"
 msgstr "       %s -l [ signal ]\n"
 
+#: misc-utils/logger.c:67
+#, fuzzy, c-format
+msgid "logger: openlog: pathname too long\n"
+msgstr "användarnamnet är alldeles för långt.\n"
+
+#: misc-utils/logger.c:75
+#, fuzzy, c-format
+msgid "socket: %s.\n"
+msgstr "Blockstorlek: %d\n"
+
+#: misc-utils/logger.c:80
+#, c-format
+msgid "connect: %s.\n"
+msgstr ""
+
 #: misc-utils/logger.c:139
 #, c-format
 msgid "logger: %s: %s.\n"
@@ -7454,25 +7520,25 @@ msgstr ""
 msgid "failed to read typescript file %s"
 msgstr "ioctl() misslyckades med att läsa tid från %s"
 
-#: misc-utils/scriptreplay.c:144
+#: misc-utils/scriptreplay.c:145
 #, fuzzy, c-format
 msgid "cannot open timing file %s"
 msgstr "Kan inte öppna filen \"%s\""
 
-#: misc-utils/scriptreplay.c:147
+#: misc-utils/scriptreplay.c:148
 #, fuzzy, c-format
 msgid "cannot open typescript file %s"
 msgstr "Kan inte öppna filen \"%s\""
 
-#: misc-utils/scriptreplay.c:163
+#: misc-utils/scriptreplay.c:164
 #, fuzzy, c-format
 msgid "failed to read timing file %s"
 msgstr "ioctl() misslyckades med att läsa tid från %s"
 
-#: misc-utils/scriptreplay.c:165
-#, fuzzy, c-format
+#: misc-utils/scriptreplay.c:166
+#, c-format
 msgid "timings file %s: %lu: expected format"
-msgstr "%s: Oväntat filslut i %s-fil\n"
+msgstr ""
 
 #: misc-utils/setterm.c:763
 #, c-format
@@ -7725,52 +7791,52 @@ msgstr "%s: $TERM är inte angiven.\n"
 msgid "whereis [ -sbmu ] [ -SBM dir ... -f ] name...\n"
 msgstr "whereis [ -sbmu ] [ -SBM kat ... -f ] namn...\n"
 
-#: misc-utils/write.c:98
+#: misc-utils/write.c:102
 #, c-format
 msgid "write: can't find your tty's name\n"
 msgstr "write: kan inte hitta namnet på din tty\n"
 
-#: misc-utils/write.c:109
+#: misc-utils/write.c:113
 #, c-format
 msgid "write: you have write permission turned off.\n"
 msgstr "write: du har inte skrivrättighet aktiverad.\n"
 
-#: misc-utils/write.c:130
+#: misc-utils/write.c:134
 #, c-format
 msgid "write: %s is not logged in on %s.\n"
 msgstr "write: %s är inte inloggad på %s.\n"
 
-#: misc-utils/write.c:138
+#: misc-utils/write.c:142
 #, c-format
 msgid "write: %s has messages disabled on %s\n"
 msgstr "write: %s har meddelanden avstängda på %s\n"
 
-#: misc-utils/write.c:145
+#: misc-utils/write.c:149
 #, c-format
 msgid "usage: write user [tty]\n"
 msgstr "användning: write användare [tty]\n"
 
-#: misc-utils/write.c:233
+#: misc-utils/write.c:237
 #, c-format
 msgid "write: %s is not logged in\n"
 msgstr "write: %s är inte inloggad\n"
 
-#: misc-utils/write.c:242
+#: misc-utils/write.c:246
 #, c-format
 msgid "write: %s has messages disabled\n"
 msgstr "write: %s har meddelanden avstängda\n"
 
-#: misc-utils/write.c:246
+#: misc-utils/write.c:250
 #, c-format
 msgid "write: %s is logged in more than once; writing to %s\n"
 msgstr "write: %s är loggad in mer än en gång; skriver till %s\n"
 
-#: misc-utils/write.c:312
+#: misc-utils/write.c:318
 #, c-format
 msgid "Message from %s@%s (as %s) on %s at %s ..."
 msgstr "Meddelande från %s@%s (som %s) på %s klockan %s ..."
 
-#: misc-utils/write.c:315
+#: misc-utils/write.c:321
 #, c-format
 msgid "Message from %s@%s on %s at %s ..."
 msgstr "Meddelande från %s@%s på %s klockan %s ..."
@@ -7780,61 +7846,61 @@ msgstr "Meddelande från %s@%s på %s klockan %s ..."
 msgid "Trying %s\n"
 msgstr "Försöker med %s\n"
 
-#: mount/fsprobe.c:185
+#: mount/fsprobe.c:188
 #, c-format
 msgid "mount: going to mount %s by %s\n"
 msgstr "mount: kommer att montera %s efter %s\n"
 
-#: mount/fsprobe.c:193
+#: mount/fsprobe.c:196
 #, c-format
 msgid "mount: no LABEL=, no UUID=, going to mount %s by path\n"
 msgstr "mount: ingen LABEL=, inget UUID=, kommer att montera %s efter sökväg\n"
 
-#: mount/fstab.c:141
+#: mount/fstab.c:144
 #, c-format
 msgid "warning: error reading %s: %s"
 msgstr "varning: fel vid läsning av %s: %s"
 
-#: mount/fstab.c:169 mount/fstab.c:194
+#: mount/fstab.c:172 mount/fstab.c:197
 #, c-format
 msgid "warning: can't open %s: %s"
 msgstr "varning: kan inte öppna %s: %s"
 
-#: mount/fstab.c:174
+#: mount/fstab.c:177
 #, c-format
 msgid "mount: could not open %s - using %s instead\n"
 msgstr "mount: kunde inte öppna %s - använder %s istället\n"
 
-#: mount/fstab.c:583
+#: mount/fstab.c:596
 #, c-format
 msgid "can't create lock file %s: %s (use -n flag to override)"
 msgstr "kan inte skapa låsfilen %s: %s (använd flaggan -n för att åsidosätta)"
 
-#: mount/fstab.c:609
+#: mount/fstab.c:622
 #, c-format
 msgid "can't link lock file %s: %s (use -n flag to override)"
 msgstr "kan inte länka låsfilen %s: %s (använd flaggan -n för att åsidosätta)"
 
-#: mount/fstab.c:625
+#: mount/fstab.c:638
 #, c-format
 msgid "can't open lock file %s: %s (use -n flag to override)"
 msgstr "kan inte öppna låsfilen %s: %s (använd flaggan -n för att åsidosätta)"
 
-#: mount/fstab.c:640
+#: mount/fstab.c:653
 #, c-format
 msgid "Can't lock lock file %s: %s\n"
 msgstr "Kan inte låsa låsfilen %s: %s\n"
 
-#: mount/fstab.c:654
+#: mount/fstab.c:667
 #, c-format
 msgid "can't lock lock file %s: %s"
 msgstr "kan inte låsa låsfilen %s: %s"
 
-#: mount/fstab.c:656
+#: mount/fstab.c:669
 msgid "timed out"
 msgstr "gjorde time-out"
 
-#: mount/fstab.c:663
+#: mount/fstab.c:676
 #, c-format
 msgid ""
 "Cannot create link %s\n"
@@ -7843,83 +7909,83 @@ msgstr ""
 "Kan inte skapa länken %s\n"
 "Det finns kanske en kvarglömd låsfil?\n"
 
-#: mount/fstab.c:785 mount/fstab.c:840
+#: mount/fstab.c:798 mount/fstab.c:853
 #, c-format
 msgid "cannot open %s (%s) - mtab not updated"
 msgstr "kan inte öppna %s (%s) - mtab uppdaterades inte"
 
-#: mount/fstab.c:849
+#: mount/fstab.c:862
 #, c-format
 msgid "error writing %s: %s"
 msgstr "fel vid skrivning av %s: %s"
 
-#: mount/fstab.c:867
+#: mount/fstab.c:880
 #, c-format
 msgid "error changing mode of %s: %s\n"
 msgstr "fel vid byte av rättigheter på %s: %s\n"
 
-#: mount/fstab.c:880
+#: mount/fstab.c:893
 #, fuzzy, c-format
 msgid "error changing owner of %s: %s\n"
 msgstr "fel vid byte av rättigheter på %s: %s\n"
 
-#: mount/fstab.c:891
+#: mount/fstab.c:904
 #, c-format
 msgid "can't rename %s to %s: %s\n"
 msgstr "kan inte byta namn på %s till %s: %s\n"
 
-#: mount/lomount.c:330
+#: mount/lomount.c:356
 #, fuzzy, c-format
 msgid ", offset %<PRIu64>"
 msgstr ", avstånd %d"
 
-#: mount/lomount.c:333
+#: mount/lomount.c:359
 #, fuzzy, c-format
 msgid ", sizelimit %<PRIu64>"
 msgstr ", storleksgräns %lld"
 
-#: mount/lomount.c:341
+#: mount/lomount.c:367
 #, fuzzy, c-format
 msgid ", encryption %s (type %<PRIu32>)"
 msgstr ", kryptering %s (typ %d)"
 
-#: mount/lomount.c:354
+#: mount/lomount.c:380
 #, c-format
 msgid ", offset %d"
 msgstr ", avstånd %d"
 
-#: mount/lomount.c:357
+#: mount/lomount.c:383
 #, c-format
 msgid ", encryption type %d\n"
 msgstr ", krypteringstyp %d\n"
 
-#: mount/lomount.c:365
+#: mount/lomount.c:391
 #, c-format
 msgid "loop: can't get info on device %s: %s\n"
 msgstr "loop: kan inte få tag i information om enheten %s: %s\n"
 
-#: mount/lomount.c:376
+#: mount/lomount.c:402
 #, c-format
 msgid "loop: can't open device %s: %s\n"
 msgstr "loop: kan inte öppna enheten %s: %s\n"
 
-#: mount/lomount.c:392 mount/lomount.c:423 mount/lomount.c:488
-#: mount/lomount.c:537
+#: mount/lomount.c:418 mount/lomount.c:449 mount/lomount.c:514
+#: mount/lomount.c:563
 #, fuzzy, c-format
 msgid "%s: /dev directory does not exist."
 msgstr "%s: användaren \"%s\" finns inte.\n"
 
-#: mount/lomount.c:403 mount/lomount.c:550
+#: mount/lomount.c:429 mount/lomount.c:576
 #, c-format
 msgid "%s: no permission to look at /dev/loop#"
 msgstr "%s: inga rättigheter att granska /dev/loop#"
 
-#: mount/lomount.c:552
+#: mount/lomount.c:578
 #, c-format
 msgid "%s: could not find any free loop device"
 msgstr "%s: kunde inte hitta någon ledig slingenhet"
 
-#: mount/lomount.c:555
+#: mount/lomount.c:581
 #, c-format
 msgid ""
 "%s: Could not find any loop device. Maybe this kernel does not know\n"
@@ -7929,42 +7995,52 @@ msgstr ""
 "       till slingenheten? (Om det är så bör du kompilera om eller\n"
 "       \"modprobe loop\")."
 
-#: mount/lomount.c:622
+#: mount/lomount.c:611
+#, fuzzy
+msgid "Out of memory while reading passphrase"
+msgstr "Slut på minne vid växande av buffert.\n"
+
+#: mount/lomount.c:654
 #, fuzzy, c-format
 msgid "warning: %s is already associated with %s\n"
 msgstr "Sektor %d är redan allokerad\n"
 
 #: mount/lomount.c:670
+#, fuzzy, c-format
+msgid "warning: %s: is write-protected, using read-only.\n"
+msgstr "mount: %s%s är skrivskyddad, monterar som endast läsbar"
+
+#: mount/lomount.c:706
 #, c-format
 msgid "Couldn't lock into memory, exiting.\n"
 msgstr "Kunde inte låsa i minne, avslutar.\n"
 
-#: mount/lomount.c:697
+#: mount/lomount.c:733
 #, c-format
 msgid "ioctl LOOP_SET_FD failed: %s\n"
 msgstr "ioctl LOOP_SET_FD misslyckades: %s\n"
 
-#: mount/lomount.c:762
+#: mount/lomount.c:798
 #, fuzzy, c-format
 msgid "set_loop(%s,%s,%llu,%llu): success\n"
 msgstr "set_loop(%s,%s,%llu): lyckades\n"
 
-#: mount/lomount.c:775
+#: mount/lomount.c:811
 #, c-format
 msgid "loop: can't delete device %s: %s\n"
 msgstr "loop: kan inte ta bort enheten %s: %s\n"
 
-#: mount/lomount.c:786
+#: mount/lomount.c:822
 #, c-format
 msgid "del_loop(%s): success\n"
 msgstr "del_loop(%s): lyckades\n"
 
-#: mount/lomount.c:794
+#: mount/lomount.c:830
 #, c-format
 msgid "This mount was compiled without loop support. Please recompile.\n"
 msgstr "Denna mount kompilerades utan stöd för slingor. Du bör kompilera om.\n"
 
-#: mount/lomount.c:829
+#: mount/lomount.c:865
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -7983,7 +8059,7 @@ msgstr ""
 "  %s -f                                                # hitta ledig\n"
 "  %s [-e kryptering] [-o avstånd] {-f|slingenhet} fil  # konfiguration\n"
 
-#: mount/lomount.c:838
+#: mount/lomount.c:874
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -8016,225 +8092,240 @@ msgstr ""
 " -v | --verbose           informativt läge\n"
 "\n"
 
-#: mount/lomount.c:1014
+#: mount/lomount.c:1004 mount/lomount.c:1041
+#, fuzzy, c-format
+msgid "Loop device is %s\n"
+msgstr "loop: kan inte öppna enheten %s: %s\n"
+
+#: mount/lomount.c:1028
+#, fuzzy, c-format
+msgid "stolen loop=%s...trying again\n"
+msgstr "mount: stulen loop=%s ...försöker igen\n"
+
+#: mount/lomount.c:1038
+#, fuzzy, c-format
+msgid "%s: %s: device is busy"
+msgstr "umount: %s: enheten är upptagen"
+
+#: mount/lomount.c:1055
 #, c-format
 msgid "No loop support was available at compile time. Please recompile.\n"
 msgstr ""
 "Inget stöd för slingor fanns tillgängligt vid kompileringen. Du bör\n"
 "kompilera om.\n"
 
-#: mount/mount.c:313
+#: mount/mount.c:317
 #, c-format
 msgid "mount: improperly quoted option string '%s'"
 msgstr "mount: felaktigt citerad flaggsträng \"%s\""
 
-#: mount/mount.c:346
+#: mount/mount.c:350
 #, c-format
 msgid "mount: translated %s '%s' to '%s'\n"
 msgstr "mount: översatte %s \"%s\" till \"%s\"\n"
 
-#: mount/mount.c:504
+#: mount/mount.c:514
 #, c-format
 msgid "mount: according to mtab, %s is already mounted on %s"
 msgstr "mount: enligt mtab är %s redan monterat på %s"
 
-#: mount/mount.c:509
+#: mount/mount.c:519
 #, c-format
 msgid "mount: according to mtab, %s is mounted on %s"
 msgstr "mount: enligt mtab är %s monterat på %s"
 
-#: mount/mount.c:529
+#: mount/mount.c:543
 #, c-format
 msgid "mount: can't open %s for writing: %s"
 msgstr "mount: kan inte öppna %s för skrivning: %s"
 
-#: mount/mount.c:546 mount/mount.c:1016
+#: mount/mount.c:560 mount/mount.c:1030
 #, c-format
 msgid "mount: error writing %s: %s"
 msgstr "mount: fel vid skrivning av %s: %s"
 
-#: mount/mount.c:554
+#: mount/mount.c:568
 #, c-format
 msgid "mount: error changing mode of %s: %s"
 msgstr "mount: fel vid byte av rättigheter på %s: %s"
 
-#: mount/mount.c:637
+#: mount/mount.c:651
 #, c-format
 msgid "mount: cannot set group id: %s"
 msgstr "mount: kan inte ställa in grupp-id: %s"
 
-#: mount/mount.c:640
+#: mount/mount.c:654
 #, c-format
 msgid "mount: cannot set user id: %s"
 msgstr "mount: kan inte ställa in användar-id: %s"
 
-#: mount/mount.c:679 mount/mount.c:1594
+#: mount/mount.c:693 mount/mount.c:1642
 #, c-format
 msgid "mount: cannot fork: %s"
 msgstr "mount: kan inte grena: %s"
 
-#: mount/mount.c:693
+#: mount/mount.c:707
 #, c-format
 msgid "mount: you didn't specify a filesystem type for %s\n"
 msgstr "mount: du angav ingen filsystemstyp för %s\n"
 
-#: mount/mount.c:696
+#: mount/mount.c:710
 #, c-format
 msgid "       I will try all types mentioned in %s or %s\n"
 msgstr "       Jag kommer att försöka med alla typer nämnda i %s eller %s\n"
 
-#: mount/mount.c:699
+#: mount/mount.c:713
 #, c-format
 msgid "       and it looks like this is swapspace\n"
 msgstr "       och det verkar som om detta är växlingsutrymme\n"
 
-#: mount/mount.c:701
+#: mount/mount.c:715
 #, c-format
 msgid "       I will try type %s\n"
 msgstr "       Jag kommer att försöka med typen %s\n"
 
-#: mount/mount.c:728
+#: mount/mount.c:742
 #, c-format
 msgid "%s looks like swapspace - not mounted"
 msgstr "%s ser ut som växlingsutrymme - monteras inte"
 
-#: mount/mount.c:819
+#: mount/mount.c:833
 msgid "mount failed"
 msgstr "montering misslyckades"
 
-#: mount/mount.c:821
+#: mount/mount.c:835
 #, c-format
 msgid "mount: only root can mount %s on %s"
 msgstr "mount: endast root kan montera %s på %s"
 
-#: mount/mount.c:891
+#: mount/mount.c:905
 msgid "mount: loop device specified twice"
 msgstr "mount: slingenheten angiven två gånger"
 
-#: mount/mount.c:896
+#: mount/mount.c:910
 msgid "mount: type specified twice"
 msgstr "mount: typen angiven två gånger"
 
-#: mount/mount.c:908
+#: mount/mount.c:922
 #, c-format
 msgid "mount: skipping the setup of a loop device\n"
 msgstr "mount: hoppar över konfigurationen av en slingenhet\n"
 
-#: mount/mount.c:920
+#: mount/mount.c:934
 #, fuzzy, c-format
 msgid "mount: according to mtab %s is already mounted on %s as loop"
 msgstr "mount: enligt mtab är %s redan monterat på %s"
 
-#: mount/mount.c:930
+#: mount/mount.c:944
 #, c-format
 msgid "mount: going to use the loop device %s\n"
 msgstr "mount: kommer att använda slingenheten %s\n"
 
-#: mount/mount.c:939
+#: mount/mount.c:953
 #, c-format
 msgid "mount: stolen loop=%s ...trying again\n"
 msgstr "mount: stulen loop=%s ...försöker igen\n"
 
-#: mount/mount.c:944
+#: mount/mount.c:958
 #, c-format
 msgid "mount: stolen loop=%s"
 msgstr "mount: stulen loop=%s"
 
-#: mount/mount.c:949
+#: mount/mount.c:963
 #, c-format
 msgid "mount: failed setting up loop device\n"
 msgstr "mount: misslyckades konfigurera slingenheten\n"
 
-#: mount/mount.c:960
+#: mount/mount.c:974
 #, c-format
 msgid "mount: setup loop device successfully\n"
 msgstr "mount: lyckades konfigurera slingenheten\n"
 
-#: mount/mount.c:994
+#: mount/mount.c:1008
 #, c-format
 msgid "mount: no %s found - creating it..\n"
 msgstr "mount: ingen %s hittades - skapar den...\n"
 
-#: mount/mount.c:1011
+#: mount/mount.c:1025
 #, c-format
 msgid "mount: can't open %s: %s"
 msgstr "mount: kan inte öppna %s: %s"
 
-#: mount/mount.c:1032
+#: mount/mount.c:1046
 msgid "mount: argument to -p or --pass-fd must be a number"
 msgstr "mount: argument till -p eller --pass-fd måste vara ett tal"
 
-#: mount/mount.c:1045
+#: mount/mount.c:1059
 #, c-format
 msgid "mount: cannot open %s for setting speed"
 msgstr "mount: kan inte öppna %s för inställning av hastighet"
 
-#: mount/mount.c:1048
+#: mount/mount.c:1062
 #, c-format
 msgid "mount: cannot set speed: %s"
 msgstr "mount: kan inte ställa in hastighet: %s"
 
-#: mount/mount.c:1104
+#: mount/mount.c:1119
 #, c-format
 msgid "mount: according to mtab, %s is already mounted on %s\n"
 msgstr "mount: enligt mtab är %s redan monterat på %s\n"
 
-#: mount/mount.c:1179
+#: mount/mount.c:1195
 msgid ""
 "mount: I could not determine the filesystem type, and none was specified"
 msgstr "mount: Jag kunde inte avgöra filsystemstypen, och ingen angavs"
 
-#: mount/mount.c:1182
+#: mount/mount.c:1198
 msgid "mount: you must specify the filesystem type"
 msgstr "mount: du måste ange filsystemstypen"
 
-#: mount/mount.c:1185
+#: mount/mount.c:1201
 msgid "mount: mount failed"
 msgstr "mount: montering misslyckades"
 
-#: mount/mount.c:1191 mount/mount.c:1228
+#: mount/mount.c:1207 mount/mount.c:1244
 #, c-format
 msgid "mount: mount point %s is not a directory"
 msgstr "mount: monteringspunkten %s är inte en katalog"
 
-#: mount/mount.c:1193
+#: mount/mount.c:1209
 msgid "mount: permission denied"
 msgstr "mount: åtkomst nekas"
 
-#: mount/mount.c:1195
+#: mount/mount.c:1211
 msgid "mount: must be superuser to use mount"
 msgstr "mount: måste vara superanvändaren för att använda mount"
 
-#: mount/mount.c:1199 mount/mount.c:1203
+#: mount/mount.c:1215 mount/mount.c:1219
 #, c-format
 msgid "mount: %s is busy"
 msgstr "mount: %s är upptagen"
 
-#: mount/mount.c:1205
+#: mount/mount.c:1221
 msgid "mount: proc already mounted"
 msgstr "mount: proc är redan monterad"
 
-#: mount/mount.c:1207
+#: mount/mount.c:1223
 #, c-format
 msgid "mount: %s already mounted or %s busy"
 msgstr "mount: %s är redan monterad eller %s är upptagen"
 
-#: mount/mount.c:1213
+#: mount/mount.c:1229
 #, c-format
 msgid "mount: mount point %s does not exist"
 msgstr "mount: monteringspunkten %s finns inte"
 
-#: mount/mount.c:1215
+#: mount/mount.c:1231
 #, c-format
 msgid "mount: mount point %s is a symbolic link to nowhere"
 msgstr "mount: monteringspunkten %s är en symbolisk länk till ingenstans"
 
-#: mount/mount.c:1220
+#: mount/mount.c:1236
 #, c-format
 msgid "mount: special device %s does not exist"
 msgstr "mount: specialenheten %s finns inte"
 
-#: mount/mount.c:1232
+#: mount/mount.c:1248
 #, c-format
 msgid ""
 "mount: special device %s does not exist\n"
@@ -8243,12 +8334,12 @@ msgstr ""
 "mount: specialenheten %s finns inte\n"
 "       (ett sökvägsprefix är inte en katalog)\n"
 
-#: mount/mount.c:1244
+#: mount/mount.c:1260
 #, c-format
 msgid "mount: %s not mounted already, or bad option"
 msgstr "mount: %s är inte redan monterad, eller felaktig flagga"
 
-#: mount/mount.c:1246
+#: mount/mount.c:1262
 #, c-format
 msgid ""
 "mount: wrong fs type, bad option, bad superblock on %s,\n"
@@ -8257,13 +8348,13 @@ msgstr ""
 "mount: fel filsystemstyp, felaktig flagga, felaktigt superblock\n"
 "       på %s, codepage eller hjälpprogram saknas, eller annat fel"
 
-#: mount/mount.c:1253
+#: mount/mount.c:1269
 msgid ""
 "       (for several filesystems (e.g. nfs, cifs) you might\n"
 "       need a /sbin/mount.<type> helper program)"
 msgstr ""
 
-#: mount/mount.c:1262
+#: mount/mount.c:1278
 msgid ""
 "       (could this be the IDE device where you in fact use\n"
 "       ide-scsi so that sr0 or sda or so is needed?)"
@@ -8272,7 +8363,7 @@ msgstr ""
 "       använder ide-scsi så att sr0 eller sda eller något\n"
 "       liknande behövs?)"
 
-#: mount/mount.c:1267
+#: mount/mount.c:1283
 msgid ""
 "       (aren't you trying to mount an extended partition,\n"
 "       instead of some logical partition inside?)"
@@ -8280,7 +8371,7 @@ msgstr ""
 "       (försöker du kanske montera en utökad partition,\n"
 "       istället för någon logisk partition inuti?)"
 
-#: mount/mount.c:1274
+#: mount/mount.c:1290
 msgid ""
 "       In some cases useful info is found in syslog - try\n"
 "       dmesg | tail  or so\n"
@@ -8288,49 +8379,49 @@ msgstr ""
 "       I en del fall kan användbar information hittas i syslog\n"
 "       - prova dmesg | tail eller något liknande\n"
 
-#: mount/mount.c:1280
+#: mount/mount.c:1296
 msgid "mount table full"
 msgstr "monteringstabellen full"
 
-#: mount/mount.c:1282
+#: mount/mount.c:1298
 #, c-format
 msgid "mount: %s: can't read superblock"
 msgstr "mount: %s: kan inte läsa superblock"
 
-#: mount/mount.c:1288
+#: mount/mount.c:1304
 #, c-format
 msgid "mount: %s: unknown device"
 msgstr "mount: %s: okänd enhet"
 
-#: mount/mount.c:1293
+#: mount/mount.c:1309
 #, c-format
 msgid "mount: unknown filesystem type '%s'"
 msgstr "mount: okänd filsystemstyp \"%s\""
 
-#: mount/mount.c:1305
+#: mount/mount.c:1321
 #, c-format
 msgid "mount: probably you meant %s"
 msgstr "mount: du menade troligtvis %s"
 
-#: mount/mount.c:1308
+#: mount/mount.c:1324
 msgid "mount: maybe you meant 'iso9660'?"
 msgstr "mount: du menade kanske \"iso9660\"?"
 
-#: mount/mount.c:1311
+#: mount/mount.c:1327
 msgid "mount: maybe you meant 'vfat'?"
 msgstr "mount: du menade kanske \"vfat\"?"
 
-#: mount/mount.c:1314
+#: mount/mount.c:1330
 #, c-format
 msgid "mount: %s has wrong device number or fs type %s not supported"
 msgstr "mount: %s har fel enhetsnummer eller så stöds filsystemstypen %s inte"
 
-#: mount/mount.c:1322
+#: mount/mount.c:1338
 #, c-format
 msgid "mount: %s is not a block device, and stat fails?"
 msgstr "mount: %s är inte en blockenhet, och statustagning misslyckas?"
 
-#: mount/mount.c:1324
+#: mount/mount.c:1340
 #, c-format
 msgid ""
 "mount: the kernel does not recognize %s as a block device\n"
@@ -8339,58 +8430,78 @@ msgstr ""
 "mount: kärnan känner inte igen %s som en blockenhet\n"
 "       (kanske \"insmod drivrutin\"?)"
 
-#: mount/mount.c:1327
+#: mount/mount.c:1343
 #, c-format
 msgid "mount: %s is not a block device (maybe try `-o loop'?)"
 msgstr "mount: %s är ingen blockenhet (försök kanske med \"-o loop\"?)"
 
-#: mount/mount.c:1330
+#: mount/mount.c:1346
 #, c-format
 msgid "mount: %s is not a block device"
 msgstr "mount: %s är ingen blockenhet"
 
-#: mount/mount.c:1335
+#: mount/mount.c:1351
 #, c-format
 msgid "mount: %s is not a valid block device"
 msgstr "mount: %s är ingen giltig blockenhet"
 
-#: mount/mount.c:1338
+#: mount/mount.c:1354
 msgid "block device "
 msgstr "blockenhet "
 
-#: mount/mount.c:1340
+#: mount/mount.c:1356
 #, c-format
 msgid "mount: cannot mount %s%s read-only"
 msgstr "mount: kan inte montera %s%s som endast läsbar"
 
-#: mount/mount.c:1344
+#: mount/mount.c:1360
 #, c-format
 msgid "mount: %s%s is write-protected but explicit `-w' flag given"
 msgstr "mount: %s%s är skrivskyddad med en explicit \"-w\"-flagga angavs"
 
-#: mount/mount.c:1359
+#: mount/mount.c:1375
 #, c-format
 msgid "mount: %s%s is write-protected, mounting read-only"
 msgstr "mount: %s%s är skrivskyddad, monterar som endast läsbar"
 
-#: mount/mount.c:1440
+#: mount/mount.c:1385
+#, fuzzy, c-format
+msgid "mount: no medium found on %s ...trying again\n"
+msgstr "mount: stulen loop=%s ...försöker igen\n"
+
+#: mount/mount.c:1391
+#, fuzzy, c-format
+msgid "mount: no medium found on %s"
+msgstr "mount: %s är redan monterad på %s\n"
+
+#: mount/mount.c:1409
+#, c-format
+msgid ""
+"mount: %s does not contain SELinux labels.\n"
+"       You just mounted an file system that supports labels which does not\n"
+"       contain labels, onto an SELinux box. It is likely that confined\n"
+"       applications will generate AVC messages and not be allowed access to\n"
+"       this file system.  For more details see restorecon(8) and mount(8).\n"
+msgstr ""
+
+#: mount/mount.c:1488
 #, c-format
 msgid "mount: no type was given - I'll assume nfs because of the colon\n"
 msgstr ""
 "mount: ingen typ angavs - jag kommer att anta nfs på grund av kolonet\n"
 
-#: mount/mount.c:1446
+#: mount/mount.c:1494
 #, c-format
 msgid "mount: no type was given - I'll assume cifs because of the // prefix\n"
 msgstr ""
 "mount: ingen typ angavs - jag kommer att anta cifs på grund //-prefixet\n"
 
-#: mount/mount.c:1541
+#: mount/mount.c:1589
 #, c-format
 msgid "mount: %s already mounted on %s\n"
 msgstr "mount: %s är redan monterad på %s\n"
 
-#: mount/mount.c:1675
+#: mount/mount.c:1723
 #, c-format
 msgid ""
 "Usage: mount -V                 : print version\n"
@@ -8460,19 +8571,19 @@ msgstr ""
 "Andra flaggor: [-nfFrsvw] [-o flaggor] [-p lösenordfd].\n"
 "Ange  man 8 mount  för ytterligare detaljer.\n"
 
-#: mount/mount.c:1987
+#: mount/mount.c:2035
 msgid "mount: only root can do that"
 msgstr "mount: endast root kan göra det"
 
-#: mount/mount.c:1997
+#: mount/mount.c:2045
 msgid "nothing was mounted"
 msgstr "ingenting monterades"
 
-#: mount/mount.c:2015 mount/mount.c:2041
+#: mount/mount.c:2063 mount/mount.c:2089
 msgid "mount: no such partition found"
 msgstr "mount: ingen sådan partition hittades"
 
-#: mount/mount.c:2018
+#: mount/mount.c:2066
 #, c-format
 msgid "mount: can't find %s in %s or %s"
 msgstr "mount: kan inte hitta %s i %s eller %s"
@@ -8653,36 +8764,36 @@ msgstr "umount: %s: blockenheter är inte tillåtna på filsystem"
 msgid "umount: %s: %s"
 msgstr "umount: %s: %s"
 
-#: mount/umount.c:228
+#: mount/umount.c:236
 #, c-format
 msgid "no umount2, trying umount...\n"
 msgstr "ingen umount2, försöker med umount...\n"
 
-#: mount/umount.c:244
+#: mount/umount.c:252
 #, c-format
 msgid "could not umount %s - trying %s instead\n"
 msgstr "kunde inte avmontera %s - försöker med %s istället\n"
 
-#: mount/umount.c:262
+#: mount/umount.c:270
 #, c-format
 msgid "umount: %s busy - remounted read-only\n"
 msgstr "umount: %s är upptagen - monterade om som endast läsbar\n"
 
-#: mount/umount.c:273
+#: mount/umount.c:281
 #, c-format
 msgid "umount: could not remount %s read-only\n"
 msgstr "umount: kunde inte montera om %s som endast läsbar\n"
 
-#: mount/umount.c:282
+#: mount/umount.c:290
 #, c-format
 msgid "%s umounted\n"
 msgstr "%s avmonterad\n"
 
-#: mount/umount.c:380
+#: mount/umount.c:388
 msgid "umount: cannot find list of filesystems to unmount"
 msgstr "umount: kan inte hitta lista med filsystem att avmontera"
 
-#: mount/umount.c:410
+#: mount/umount.c:418
 #, c-format
 msgid ""
 "Usage: umount [-hV]\n"
@@ -8693,46 +8804,46 @@ msgstr ""
 "            umount -a [-f] [-r] [-n] [-v] [-t vfs-typer] [-O alternativ]\n"
 "            umount [-f] [-r] [-n] [-v] special | nod...\n"
 
-#: mount/umount.c:460
+#: mount/umount.c:468
 msgid "Cannot umount \"\"\n"
 msgstr "Kan inte avmontera \"\"\n"
 
-#: mount/umount.c:466
+#: mount/umount.c:474
 #, c-format
 msgid "Trying to umount %s\n"
 msgstr "Försöker avmontera %s\n"
 
-#: mount/umount.c:472
+#: mount/umount.c:480
 #, c-format
 msgid "Could not find %s in mtab\n"
 msgstr "Kunde inte hitta %s i mtab\n"
 
-#: mount/umount.c:479
+#: mount/umount.c:487
 #, c-format
 msgid "umount: %s is not mounted (according to mtab)"
 msgstr "umount: %s är inte monterad (enligt mtab)"
 
-#: mount/umount.c:503
+#: mount/umount.c:511
 #, c-format
 msgid "umount: it seems %s is mounted multiple times"
 msgstr "umount: det verkar som om %s är monterad flera gånger"
 
-#: mount/umount.c:516
+#: mount/umount.c:524
 #, c-format
 msgid "umount: %s is not in the fstab (and you are not root)"
 msgstr "umount: %s är inte i fstab (och du är inte root)"
 
-#: mount/umount.c:520
+#: mount/umount.c:528
 #, c-format
 msgid "umount: %s mount disagrees with the fstab"
 msgstr "umount: montering av %s stämmer inte överens med fstab"
 
-#: mount/umount.c:561
+#: mount/umount.c:569
 #, c-format
 msgid "umount: only %s can unmount %s from %s"
 msgstr "umount: endast %s kan avmontera %s från %s"
 
-#: mount/umount.c:640
+#: mount/umount.c:648
 msgid "umount: only root can do that"
 msgstr "umount: endast root kan göra det"
 
@@ -9101,11 +9212,6 @@ msgstr "Växlingsprestanda: %ld försök\t  %ld lyckade försök\n"
 msgid "------ Shared Memory Segment Creators/Owners --------\n"
 msgstr "------ Skapare/Ägare av delade minnessegment --------\n"
 
-#: sys-utils/ipcs.c:301 sys-utils/ipcs.c:421 sys-utils/ipcs.c:519
-#, c-format
-msgid "%-10s %-10s %-10s %-10s %-10s %-10s\n"
-msgstr "%-10s %-10s %-10s %-10s %-10s %-10s\n"
-
 #: sys-utils/ipcs.c:302 sys-utils/ipcs.c:308 sys-utils/ipcs.c:315
 #: sys-utils/ipcs.c:321
 msgid "shmid"
@@ -9137,11 +9243,6 @@ msgstr "gid"
 msgid "------ Shared Memory Attach/Detach/Change Times --------\n"
 msgstr "------ Tilläggs-/Lösgörnings-/Ändringstider för delat minne --------\n"
 
-#: sys-utils/ipcs.c:307
-#, c-format
-msgid "%-10s %-10s %-20s %-20s %-20s\n"
-msgstr "%-10s %-10s %-20s %-20s %-20s\n"
-
 #: sys-utils/ipcs.c:308 sys-utils/ipcs.c:315 sys-utils/ipcs.c:321
 #: sys-utils/ipcs.c:428 sys-utils/ipcs.c:437 sys-utils/ipcs.c:526
 #: sys-utils/ipcs.c:532 sys-utils/ipcs.c:538
@@ -9165,11 +9266,6 @@ msgstr "ändrad"
 msgid "------ Shared Memory Creator/Last-op --------\n"
 msgstr "------ Skapare/Senaste operation på delat minne --------\n"
 
-#: sys-utils/ipcs.c:314 sys-utils/ipcs.c:531
-#, c-format
-msgid "%-10s %-10s %-10s %-10s\n"
-msgstr "%-10s %-10s %-10s %-10s\n"
-
 #: sys-utils/ipcs.c:315
 msgid "cpid"
 msgstr "cpid"
@@ -9182,11 +9278,6 @@ msgstr "lpid"
 #, c-format
 msgid "------ Shared Memory Segments --------\n"
 msgstr "------ Delade minnessegment --------\n"
-
-#: sys-utils/ipcs.c:320
-#, c-format
-msgid "%-10s %-10s %-10s %-10s %-10s %-10s %-12s\n"
-msgstr "%-10s %-10s %-10s %-10s %-10s %-10s %-12s\n"
 
 #: sys-utils/ipcs.c:321 sys-utils/ipcs.c:437 sys-utils/ipcs.c:538
 msgid "key"
@@ -9284,11 +9375,6 @@ msgstr "semid"
 msgid "------ Semaphore Operation/Change Times --------\n"
 msgstr "------ Semaforoperation/Ändringstider --------\n"
 
-#: sys-utils/ipcs.c:427
-#, c-format
-msgid "%-8s %-10s %-26.24s %-26.24s\n"
-msgstr "%-8s %-10s %-26.24s %-26.24s\n"
-
 #: sys-utils/ipcs.c:428
 msgid "last-op"
 msgstr "senaste-op"
@@ -9301,11 +9387,6 @@ msgstr "senast-ändrad"
 #, c-format
 msgid "------ Semaphore Arrays --------\n"
 msgstr "------ Semaforvektorer --------\n"
-
-#: sys-utils/ipcs.c:436 sys-utils/ipcs.c:678
-#, c-format
-msgid "%-10s %-10s %-10s %-10s %-10s\n"
-msgstr "%-10s %-10s %-10s %-10s %-10s\n"
 
 #: sys-utils/ipcs.c:437
 msgid "nsems"
@@ -9372,11 +9453,6 @@ msgid "------ Message Queues Send/Recv/Change Times --------\n"
 msgstr ""
 "------ Meddelandeköernas sändnings-/mottagnings-/ändringstider --------\n"
 
-#: sys-utils/ipcs.c:525
-#, c-format
-msgid "%-8s %-10s %-20s %-20s %-20s\n"
-msgstr "%-8s %-10s %-20s %-20s %-20s\n"
-
 #: sys-utils/ipcs.c:526
 msgid "send"
 msgstr "sänt"
@@ -9406,11 +9482,6 @@ msgstr "lrpid"
 #, c-format
 msgid "------ Message Queues --------\n"
 msgstr "------ Meddelandeköer --------\n"
-
-#: sys-utils/ipcs.c:537
-#, c-format
-msgid "%-10s %-10s %-10s %-10s %-12s %-12s\n"
-msgstr "%-10s %-10s %-10s %-10s %-12s %-12s\n"
 
 #: sys-utils/ipcs.c:539
 msgid "used-bytes"
@@ -9591,9 +9662,9 @@ msgid "speed %d unsupported"
 msgstr ""
 
 #: sys-utils/ldattach.c:242
-#, fuzzy, c-format
+#, c-format
 msgid "cannot set terminal attributes for %s"
-msgstr "kan inte hämta storleken på %s"
+msgstr ""
 
 #: sys-utils/ldattach.c:249
 #, fuzzy
@@ -9603,7 +9674,7 @@ msgstr "Kan inte söka på diskenhet"
 #: sys-utils/ldattach.c:255
 #, fuzzy
 msgid "cannot daemonize"
-msgstr "kan inte hämta storleken på %s"
+msgstr "kan inte öppna %s"
 
 #: sys-utils/rdev.c:69
 msgid "usage: rdev [ -rv ] [ -o OFFSET ] [ IMAGE [ VALUE [ OFFSET ] ] ]"
@@ -9699,6 +9770,16 @@ msgstr ""
 "\t -r              nollställ alla räknare (endast root)\n"
 "\t -n              deaktivera automatisk detektering av byteordning\n"
 "\t -V              visa versionsinformation och avsluta\n"
+
+#: sys-utils/readprofile.c:227
+#, fuzzy, c-format
+msgid "readprofile: error writing %s: %s\n"
+msgstr "mount: fel vid skrivning av %s: %s"
+
+#: sys-utils/readprofile.c:268
+#, c-format
+msgid "Assuming reversed byte order. Use -n to force native byte order.\n"
+msgstr ""
 
 #: sys-utils/readprofile.c:284
 #, c-format
@@ -9802,87 +9883,87 @@ msgstr "läs systemtid"
 msgid "convert rtc time"
 msgstr "konvertera rtc-tid"
 
-#: sys-utils/rtcwake.c:219
+#: sys-utils/rtcwake.c:222
 msgid "set rtc alarm"
 msgstr "ställ in rtc-alarm"
 
-#: sys-utils/rtcwake.c:223
+#: sys-utils/rtcwake.c:226
 msgid "enable rtc alarm"
 msgstr "aktivera rtc-alarm"
 
-#: sys-utils/rtcwake.c:231
+#: sys-utils/rtcwake.c:230
 msgid "set rtc wake alarm"
 msgstr "ställ in rtc-uppvakningsalarm"
 
-#: sys-utils/rtcwake.c:342
+#: sys-utils/rtcwake.c:341
 #, c-format
 msgid "%s: unrecognized suspend state '%s'\n"
 msgstr "%s: okänt väntelägestillstånd \"%s\"\n"
 
-#: sys-utils/rtcwake.c:351
+#: sys-utils/rtcwake.c:350
 #, c-format
 msgid "%s: illegal interval %s seconds\n"
 msgstr "%s: otillåtet intervall %s sekunder\n"
 
-#: sys-utils/rtcwake.c:365
+#: sys-utils/rtcwake.c:364
 #, c-format
 msgid "%s: illegal time_t value %s\n"
 msgstr "%s: otillåtet värde för time_t, %s\n"
 
-#: sys-utils/rtcwake.c:381
+#: sys-utils/rtcwake.c:380
 #, c-format
 msgid "%s: version %s\n"
 msgstr "%s: version %s\n"
 
-#: sys-utils/rtcwake.c:394
+#: sys-utils/rtcwake.c:393
 #, c-format
 msgid "%s: assuming RTC uses UTC ...\n"
 msgstr "%s: antar att RTC använder UTC ...\n"
 
-#: sys-utils/rtcwake.c:399
+#: sys-utils/rtcwake.c:398
 #, fuzzy, c-format
 msgid "Using UTC time.\n"
 msgstr "Använder %s-tid\n"
 
-#: sys-utils/rtcwake.c:400
+#: sys-utils/rtcwake.c:399
 #, fuzzy, c-format
 msgid "Using local time.\n"
 msgstr "Använder %s-tid\n"
 
-#: sys-utils/rtcwake.c:403
+#: sys-utils/rtcwake.c:402
 #, c-format
 msgid "%s: must provide wake time\n"
 msgstr "%s: måste tillhandahålla uppvakningstid\n"
 
-#: sys-utils/rtcwake.c:413
+#: sys-utils/rtcwake.c:412
 msgid "malloc() failed"
 msgstr "malloc() misslyckades"
 
-#: sys-utils/rtcwake.c:424
+#: sys-utils/rtcwake.c:423
 #, c-format
 msgid "%s: %s not enabled for wakeup events\n"
 msgstr "%s: %s är inte aktiverad för uppvakningshändelser\n"
 
-#: sys-utils/rtcwake.c:440
+#: sys-utils/rtcwake.c:439
 #, c-format
 msgid "alarm %ld, sys_time %ld, rtc_time %ld, seconds %u\n"
 msgstr "alarm %ld, sys_time %ld, rtc_time %ld, sekunder %u\n"
 
-#: sys-utils/rtcwake.c:445
+#: sys-utils/rtcwake.c:444
 #, c-format
 msgid "%s: time doesn't go backward to %s\n"
 msgstr "%s: tiden går inte baklänges till %s\n"
 
-#: sys-utils/rtcwake.c:456
+#: sys-utils/rtcwake.c:455
 #, c-format
 msgid "%s: wakeup from \"%s\" using %s at %s\n"
 msgstr "%s: uppvakning från \"%s\" med %s klockan %s\n"
 
-#: sys-utils/rtcwake.c:470
+#: sys-utils/rtcwake.c:469
 msgid "rtc read"
 msgstr "rtc läs"
 
-#: sys-utils/rtcwake.c:479
+#: sys-utils/rtcwake.c:478
 msgid "disable rtc alarm interrupt"
 msgstr "inaktivera rtc-alarmavbrott"
 
@@ -10087,17 +10168,17 @@ msgid ""
 msgstr ""
 "hexdump: [-bcCdovx] [-e fmt] [-f fmtfil] [-n längd] [-s överhopp] [fil ...]\n"
 
-#: text-utils/more.c:257
+#: text-utils/more.c:256
 #, c-format
 msgid "usage: %s [-dflpcsu] [+linenum | +/pattern] name1 name2 ...\n"
 msgstr "användning: %s [-dflpcsu] [+radnummer | +/mönster] namn1 namn2 ...\n"
 
-#: text-utils/more.c:480
+#: text-utils/more.c:479
 #, c-format
 msgid "%s: unknown option \"-%c\"\n"
 msgstr "%s: okänd flagga \"-%c\"\n"
 
-#: text-utils/more.c:512
+#: text-utils/more.c:511
 #, c-format
 msgid ""
 "\n"
@@ -10108,7 +10189,7 @@ msgstr ""
 "*** %s: katalog ***\n"
 "\n"
 
-#: text-utils/more.c:556
+#: text-utils/more.c:555
 #, c-format
 msgid ""
 "\n"
@@ -10119,45 +10200,45 @@ msgstr ""
 "******** %s: Inte en textfil ********\n"
 "\n"
 
-#: text-utils/more.c:659
+#: text-utils/more.c:658
 #, c-format
 msgid "[Use q or Q to quit]"
 msgstr "[Använd q eller Q för att avsluta]"
 
-#: text-utils/more.c:751
+#: text-utils/more.c:750
 #, c-format
 msgid "--More--"
 msgstr "--Mer--"
 
-#: text-utils/more.c:753
+#: text-utils/more.c:752
 #, c-format
 msgid "(Next file: %s)"
 msgstr "(Nästa fil: %s)"
 
-#: text-utils/more.c:758
+#: text-utils/more.c:757
 #, c-format
 msgid "[Press space to continue, 'q' to quit.]"
 msgstr "[Tryck blanksteg för att fortsätta, \"q\" för att avsluta.]"
 
-#: text-utils/more.c:1173
+#: text-utils/more.c:1172
 #, c-format
 msgid "...back %d pages"
 msgstr "...tillbaka %d sidor"
 
-#: text-utils/more.c:1175
+#: text-utils/more.c:1174
 msgid "...back 1 page"
 msgstr "...tillbaka 1 sida"
 
-#: text-utils/more.c:1218
+#: text-utils/more.c:1217
 msgid "...skipping one line"
 msgstr "...hoppar över en rad"
 
-#: text-utils/more.c:1220
+#: text-utils/more.c:1219
 #, c-format
 msgid "...skipping %d lines"
 msgstr "...hoppar över %d rader"
 
-#: text-utils/more.c:1257
+#: text-utils/more.c:1256
 msgid ""
 "\n"
 "***Back***\n"
@@ -10167,7 +10248,7 @@ msgstr ""
 "***Tillbaka***\n"
 "\n"
 
-#: text-utils/more.c:1295
+#: text-utils/more.c:1294
 msgid ""
 "\n"
 "Most commands optionally preceded by integer argument k.  Defaults in "
@@ -10180,7 +10261,7 @@ msgstr ""
 "\n"
 "Stjärna (*) indikerar att argumentet blir nytt standardalternativ.\n"
 
-#: text-utils/more.c:1302
+#: text-utils/more.c:1301
 msgid ""
 "<space>                 Display next k lines of text [current screen size]\n"
 "z                       Display next k lines of text [current screen size]*\n"
@@ -10225,34 +10306,34 @@ msgstr ""
 ":f                      Visa aktuellt filnamn och radnummer\n"
 ".                       Upprepa föregående kommando\n"
 
-#: text-utils/more.c:1371 text-utils/more.c:1376
+#: text-utils/more.c:1370 text-utils/more.c:1375
 #, c-format
 msgid "[Press 'h' for instructions.]"
 msgstr "[Tryck \"h\" för instruktioner.]"
 
-#: text-utils/more.c:1410
+#: text-utils/more.c:1409
 #, c-format
 msgid "\"%s\" line %d"
 msgstr "\"%s\" rad %d"
 
-#: text-utils/more.c:1412
+#: text-utils/more.c:1411
 #, c-format
 msgid "[Not a file] line %d"
 msgstr "[Inte en fil] rad %d"
 
-#: text-utils/more.c:1496
+#: text-utils/more.c:1495
 msgid "  Overflow\n"
 msgstr "  Spill\n"
 
-#: text-utils/more.c:1543
+#: text-utils/more.c:1542
 msgid "...skipping\n"
 msgstr "...hoppar över\n"
 
-#: text-utils/more.c:1572
+#: text-utils/more.c:1571
 msgid "Regular expression botch"
 msgstr "Reguljärt uttrycksmischmasch"
 
-#: text-utils/more.c:1580
+#: text-utils/more.c:1579
 msgid ""
 "\n"
 "Pattern not found\n"
@@ -10260,15 +10341,15 @@ msgstr ""
 "\n"
 "Mönstret hittades inte\n"
 
-#: text-utils/more.c:1583 text-utils/pg.c:1123 text-utils/pg.c:1274
+#: text-utils/more.c:1582 text-utils/pg.c:1123 text-utils/pg.c:1274
 msgid "Pattern not found"
 msgstr "Mönstret hittades inte"
 
-#: text-utils/more.c:1644
+#: text-utils/more.c:1643
 msgid "can't fork\n"
 msgstr "kan inte grena\n"
 
-#: text-utils/more.c:1683
+#: text-utils/more.c:1682
 msgid ""
 "\n"
 "...Skipping "
@@ -10276,19 +10357,19 @@ msgstr ""
 "\n"
 "...Hoppar över "
 
-#: text-utils/more.c:1687
+#: text-utils/more.c:1686
 msgid "...Skipping to file "
 msgstr "...Hoppar över till filen "
 
-#: text-utils/more.c:1689
+#: text-utils/more.c:1688
 msgid "...Skipping back to file "
 msgstr "...Hoppar tillbaka till filen "
 
-#: text-utils/more.c:1967
+#: text-utils/more.c:1966
 msgid "Line too long"
 msgstr "Raden är för lång"
 
-#: text-utils/more.c:2010
+#: text-utils/more.c:2009
 msgid "No previous command to substitute for"
 msgstr "Inget tidigare kommando att ersätta"
 
@@ -10492,21 +10573,6 @@ msgstr "Indataraden är för lång.\n"
 msgid "Out of memory when growing buffer.\n"
 msgstr "Slut på minne vid växande av buffert.\n"
 
-#~ msgid "chfn: PAM Failure, aborting: %s\n"
-#~ msgstr "chfn: PAM-fel, avbryter: %s\n"
-
-#~ msgid "Can't read %s, exiting."
-#~ msgstr "Kan inte läsa %s, avslutar."
-
-#~ msgid "login: PAM Failure, aborting: %s\n"
-#~ msgstr "login: PAM-fel, avbryter: %s\n"
-
-#~ msgid "mount: backgrounding \"%s\"\n"
-#~ msgstr "mount: förlägger \"%s\" till bakgrunden\n"
-
-#~ msgid "mount: giving up \"%s\"\n"
-#~ msgstr "mount: ger upp \"%s\"\n"
-
 #~ msgid "calling open_tty\n"
 #~ msgstr "anropar open_tty\n"
 
@@ -10549,8 +10615,17 @@ msgstr "Slut på minne vid växande av buffert.\n"
 #~ msgid "term_io 2\n"
 #~ msgstr "term_io 2\n"
 
+#~ msgid "chfn: PAM Failure, aborting: %s\n"
+#~ msgstr "chfn: PAM-fel, avbryter: %s\n"
+
 #~ msgid "Warning: \"%s\" is not listed in /etc/shells\n"
 #~ msgstr "Varning: \"%s\" finns inte med i /etc/shells\n"
+
+#~ msgid "Can't read %s, exiting."
+#~ msgstr "Kan inte läsa %s, avslutar."
+
+#~ msgid "login: PAM Failure, aborting: %s\n"
+#~ msgstr "login: PAM-fel, avbryter: %s\n"
 
 #~ msgid "timeout = %d, quiet = %d, reboot = %d\n"
 #~ msgstr "time-out = %d, tyst = %d, omstart = %d\n"
@@ -10566,6 +10641,12 @@ msgstr "Slut på minne vid växande av buffert.\n"
 
 #~ msgid "%s: could not find any device /dev/loop#"
 #~ msgstr "%s: kunde inte hitta någon /dev/loop#-enhet"
+
+#~ msgid "mount: backgrounding \"%s\"\n"
+#~ msgstr "mount: förlägger \"%s\" till bakgrunden\n"
+
+#~ msgid "mount: giving up \"%s\"\n"
+#~ msgstr "mount: ger upp \"%s\"\n"
 
 #~ msgid ""
 #~ "usage: %s [-hV]\n"
@@ -10590,8 +10671,29 @@ msgstr "Slut på minne vid växande av buffert.\n"
 #~ msgid "%s: cannot canonicalize %s: %s\n"
 #~ msgstr "%s: kan inte göra %s kanonisk: %s\n"
 
-#~ msgid "umount: %s: device is busy"
-#~ msgstr "umount: %s: enheten är upptagen"
+#~ msgid "%-10s %-10s %-10s %-10s %-10s %-10s\n"
+#~ msgstr "%-10s %-10s %-10s %-10s %-10s %-10s\n"
+
+#~ msgid "%-10s %-10s %-20s %-20s %-20s\n"
+#~ msgstr "%-10s %-10s %-20s %-20s %-20s\n"
+
+#~ msgid "%-10s %-10s %-10s %-10s\n"
+#~ msgstr "%-10s %-10s %-10s %-10s\n"
+
+#~ msgid "%-10s %-10s %-10s %-10s %-10s %-10s %-12s\n"
+#~ msgstr "%-10s %-10s %-10s %-10s %-10s %-10s %-12s\n"
+
+#~ msgid "%-8s %-10s %-26.24s %-26.24s\n"
+#~ msgstr "%-8s %-10s %-26.24s %-26.24s\n"
+
+#~ msgid "%-10s %-10s %-10s %-10s %-10s\n"
+#~ msgstr "%-10s %-10s %-10s %-10s %-10s\n"
+
+#~ msgid "%-8s %-10s %-20s %-20s %-20s\n"
+#~ msgstr "%-8s %-10s %-20s %-20s %-20s\n"
+
+#~ msgid "%-10s %-10s %-10s %-10s %-12s %-12s\n"
+#~ msgstr "%-10s %-10s %-10s %-10s %-12s %-12s\n"
 
 #~ msgid ""
 #~ "usage: renice priority [ [ -p ] pids ] [ [ -g ] pgrps ] [ [ -u ] users ]\n"
