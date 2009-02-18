@@ -30,6 +30,10 @@ FIRST=no	# debian/rules sets this to 'yes' when creating hwclockfirst.sh
 # as machine hardware clock type for Alphas.
 HWCLOCKPARS=
 
+# Set this to the hardware clock device you want to use, it should
+# probably match the CONFIG_RTC_HCTOSYS_DEVICE kernel config option.
+HCTOSYS_DEVICE=rtc0
+
 hwclocksh()
 {
     [ ! -x /sbin/hwclock ] && return 0
@@ -94,7 +98,7 @@ hwclocksh()
 		# Please read /usr/share/doc/util-linux/README.Debian.hwclock
 		# before enabling hwclock --adjust.
 
-		#/sbin/hwclock --adjust $GMT $BADYEAR
+		#/sbin/hwclock --rtc=/dev/$HCTOSYS_DEVICE --adjust $GMT $BADYEAR
 		:
 	    fi
 
@@ -104,7 +108,7 @@ hwclocksh()
 		# Copies Hardware Clock time to System Clock using the correct
 		# timezone for hardware clocks in local time, and sets kernel
 		# timezone. DO NOT REMOVE.
-		if /sbin/hwclock --hctosys $GMT $HWCLOCKPARS $BADYEAR $NOADJ; then
+		if /sbin/hwclock --rtc=/dev/$HCTOSYS_DEVICE --hctosys $GMT $HWCLOCKPARS $BADYEAR $NOADJ; then
 		    #	Announce the local time.
 		    verbose_log_action_msg "System Clock set to: `date $UTC`"
 		else
@@ -133,7 +137,7 @@ hwclocksh()
 		if [ "$GMT" = "-u" ]; then
 		    GMT="--utc"
 		fi
-		if /sbin/hwclock --systohc $GMT $HWCLOCKPARS $BADYEAR $NOADJ; then
+		if /sbin/hwclock --rtc=/dev/$HCTOSYS_DEVICE --systohc $GMT $HWCLOCKPARS $BADYEAR $NOADJ; then
 		    verbose_log_action_msg "Hardware Clock updated to `date`"
 		fi
 	    else
@@ -148,7 +152,7 @@ hwclocksh()
 	    fi
 
 	    if [ "$HWCLOCKACCESS" != no ]; then
-		/sbin/hwclock --show $GMT $HWCLOCKPARS $BADYEAR $NOADJ
+		/sbin/hwclock --rtc=/dev/$HCTOSYS_DEVICE --show $GMT $HWCLOCKPARS $BADYEAR $NOADJ
 	    fi
 	    ;;
 	*)
