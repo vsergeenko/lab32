@@ -122,12 +122,18 @@ hwclocksh()
 	    # WARNING: If you disable this, any changes to the system
 	    #          clock will not be carried across reboots.
 	    #
+	    if [ ! -w /etc/adjtime ]; then
+		NOADJ="--noadjfile"
+	    else
+	    	NOADJ=""
+	    fi
+
 	    if [ "$HWCLOCKACCESS" != no ]; then
 		log_action_msg "Saving the system clock"
 		if [ "$GMT" = "-u" ]; then
 		    GMT="--utc"
 		fi
-		if /sbin/hwclock --systohc $GMT $HWCLOCKPARS $BADYEAR; then
+		if /sbin/hwclock --systohc $GMT $HWCLOCKPARS $BADYEAR $NOADJ; then
 		    verbose_log_action_msg "Hardware Clock updated to `date`"
 		fi
 	    else
@@ -135,8 +141,14 @@ hwclocksh()
 	    fi
 	    ;;
 	show)
+	    if [ ! -w /etc/adjtime ]; then
+		NOADJ="--noadjfile"
+	    else
+	    	NOADJ=""
+	    fi
+
 	    if [ "$HWCLOCKACCESS" != no ]; then
-		/sbin/hwclock --show $GMT $HWCLOCKPARS $BADYEAR
+		/sbin/hwclock --show $GMT $HWCLOCKPARS $BADYEAR $NOADJ
 	    fi
 	    ;;
 	*)
