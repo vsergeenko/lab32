@@ -112,8 +112,7 @@ endif
 	fi
 ifneq ($(DISTRO),Debian)
 	if [ -f debian/util-linux/sbin/hwclock ] ; then \
-	    install -m 755 debian/hwclock.udev debian/util-linux/lib/udev/set_hwclock && \
-	    install -m 644 debian/hwclock.rules debian/util-linux/etc/udev/rules.d/85-hwclock.rules; \
+	    install -m 644 debian/hwclock.rules debian/util-linux/lib/udev/rules.d/85-hwclock.rules; \
 	fi
 endif
 	cd debian; if [ -f util-linux/sbin/fdisk ]; then \
