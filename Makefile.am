@@ -6,6 +6,7 @@ SUBDIRS = \
 	fdisk \
 	getopt \
 	lib \
+	libs \
 	login-utils \
 	misc-utils \
 	po \
@@ -26,6 +27,10 @@ endif
 
 if BUILD_MOUNT
 SUBDIRS += mount
+endif
+
+if BUILD_FSCK
+SUBDIRS += fsck
 endif
 
 ACLOCAL_AMFLAGS = -I m4
@@ -58,7 +63,7 @@ checkconfig:
 		| xargs $(top_srcdir)/tools/checkconfig.sh $(top_srcdir)
 
 
-ENABLE_ALL = --enable-static-programs \
+ENABLE_ALL = --enable-static-programs --with-fsprobe=builtin \
  --enable-elvtune --enable-init --enable-kill --enable-last \
  --enable-mesg --enable-partx --enable-raw --enable-rdev --enable-reset \
  --enable-login-utils --enable-write --enable-arch --enable-mount

@@ -1,7 +1,6 @@
 /*
  * A swapon(8)/swapoff(8) for Linux 0.99.
  */
-#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
@@ -14,15 +13,14 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <stdint.h>
+#include <err.h>
+
 #include "bitops.h"
 #include "blkdev.h"
-#include "xmalloc.h"
 #include "swap_constants.h"
 #include "nls.h"
 #include "fsprobe.h"
-#include "realpath.h"
 #include "pathnames.h"
-#include "sundries.h"
 #include "swapheader.h"
 
 #define PATH_MKSWAP	"/sbin/mkswap"
@@ -47,17 +45,30 @@
 
 #define MAX_PAGESIZE	(64 * 1024)
 
-int all = 0;
+enum {
+	SIG_SWAPSPACE = 1,
+	SIG_SWSUSPEND
+};
+
+#define SWAP_SIGNATURE		"SWAPSPACE2"
+#define SWAP_SIGNATURE_SZ	(sizeof(SWAP_SIGNATURE) - 1)
+
+int all;
 int priority = -1;	/* non-prioritized swap by default */
 
 /* If true, don't complain if the device/file doesn't exist */
-int ifexists = 0;
+int ifexists;
+int fixpgsz;
+
+int verbose;
+char *progname;
 
 static struct option longswaponopts[] = {
 		/* swapon only */
 	{ "priority", required_argument, 0, 'p' },
 	{ "ifexists", 0, 0, 'e' },
 	{ "summary", 0, 0, 's' },
+	{ "fixpgsz", 0, 0, 'f' },
 		/* also for swapoff */
 	{ "all", 0, 0, 'a' },
 	{ "help", 0, 0, 'h' },
@@ -66,7 +77,7 @@ static struct option longswaponopts[] = {
 	{ NULL, 0, 0, 0 }
 };
 
-static struct option *longswapoffopts = &longswaponopts[2];
+static struct option *longswapoffopts = &longswaponopts[4];
 
 static int cannot_find(const char *special);
 
@@ -81,8 +92,8 @@ static int cannot_find(const char *special);
 static void
 swapon_usage(FILE *fp, int n) {
 	fprintf(fp, _("\nUsage:\n"
-	" %1$s -a [-e] [-v]                  enable all swaps from /etc/fstab\n"
-	" %1$s [-p priority] [-v] <special>  enable given swap\n"
+	" %1$s -a [-e] [-v] [-f]             enable all swaps from /etc/fstab\n"
+	" %1$s [-p priority] [-v] [-f] <special>  enable given swap\n"
 	" %1$s -s                            display swap usage summary\n"
 	" %1$s -h                            display help\n"
 	" %1$s -V                            display version\n\n"), progname);
@@ -126,8 +137,7 @@ read_proc_swaps(void) {
 
 	/* skip the first line */
 	if (!fgets(line, sizeof(line), swaps)) {
-		fprintf (stderr, _("%s: %s: unexpected file format\n"),
-			progname, _PATH_PROC_SWAPS);
+		warnx(_("%s: unexpected file format"), _PATH_PROC_SWAPS);
 		fclose(swaps);
 		return;
 	}
@@ -166,9 +176,7 @@ display_summary(void)
        char line[1024] ;
 
        if ((swaps = fopen(_PATH_PROC_SWAPS, "r")) == NULL) {
-               int errsv = errno;
-               fprintf(stderr, "%s: %s: %s\n", progname, _PATH_PROC_SWAPS,
-			strerror(errsv));
+               warn(_("%s: open failed"), _PATH_PROC_SWAPS);
                return -1;
        }
 
@@ -177,22 +185,6 @@ display_summary(void)
 
        fclose(swaps);
        return 0 ;
-}
-
-static int
-swap_is_suspend(const char *device) {
-	const char *type = fsprobe_get_fstype_by_devname(device);
-
-	/* S1SUSPEND/S2SUSPEND =
-	 *
-	 *   "swsuspend" in libblkid
-	 *   "suspend" in libvolume_id
-	 */
-	if (type && (strcmp(type, "suspend") == 0 ||
-			strcmp(type, "swsuspend") == 0))
-		return 1;
-
-	return 0;
 }
 
 /* calls mkswap */
@@ -205,10 +197,11 @@ swap_reinitialize(const char *device) {
 	char *cmd[7];
 	int idx=0;
 
+	warnx(_("%s: reinitializing the swap."), device);
+
 	switch((pid=fork())) {
 	case -1: /* fork error */
-		fprintf(stderr, _("%s: cannot fork: %s\n"),
-			progname, strerror(errno));
+		warn(_("fork failed"));
 		return -1;
 
 	case 0:	/* child */
@@ -224,8 +217,7 @@ swap_reinitialize(const char *device) {
 		cmd[idx++] = (char *) device;
 		cmd[idx++] = NULL;
 		execv(cmd[0], cmd);
-		perror("execv");
-		exit(1); /* error  */
+		err(EXIT_FAILURE, _("execv failed"));
 
 	default: /* parent */
 		do {
@@ -233,8 +225,7 @@ swap_reinitialize(const char *device) {
 					&& errno == EINTR)
 				continue;
 			else if (ret < 0) {
-				fprintf(stderr, _("%s: waitpid: %s\n"),
-					progname, strerror(errno));
+				warn(_("waitpid failed"));
 				return -1;
 			}
 		} while (0);
@@ -246,65 +237,69 @@ swap_reinitialize(const char *device) {
 	return -1; /* error */
 }
 
-int
-swap_detect_signature(const char *buf)
+static int
+swap_rewrite_signature(const char *devname, unsigned int pagesize)
 {
-	if ((memcmp(buf, "SWAP-SPACE", 10) == 0) ||
-            (memcmp(buf, "SWAPSPACE2", 10) == 0))
-		return 1;
+	int fd, rc = -1;
 
-	return 0;
+	fd = open(devname, O_WRONLY);
+	if (fd == -1) {
+		warn(_("%s: open failed"), devname);
+		return -1;
+	}
+
+	if (lseek(fd, pagesize - SWAP_SIGNATURE_SZ, SEEK_SET) < 0) {
+		warn(_("%s: lseek failed"), devname);
+		goto err;
+	}
+
+	if (write(fd, (void *) SWAP_SIGNATURE,
+			SWAP_SIGNATURE_SZ) != SWAP_SIGNATURE_SZ) {
+		warn(_("%s: write signature failed"), devname);
+		goto err;
+	}
+
+	rc  = 0;
+err:
+	close(fd);
+	return rc;
 }
 
-/* return the pagesize the swap format has been built with
- * as swap metadata depends on the pagesize, we have to
- * reinitialize if it does not match with the current pagesize
- * returns 0 if not a valid swap format
- */
-unsigned int
-swap_get_pagesize(const char *dev)
+static int
+swap_detect_signature(const char *buf, int *sig)
 {
-	int fd;
-	char *buf;
-	unsigned int page, last_page = 0;
-	unsigned int pagesize = 0;
-	unsigned long long size, swap_size;
-	int swap_version = 0;
-	int flip = 0;
-	int datasz;
-	struct swap_header_v1_2 *s;
-	struct stat sb;
+	if (memcmp(buf, "SWAP-SPACE", 10) == 0 ||
+            memcmp(buf, "SWAPSPACE2", 10) == 0)
+		*sig = SIG_SWAPSPACE;
 
-	fd = open(dev, O_RDONLY);
-	if (fd == -1) {
-		perror("open");
+	else if (memcmp(buf, "S1SUSPEND", 9) == 0 ||
+		 memcmp(buf, "S2SUSPEND", 9) == 0 ||
+		 memcmp(buf, "ULSUSPEND", 9) == 0 ||
+		 memcmp(buf, "\xed\xc3\x02\xe9\x98\x56\xe5\x0c", 8) == 0)
+		*sig = SIG_SWSUSPEND;
+	else
 		return 0;
-	}
 
-	/* get size */
-	if (fstat(fd, &sb)) {
-		perror("fstat");
-		goto err;
-	}
-	if (S_ISBLK(sb.st_mode)) {
-		if (blkdev_get_size(fd, &size)) {
-			perror("blkdev_get_size");
-			goto err;
-		}
-	} else
-		size = sb.st_size;
+	return 1;
+}
+
+static char *
+swap_get_header(int fd, int *sig, unsigned int *pagesize)
+{
+	char *buf;
+	ssize_t datasz;
+	unsigned int page;
+
+	*pagesize = 0;
+	*sig = 0;
 
 	buf = malloc(MAX_PAGESIZE);
-	if (!buf) {
-		perror("malloc");
-		goto err;
-	}
+	if (!buf)
+		return NULL;
 
 	datasz = read(fd, buf, MAX_PAGESIZE);
-	if (datasz == (ssize_t) -1) {
-		perror("read");
-		goto err1;
-	}
+	if (datasz == (ssize_t) -1)
+		goto err;
 
 	for (page = 0x1000; page <= MAX_PAGESIZE; page <<= 1) {
 		/* skip 32k pagesize since this does not seem to
@@ -313,93 +308,62 @@ swap_get_pagesize(const char *dev)
 			continue;
 		/* the smallest swap area is PAGE_SIZE*10, it means
 		 * 40k, that's less than MAX_PAGESIZE */
-		if (datasz < (page - 10))
+		if (datasz < (page - SWAP_SIGNATURE_SZ))
 			break;
-		if (swap_detect_signature(buf + page - 10)) {
-			pagesize = page;
+		if (swap_detect_signature(buf + page - SWAP_SIGNATURE_SZ, sig)) {
+			*pagesize = page;
 			break;
 		}
 	}
 
-	if (pagesize) {
-		s = (struct swap_header_v1_2 *)buf;
-		if (s->version == 1) {
-			swap_version = 1;
-			last_page = s->last_page;
-		} else if (swab32(s->version) == 1) {
-			flip = 1;
-			swap_version = 1;
-			last_page = swab32(s->last_page);
-		}
-		if (verbose)
-			fprintf(stderr, _("found %sswap v%d signature string"
-					" for %d KiB PAGE_SIZE\n"),
-				flip ? "other-endian " : "", swap_version,
-				pagesize / 1024);
-		swap_size = (last_page + 1) * pagesize;
-		if (swap_size > size) {
-			if (verbose)
-				fprintf(stderr, _("last_page 0x%08llx is larger"
-					" than actual size of swapspace\n"),
-					(unsigned long long)swap_size);
-			pagesize = 0;
-		}
-	}
-
-err1:
-	free(buf);
+	if (*pagesize)
+		return buf;
 err:
-	close(fd);
-	return pagesize;
+	free(buf);
+	return NULL;
+}
+
+/* returns real size of swap space */
+unsigned long long
+swap_get_size(const char *hdr, const char *devname, unsigned int pagesize)
+{
+	unsigned int last_page = 0;
+	int swap_version = 0;
+	int flip = 0;
+	struct swap_header_v1_2 *s;
+
+	s = (struct swap_header_v1_2 *) hdr;
+	if (s->version == 1) {
+		swap_version = 1;
+		last_page = s->last_page;
+	} else if (swab32(s->version) == 1) {
+		flip = 1;
+		swap_version = 1;
+		last_page = swab32(s->last_page);
+	}
+	if (verbose)
+		warnx(_("%s: found %sswap v%d signature string"
+				" for %d KiB PAGE_SIZE\n"),
+			devname,
+			flip ? "other-endian " : "",
+			swap_version,
+			pagesize / 1024);
+
+	return (last_page + 1) * pagesize;
 }
 
 static int
-do_swapon(const char *orig_special, int prio, int canonic) {
-	int status;
-	int reinitialize = 0;
+swapon_checks(const char *special)
+{
 	struct stat st;
-	const char *special = orig_special;
-	unsigned int swap_pagesize = 0;
-
-	if (verbose)
-		printf(_("%s on %s\n"), progname, orig_special);
-
-	if (!canonic) {
-		special = fsprobe_get_devname(orig_special);
-		if (!special)
-			return cannot_find(orig_special);
-	}
+	int fd = -1, sig;
+	char *hdr = NULL;
+	unsigned int pagesize;
+	unsigned long long devsize = 0;
 
 	if (stat(special, &st) < 0) {
-		int errsv = errno;
-		fprintf(stderr, _("%s: cannot stat %s: %s\n"),
-			progname, special, strerror(errsv));
-		return -1;
-	}
-
-	swap_pagesize = swap_get_pagesize(special);
-	if (swap_pagesize && (getpagesize() != swap_pagesize)) {
-		if (verbose)
-			fprintf(stderr, _("%s: %s: swap format pagesize does not match."
-				" Reinitializing the swap.\n"),
-				progname, special);
-		reinitialize = 1;
-	}
-
-	/* We have to reinitialize swap with old (=useless) software suspend
-	 * data. The problem is that if we don't do it, then we get data
-	 * corruption the next time an attempt at unsuspending is made.
-	 */
-	if (swap_is_suspend(special)) {
-		fprintf(stdout, _("%s: %s: software suspend data detected. "
-					"Reinitializing the swap.\n"),
-			progname, special);
-		reinitialize = 1;
-	}
-
-	if (reinitialize) {
-		if (swap_reinitialize(special) < 0)
-			return -1;
+		warn(_("%s: stat failed"), special);
+		goto err;
 	}
 
 	/* people generally dislike this warning - now it is printed
@@ -407,54 +371,121 @@ do_swapon(const char *orig_special, int prio, int canonic) {
 	if (verbose) {
 		int permMask = (S_ISBLK(st.st_mode) ? 07007 : 07077);
 
-		if ((st.st_mode & permMask) != 0) {
-			fprintf(stderr, _("%s: warning: %s has "
-					  "insecure permissions %04o, "
-					  "%04o suggested\n"),
-				progname, special, st.st_mode & 07777,
+		if ((st.st_mode & permMask) != 0)
+			warnx(_("%s: insecure permissions %04o, %04o suggested."),
+				special, st.st_mode & 07777,
 				~permMask & 0666);
-		}
 	}
 
 	/* test for holes by LBT */
 	if (S_ISREG(st.st_mode)) {
 		if (st.st_blocks * 512 < st.st_size) {
-			fprintf(stderr,
-				_("%s: Skipping file %s - it appears "
-				  "to have holes.\n"),
-				progname, special);
-			return -1;
+			warnx(_("%s: skipping - it appears to have holes."),
+				special);
+			goto err;
 		}
+		devsize = st.st_size;
 	}
 
-	{
-		int flags = 0;
+	fd = open(special, O_RDONLY);
+	if (fd == -1) {
+		warn(_("%s: open failed"), special);
+		goto err;
+	}
+
+	if (S_ISBLK(st.st_mode) && blkdev_get_size(fd, &devsize)) {
+		warn(_("%s: get size failed"), special);
+		goto err;
+	}
+
+	hdr = swap_get_header(fd, &sig, &pagesize);
+	if (!hdr) {
+		warn(_("%s: read swap header failed"), special);
+		goto err;
+	}
+
+	if (sig == SIG_SWAPSPACE && pagesize) {
+		unsigned long long swapsize =
+				swap_get_size(hdr, special, pagesize);
+		if (verbose)
+			warnx("%s: pagesize=%d, swapsize=%llu, devsize=%llu",
+				special, pagesize, swapsize, devsize);
+
+		if (swapsize > devsize) {
+			if (verbose)
+				warnx(_("%s: last_page 0x%08llx is larger"
+					" than actual size of swapspace"),
+					special, swapsize);
+		} else if (getpagesize() != pagesize) {
+			if (fixpgsz) {
+				warnx(_("%s: swap format pagesize does not match."),
+					special);
+				if (swap_reinitialize(special) < 0)
+					goto err;
+			} else
+				warnx(_("%s: swap format pagesize does not match. "
+					"(Use --fixpgsz to reinitialize it.)"),
+					special);
+		}
+	} else if (sig == SIG_SWSUSPEND) {
+		/* We have to reinitialize swap with old (=useless) software suspend
+		 * data. The problem is that if we don't do it, then we get data
+		 * corruption the next time an attempt at unsuspending is made.
+		 */
+		warnx(_("%s: software suspend data detected. "
+				"Rewriting the swap signature."),
+			special);
+		if (swap_rewrite_signature(special, pagesize) < 0)
+			goto err;
+	}
+
+	free(hdr);
+	close(fd);
+	return 0;
+err:
+	if (fd != -1)
+		close(fd);
+	free(hdr);
+	return -1;
+}
+
+static int
+do_swapon(const char *orig_special, int prio, int canonic) {
+	int status;
+	const char *special = orig_special;
+	int flags = 0;
+
+	if (verbose)
+		printf(_("%s on %s\n"), progname, orig_special);
+
+	if (!canonic) {
+		special = fsprobe_get_devname_by_spec(orig_special);
+		if (!special)
+			return cannot_find(orig_special);
+	}
+
+	if (swapon_checks(special))
+		return -1;
 
 #ifdef SWAP_FLAG_PREFER
-		if (prio >= 0) {
-			if (prio > SWAP_FLAG_PRIO_MASK)
-				prio = SWAP_FLAG_PRIO_MASK;
-			flags = SWAP_FLAG_PREFER
-				| ((prio & SWAP_FLAG_PRIO_MASK)
-				   << SWAP_FLAG_PRIO_SHIFT);
-		}
+	if (prio >= 0) {
+		if (prio > SWAP_FLAG_PRIO_MASK)
+			prio = SWAP_FLAG_PRIO_MASK;
+		flags = SWAP_FLAG_PREFER
+			| ((prio & SWAP_FLAG_PRIO_MASK)
+			   << SWAP_FLAG_PRIO_SHIFT);
+	}
 #endif
-		status = swapon(special, flags);
-	}
-
-	if (status < 0) {
-		int errsv = errno;
-		fprintf(stderr, "%s: %s: %s\n",
-			progname, orig_special, strerror(errsv));
-	}
+	status = swapon(special, flags);
+	if (status < 0)
+		warn(_("%s: swapon failed"), orig_special);
 
 	return status;
 }
 
 static int
 cannot_find(const char *special) {
-	fprintf(stderr, _("%s: cannot find the device for %s\n"),
-		progname, special);
+	warnx(_("cannot find the device for %s"), special);
 	return -1;
 }
 
@@ -478,7 +509,7 @@ do_swapoff(const char *orig_special, int quiet, int canonic) {
 		printf(_("%s on %s\n"), progname, orig_special);
 
 	if (!canonic) {
-		special = fsprobe_get_devname(orig_special);
+		special = fsprobe_get_devname_by_spec(orig_special);
 		if (!special)
 			return cannot_find(orig_special);
 	}
@@ -486,15 +517,12 @@ do_swapoff(const char *orig_special, int quiet, int canonic) {
 	if (swapoff(special) == 0)
 		return 0;	/* success */
 
-	if (errno == EPERM) {
-		fprintf(stderr, _("Not superuser.\n"));
-		exit(1);	/* any further swapoffs will also fail */
-	}
+	if (errno == EPERM)
+		errx(EXIT_FAILURE, _("Not superuser."));
 
-	if (!quiet || errno == ENOMEM) {
-		fprintf(stderr, "%s: %s: %s\n",
-			progname, orig_special, strerror(errno));
-	}
+	if (!quiet || errno == ENOMEM)
+		warn(_("%s: swapoff failed"), orig_special);
+
 	return -1;
 }
 
@@ -519,12 +547,8 @@ swapon_all(void) {
 	read_proc_swaps();
 
 	fp = setmntent(_PATH_MNTTAB, "r");
-	if (fp == NULL) {
-		int errsv = errno;
-		fprintf(stderr, _("%s: cannot open %s: %s\n"),
-			progname, _PATH_MNTTAB, strerror(errsv));
-		exit(2);
-	}
+	if (fp == NULL)
+		err(2, _("%s: open failed"), _PATH_MNTTAB);
 
 	while ((fstab = getmntent(fp)) != NULL) {
 		const char *special;
@@ -549,7 +573,7 @@ swapon_all(void) {
 		if (skip)
 			continue;
 
-		special = fsprobe_get_devname(fstab->mnt_fsname);
+		special = fsprobe_get_devname_by_spec(fstab->mnt_fsname);
 		if (!special) {
 			if (!ifexists)
 				status |= cannot_find(fstab->mnt_fsname);
@@ -573,12 +597,16 @@ static const char **ulist = NULL;
 static int ulct = 0;
 
 static void addl(const char *label) {
-	llist = (const char **) xrealloc(llist, (++llct) * sizeof(char *));
+	llist = (const char **) realloc(llist, (++llct) * sizeof(char *));
+	if (!llist)
+		exit(EXIT_FAILURE);
 	llist[llct-1] = label;
 }
 
 static void addu(const char *uuid) {
-	ulist = (const char **) xrealloc(ulist, (++ulct) * sizeof(char *));
+	ulist = (const char **) realloc(ulist, (++ulct) * sizeof(char *));
+	if (!ulist)
+		exit(EXIT_FAILURE);
 	ulist[ulct-1] = uuid;
 }
 
@@ -587,7 +615,7 @@ main_swapon(int argc, char *argv[]) {
 	int status = 0;
 	int c, i;
 
-	while ((c = getopt_long(argc, argv, "ahep:svVL:U:",
+	while ((c = getopt_long(argc, argv, "ahefp:svVL:U:",
 				longswaponopts, NULL)) != -1) {
 		switch (c) {
 		case 'a':		/* all */
@@ -607,6 +635,9 @@ main_swapon(int argc, char *argv[]) {
 			break;
 		case 'e':               /* ifexists */
 		        ifexists = 1;
+			break;
+		case 'f':
+			fixpgsz = 1;
 			break;
 		case 's':		/* status report */
 			status = display_summary();
@@ -718,19 +749,16 @@ main_swapoff(int argc, char *argv[]) {
 		 * Doing swapoff -a twice should not give error messages.
 		 */
 		fp = setmntent(_PATH_MNTTAB, "r");
-		if (fp == NULL) {
-			int errsv = errno;
-			fprintf(stderr, _("%s: cannot open %s: %s\n"),
-				progname, _PATH_MNTTAB, strerror(errsv));
-			exit(2);
-		}
+		if (fp == NULL)
+			err(2, _("%s: open failed"), _PATH_MNTTAB);
+
 		while ((fstab = getmntent(fp)) != NULL) {
 			const char *special;
 
 			if (!streq(fstab->mnt_type, MNTTYPE_SWAP))
 				continue;
 
-			special = fsprobe_get_devname(fstab->mnt_fsname);
+			special = fsprobe_get_devname_by_spec(fstab->mnt_fsname);
 			if (!special)
 				continue;
 
@@ -745,16 +773,16 @@ main_swapoff(int argc, char *argv[]) {
 
 int
 main(int argc, char *argv[]) {
-	char *p;
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	progname = argv[0];
-	p = strrchr(progname, '/');
-	if (p)
-		progname = p+1;
+	progname = program_invocation_short_name;
+	if (!progname) {
+		char *p = strrchr(argv[0], '/');
+		progname = p ? p+1 : argv[0];
+	}
 
 	if (streq(progname, "swapon"))
 		return main_swapon(argc, argv);

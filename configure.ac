@@ -1,14 +1,26 @@
-AC_INIT(util-linux-ng, 2.14.2, kzak@redhat.com)
+AC_INIT(util-linux-ng, 2.15-rc1, kzak@redhat.com)
 
 AC_PREREQ(2.60)
 
 AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE([check-news -Wall foreign 1.9 dist-bzip2])
 
 AC_CONFIG_SRCDIR(mount/mount.c)
 
 AC_PREFIX_DEFAULT([/usr])
+
+dnl blkid version definition (the library SONAME is
+dnl "libblkid.so.$BLKID_VERSION_MAJOR", see blkid/Makefile.am)
+dnl ----------------------------------------------------------
+BLKID_VERSION_MAJOR=1
+BLKID_VERSION_MINOR=99
+BLKID_VERSION_RELEASE=0
+BLKID_DATE="10-Feb-2009"
+
+BLKID_VERSION=$BLKID_VERSION_MAJOR.$BLKID_VERSION_MINOR.$BLKID_VERSION_RELEASE
+BLKID_VERSION_INFO=`expr $BLKID_VERSION_MAJOR + $BLKID_VERSION_MINOR`:$BLKID_VERSION_RELEASE:$BLKID_VERSION_MINOR
 
 # Check whether exec_prefix=/usr:
 case $exec_prefix:$prefix in
@@ -21,13 +33,29 @@ NONE:NONE | NONE:/usr | /usr:*)
   case $sbindir in
   '${exec_prefix}/sbin') sbindir=/sbin
     AC_MSG_NOTICE([  --sbindir defaults to /sbin]) ;;
+  esac
+  case $libdir in
+  '${exec_prefix}/lib') libdir=/lib
+    AC_MSG_NOTICE([  --libdir defaults to /lib]) ;;
   esac ;;
 esac
+
+# lib64
+case ${libdir} in
+  *lib64) libdirname=lib64 ;;
+  *) libdirname=lib
+esac
+AC_SUBST([libdirname])
 
 AC_PROG_CC_STDC
 AC_GNU_SOURCE
 AC_CANONICAL_HOST
 AC_C_BIGENDIAN
+
+dnl libtool-2
+LT_INIT
+
+PKG_PROG_PKG_CONFIG
 
 linux_os=no
 case ${host_os} in
@@ -49,16 +77,31 @@ AC_CHECK_HEADERS([linux/compiler.h linux/blkpg.h linux/major.h], [], [], [
 #endif
 ])
 AC_CHECK_HEADERS(
-	[scsi/scsi.h \
+	[err.h \
+	errno.h \
+	getopt.h \
 	langinfo.h \
-	locale.h \
-	sys/user.h \
-	rpcsvc/nfs_prot.h \
-	sys/io.h \
-	pty.h \
-	err.h \
+	linux/fd.h \
 	linux/tiocl.h \
-	linux/version.h])
+	linux/version.h \
+	locale.h \
+	stdlib.h \
+	pty.h \
+	mntent.h \
+	rpcsvc/nfs_prot.h \
+	scsi/scsi.h \
+	stdlib.h \
+	sys/disk.h \
+	sys/disklabel.h \
+	sys/ioctl.h \
+	sys/io.h \
+	sys/mkdev.h \
+	sys/prctl.h \
+	sys/queue.h \
+	sys/stat.h \
+	sys/types.h \
+	sys/user.h \
+	unistd.h ])
 AC_CHECK_HEADERS([linux/raw.h],
 		 [AM_CONDITIONAL([HAVE_RAW], [true])],
 		 [AM_CONDITIONAL([HAVE_RAW], [false])])
@@ -72,17 +115,17 @@ AC_CHECK_FUNCS(
 	personality \
 	updwtmp \
 	lchown \
+	llseek \
+	lseek64 \
+	strtoull \
 	inotify_init \
-	versionsort \
+	prctl \
+	__secure_getenv \
 	rpmatch])
 AC_FUNC_FSEEKO
 
-have_versionsort=no
-AC_CHECK_FUNC([versionsort], [have_versionsort=yes])
-AM_CONDITIONAL([HAVE_VERSIONSORT], test "x$have_versionsort" = xyes)
-
 dnl Static compilation
-m4_define([UTIL_STATIC_PROGRAMS], [losetup, mount, umount, fdisk, sfdisk])
+m4_define([UTIL_STATIC_PROGRAMS], [losetup, mount, umount, fdisk, sfdisk, blkid])
 
 AC_ARG_ENABLE([static-programs],
   [AS_HELP_STRING([--enable-static-programs=LIST],
@@ -94,24 +137,6 @@ yes) enable_static_programs=m4_quote(UTIL_STATIC_PROGRAMS) ;;
 no) enable_static_programs= ;;
 esac
 
-if test "$enable_static_programs" != ""; then
-  AC_CACHE_CHECK([whether linker accepts -static],
-  [static_cv_option],
-  [SAVE_LDFLAGS="$LDFLAGS"
-   LDFLAGS="$LDFLAGS -static"
-   AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#include <stdio.h>
-]], [[
-fflush(stdout);
-]])], [static_cv_option=yes],[static_cv_option=no])
-   LDFLAGS="$SAVE_LDFLAGS"
-  ])
-  if test "x$static_cv_option" = xno; then
-     AC_MSG_ERROR([the linker does not accept option -static])
-  fi
-fi
-AC_SUBST([LDFLAGS_STATIC], [-static])
-
 dnl Set all the individual AM_CONDITIONALs
 m4_foreach([UTIL_PRG], m4_defn([UTIL_STATIC_PROGRAMS]), [
   case ,$enable_static_programs, in
@@ -120,8 +145,6 @@ m4_foreach([UTIL_PRG], m4_defn([UTIL_STATIC_PROGRAMS]), [
   AM_CONDITIONAL([HAVE_STATIC_]m4_toupper(UTIL_PRG),
     [test "x$static_[]UTIL_PRG" = xyes])
 ])
-
-
 
 dnl UTIL_CHECK_LIB(LIBRARY, FUNCTION, [VARSUFFIX = $1]))
 dnl The VARSUFFIX is optional and overrides the default behaviour. For example:
@@ -145,29 +168,55 @@ fi
 UTIL_CHECK_LIB(util, openpty)
 UTIL_CHECK_LIB(termcap, tgetnum)
 
+
 AC_ARG_WITH([fsprobe],
-  [AS_HELP_STRING([--with-fsprobe], [library to guess filesystems (blkid|volume_id), default is blkid])],
+  [AS_HELP_STRING([--with-fsprobe=LIB], [library to guess filesystems, LIB should be builtin|blkid|volume_id, default is blkid])],
   [], [with_fsprobe=blkid]
 )
+
+build_libblkid=no
+have_blkid_evaluate=no
+have_blkid=no
+have_volume_id=no
+
+if test "x$with_fsprobe" = xblkid; then
+  PKG_CHECK_MODULES(BLKID, blkid, [have_blkid=yes], [])
+  AC_CHECK_LIB(blkid, blkid_evaluate_spec, [have_blkid_evaluate=yes], [])
+elif test "x$with_fsprobe" = xvolume_id; then
+  PKG_CHECK_MODULES(VOLUME_ID, volume_id, [have_volume_id=yes], [])
+elif test "x$with_fsprobe" = xbuiltin; then
+  have_blkid=yes
+  build_libblkid=yes
+  have_blkid_evaluate=yes
+  AC_SUBST(BLKID_VERSION_MAJOR)
+  AC_SUBST(BLKID_VERSION_MINOR)
+  AC_SUBST(BLKID_VERSION_RELEASE)
+  AC_SUBST(BLKID_VERSION)
+  AC_SUBST(BLKID_VERSION_INFO)
+  AC_DEFINE_UNQUOTED(BLKID_VERSION, "$BLKID_VERSION", [libblkid version string])
+  AC_DEFINE_UNQUOTED(BLKID_DATE, "$BLKID_DATE", [libblkid date string])
+fi
+
+if  test "x$have_blkid" = xyes; then
+  AC_DEFINE(HAVE_LIBBLKID, 1, [Define to 1 if you have the -lblkid.])
+  if test "x$have_blkid_evaluate" = xyes; then
+    AC_DEFINE(HAVE_BLKID_EVALUATE_SPEC, 1, [Define to 1 if you have the blkid_evaluate_spec().])
+  fi
+fi
+
+AM_CONDITIONAL(HAVE_BLKID, test "x$have_blkid" = xyes)
+AM_CONDITIONAL(HAVE_VOLUME_ID, test "x$have_volume_id" = xyes)
+AM_CONDITIONAL(BUILD_LIBBLKID, test "x$build_libblkid" = xyes)
+
 
 AC_ARG_ENABLE([mount],
   AS_HELP_STRING([--disable-mount], [do not build mount utilities]),
   [], enable_mount=check
 )
-
-AM_CONDITIONAL(HAVE_BLKID, false)
-AM_CONDITIONAL(HAVE_VOLUME_ID, false)
+build_mount=yes
 if test "${enable_mount}" = "no"; then
   build_mount=no
 elif test "x$linux_os" = xyes; then
-  build_mount=yes
-  have_blkid=no
-  have_volume_id=no
-  if test "x$with_fsprobe" = xblkid; then
-    UTIL_CHECK_LIB(blkid, blkid_known_fstype)
-  elif test "x$with_fsprobe" = xvolume_id; then
-    UTIL_CHECK_LIB(volume_id, volume_id_encode_string)
-  fi
   if test "x$have_blkid" = xno && test "x$have_volume_id" = xno; then
     AC_MSG_ERROR([blkid or volume_id is needed to build util-linux-ng mount utilities])
   fi
@@ -176,6 +225,19 @@ else
   build_mount=no
 fi
 AM_CONDITIONAL(BUILD_MOUNT, test "x$build_mount" = xyes)
+
+
+AC_ARG_ENABLE([fsck],
+  AS_HELP_STRING([--enable-fsck], [do build fsck]),
+  [], enable_fsck=no
+)
+if test "x$enable_fsck" = xyes; then
+  if test "x$have_blkid" = xno && test "x$have_volume_id" = xno; then
+    AC_MSG_ERROR([libblkid or libvolume_id is needed to build util-linux-ng fsck])
+  fi
+fi
+AM_CONDITIONAL(BUILD_FSCK, test "x$enable_fsck" = xyes)
+
 
 dnl UTIL_PKG_STATIC(VARIABLE, MODULES)
 dnl ----------------------------------
@@ -189,20 +251,18 @@ AC_DEFUN([UTIL_PKG_STATIC], [
 
 # These default values should work in most cases:
 : ${BLKID_LIBS='-lblkid -luuid'}
-: ${VOLUMEID_LIBS='-lvolume_id'}
+: ${VOLUME_ID_LIBS='-lvolume_id'}
 
 # ... but for static build, we need to consult pkg-config:
 if test -n "$enable_static_programs"; then
   case $with_fsprobe in
   blkid) UTIL_PKG_STATIC([BLKID_LIBS_STATIC], [blkid]) ;;
-  volume_id) UTIL_PKG_STATIC([VOLUMEID_LIBS_STATIC], [libvolume_id]) ;;
+  volume_id) UTIL_PKG_STATIC([VOLUME_ID_LIBS_STATIC], [libvolume_id]) ;;
   esac
 fi
 
-AC_ARG_VAR([BLKID_LIBS], [-l options for linking dynamically with blkid])
 AC_ARG_VAR([BLKID_LIBS_STATIC], [-l options for linking statically with blkid])
-AC_ARG_VAR([VOLUMEID_LIBS], [-l options for linking dynamically with volume_id])
-AC_ARG_VAR([VOLUMEID_LIBS_STATIC], [-l options for linking statically with volume_id])
+AC_ARG_VAR([VOLUME_ID_LIBS_STATIC], [-l options for linking statically with volume_id])
 
 
 AM_GNU_GETTEXT_VERSION([0.14.1])
@@ -607,7 +667,6 @@ else
   esac
 fi
 
-
 AC_ARG_ENABLE([schedutils],
   AS_HELP_STRING([--disable-schedutils], [do not build chrt, ionice, teskset]),
   [], enable_schedutils=yes
@@ -710,10 +769,17 @@ AC_CONFIG_FILES([
 Makefile
 disk-utils/Makefile
 fdisk/Makefile
+fsck/Makefile
 getopt/Makefile
 hwclock/Makefile
 include/Makefile
 lib/Makefile
+libs/Makefile
+libs/blkid/blkid.pc
+libs/blkid/Makefile
+libs/blkid/bin/Makefile
+libs/blkid/src/Makefile
+libs/blkid/src/probers/Makefile
 login-utils/Makefile
 misc-utils/Makefile
 mount/Makefile

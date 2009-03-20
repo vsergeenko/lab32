@@ -6,70 +6,87 @@ bin_PROGRAMS = mount umount
 sbin_PROGRAMS = losetup swapon
 dist_man_MANS = fstab.5 mount.8 swapoff.8 swapon.8 umount.8 losetup.8
 
-utils_common = sundries.c xmalloc.c realpath.c fsprobe.c
+# generic sources for all programs (mount, umount, losetup)
+srcs_common = sundries.c xmalloc.c ../lib/canonicalize.c sundries.h xmalloc.h rmd160.c
 
-if !HAVE_VERSIONSORT
-fallback =  ../lib/strverscmp.c
-endif
+# generic header for mount and umount
+hdrs_mount = fstab.h mount_mntent.h mount_constants.h \
+	lomount.h getusername.h loop.h
 
-headers_common = fstab.h mount_mntent.h mount_constants.h \
-	lomount.h fsprobe.h realpath.h xmalloc.h \
-	getusername.h loop.h sundries.h
+# generic sources for mount and umount
+srcs_mount = fstab.c mount_mntent.c getusername.c lomount.c devname.c devname.h \
+	$(srcs_common) $(hdrs_mount) ../lib/env.c ../lib/linux_version.c \
+	../lib/blkdev.c ../lib/fsprobe.c
 
-mount_common = fstab.c mount_mntent.c getusername.c lomount.c rmd160.c \
-	$(utils_common) $(headers_common) ../lib/env.c ../lib/linux_version.c \
-	../lib/blkdev.c $(fallback)
+# generic flags for all programs (except losetup)
+# -- note that pkg-config autoconf macros (pkg.m4) does not differentiate
+#    between CFLAGS and CPPFLAGS, we follow this behaviour and use CFLAGS only.
+ldadd_common =
+ldadd_static =
+cflags_common =
 
+# generic libtool options for all static programs
+ldflags_static ="-all-static"
 
-mount_SOURCES = mount.c $(mount_common) ../lib/setproctitle.c
-mount_CFLAGS = $(SUID_CFLAGS) $(AM_CFLAGS)
+mount_SOURCES = mount.c $(srcs_mount) ../lib/setproctitle.c
+mount_CFLAGS = $(SUID_CFLAGS) $(AM_CFLAGS) $(cflags_common)
 mount_LDFLAGS = $(SUID_LDFLAGS) $(AM_LDFLAGS)
+mount_LDADD = $(ldadd_common)
 
-umount_SOURCES = umount.c $(mount_common)
-umount_CFLAGS = $(SUID_CFLAGS) $(AM_CFLAGS)
+umount_SOURCES = umount.c $(srcs_mount)
+umount_CFLAGS = $(SUID_CFLAGS) $(AM_CFLAGS) $(cflags_common)
 umount_LDFLAGS = $(SUID_LDFLAGS) $(AM_LDFLAGS)
+umount_LDADD = $(ldadd_common)
 
-swapon_SOURCES = swapon.c swap_constants.h $(utils_common) \
-	../lib/linux_version.c ../lib/blkdev.c
+swapon_SOURCES = swapon.c swap_constants.h ../lib/linux_version.c \
+	../lib/blkdev.c ../lib/fsprobe.c ../lib/canonicalize.c
+swapon_CFLAGS = $(cflags_common)
+swapon_LDADD = $(ldadd_common)
 
-losetup_SOURCES = lomount.c sundries.c xmalloc.c realpath.c \
-	loop.h lomount.h xmalloc.h sundries.h realpath.h rmd160.c $(fallback)
+losetup_SOURCES = lomount.c $(srcs_common) loop.h lomount.h
 losetup_CPPFLAGS = -DMAIN $(AM_CPPFLAGS)
 
-
-mount_LDADD = $(LDADD_common)
-umount_LDADD = $(LDADD_common)
-swapon_LDADD = $(LDADD_common)
-
-LDADD_common =
-LDADD_common_static =
 mount_static_LDADD =
 
 if HAVE_STATIC_MOUNT
 bin_PROGRAMS += mount.static
 mount_static_SOURCES = $(mount_SOURCES)
-mount_static_LDFLAGS = $(LDFLAGS_STATIC)
-mount_static_LDADD += $(LDADD_common_static)
+mount_static_CFLAGS = $(cflags_common)
+mount_static_LDFLAGS = $(ldflags_static)
+mount_static_LDADD += $(ldadd_static)
 endif
 
 if HAVE_STATIC_UMOUNT
 bin_PROGRAMS += umount.static
 umount_static_SOURCES = $(umount_SOURCES)
-umount_static_LDFLAGS = $(LDFLAGS_STATIC)
-umount_static_LDADD = $(LDADD_common_static)
+umount_static_CFLAGS = $(cflags_common)
+umount_static_LDFLAGS = $(ldflags_static)
+umount_static_LDADD = $(ldadd_static)
 endif
 
 if HAVE_STATIC_LOSETUP
 bin_PROGRAMS += losetup.static
 losetup_static_SOURCES = $(losetup_SOURCES)
-losetup_static_LDFLAGS = $(LDFLAGS_STATIC)
+losetup_static_LDFLAGS = $(ldflags_static)
 losetup_static_CPPFLAGS = -DMAIN $(AM_CPPFLAGS)
 endif
 
 if HAVE_BLKID
-utils_common += fsprobe_blkid.c
-LDADD_common += $(BLKID_LIBS)
-LDADD_common_static += $(BLKID_LIBS_STATIC)
+if BUILD_LIBBLKID
+ldadd_common += $(ul_libblkid_la)
+ldadd_static += $(ul_libblkid_la)
+cflags_common += -I$(ul_libblkid_srcdir)
+else
+ldadd_common += $(BLKID_LIBS)
+ldadd_static += $(BLKID_LIBS_STATIC)
+cflags_common += $(BLKID_CFLAGS)
+endif
+endif
+
+if HAVE_VOLUME_ID
+ldadd_common += $(VOLUME_ID_LIBS)
+ldadd_static += $(VOLUME_ID_LIBS_STATIC)
+cflags_common += $(VOLUME_ID_CFLAGS)
 endif
 
 if HAVE_SELINUX
@@ -77,14 +94,8 @@ mount_LDADD += $(SELINUX_LIBS)
 mount_static_LDADD += $(SELINUX_LIBS_STATIC)
 endif
 
-if HAVE_VOLUME_ID
-utils_common += fsprobe_volumeid.c
-LDADD_common += $(VOLUMEID_LIBS)
-LDADD_common_static += $(VOLUMEID_LIBS_STATIC)
-endif
-
 noinst_PROGRAMS = mtab_lock_test
-mtab_lock_test_SOURCES = fstab.c sundries.c xmalloc.c $(headers_common)
+mtab_lock_test_SOURCES = fstab.c $(srcs_common) $(hdrs_mount)
 mtab_lock_test_CPPFLAGS = -DMAIN_TEST_MTABLOCK $(AM_CPPFLAGS)
 
 install-exec-hook:

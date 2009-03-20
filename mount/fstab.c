@@ -19,7 +19,6 @@
 #include "fsprobe.h"
 #include "pathnames.h"
 #include "nls.h"
-#include "realpath.h"
 
 #define streq(s, t)	(strcmp ((s), (t)) == 0)
 
@@ -389,13 +388,13 @@ getfs_by_dir (const char *dir) {
 /* Find the device SPEC in fstab.  */
 struct mntentchn *
 getfs_by_spec (const char *spec) {
-	char *name, *value, *cspec;
+	char *name = NULL, *value = NULL, *cspec;
 	struct mntentchn *mc = NULL;
 
 	if (!spec)
 		return NULL;
 
-	if (parse_spec(spec, &name, &value) != 0)
+	if (fsprobe_parse_spec(spec, &name, &value) != 0)
 		return NULL;				/* parse error */
 
 	if (name) {
@@ -917,16 +916,13 @@ update_mtab (const char *dir, struct my_mntent *instead) {
  *  number and writes the number back to the file.
  */
 /* dummy */
-const char *fsprobe_get_label_by_devname(const char *spec) { return NULL; }
-const char *fsprobe_get_uuid_by_devname(const char *spec) { return NULL; }
+char *fsprobe_get_label_by_devname(const char *spec) { return NULL; }
+char *fsprobe_get_uuid_by_devname(const char *spec) { return NULL; }
+int fsprobe_parse_spec(const char *spec, char **name, char **value) { return 0; }
 struct my_mntent *my_getmntent (mntFILE *mfp) { return NULL; }
 mntFILE *my_setmntent (const char *file, char *mode) { return NULL; }
 void my_endmntent (mntFILE *mfp) { }
 int my_addmntent (mntFILE *mfp, struct my_mntent *mnt) { return 0; }
-
-char *canonicalize (const char *path) {  return NULL; }
-char *canonicalize_spec (const char *path) { return NULL; }
-int is_pseudo_fs(const char *type) { return 0; };
 
 int
 main(int argc, char **argv)

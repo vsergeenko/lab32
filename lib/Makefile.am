@@ -1,13 +1,15 @@
 include $(top_srcdir)/config/include-Makefile.am
 
-noinst_PROGRAMS = test_blkdev
+AM_CPPFLAGS += -DTEST_PROGRAM
 
-test_blkdev_SOURCES = 	$(top_srcdir)/lib/blkdev.c
+noinst_PROGRAMS = test_blkdev test_ismounted test_pttype test_wholedisk
+
+test_blkdev_SOURCES = blkdev.c
+test_ismounted_SOURCES = ismounted.c
+test_pttype_SOURCES = pttype.c
+test_wholedisk_SOURCES = wholedisk.c
 
 if LINUX
-test_blkdev_SOURCES += $(top_srcdir)/lib/linux_version.c
+test_blkdev_SOURCES += linux_version.c
 endif
-
-test_blkdev_CFLAGS = -DMAIN_TEST_BLKDEV
-
 

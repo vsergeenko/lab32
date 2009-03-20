@@ -26,6 +26,7 @@
 #include "blkdev.h"
 #include "common.h"
 #include "fdisk.h"
+#include "wholedisk.h"
 
 #include "fdisksunlabel.h"
 #include "fdisksgilabel.h"
@@ -212,11 +213,12 @@ unsigned long long sector_offset = 1, extended_offset = 0, sectors;
 unsigned int	heads,
 	cylinders,
 	sector_size = DEFAULT_SECTOR_SIZE,
+	sector_factor = 1,
 	user_set_sector_size = 0,
 	units_per_sector = 1,
 	display_in_cyl_units = 1;
 
-unsigned long long total_number_of_sectors;
+unsigned long long total_number_of_sectors;	/* (!) 512-byte sectors */
 
 #define dos_label (!sun_label && !sgi_label && !aix_label && !mac_label && !osf_label)
 int	sun_label = 0;			/* looking at sun disklabel */
@@ -681,10 +683,12 @@ warn_cylinders(void) {
 		fprintf(stderr, _("\n"
 "WARNING: The size of this disk is %d.%d TB (%llu bytes).\n"
 "DOS partition table format can not be used on drives for volumes\n"
-"larger than 2.2 TB (2199023255040 bytes). Use parted(1) and GUID \n"
+"larger than (%llu bytes) for %d-byte sectors. Use parted(1) and GUID \n"
 "partition table format (GPT).\n\n"),
 			hectogiga / 10, hectogiga % 10,
-			total_number_of_sectors << 9);
+			total_number_of_sectors << 9,
+			(unsigned long long ) UINT_MAX * sector_size,
+			sector_size);
 	}
 }
 
@@ -905,11 +909,10 @@ get_partition_table_geometry(void) {
 
 void
 get_geometry(int fd, struct geom *g) {
-	int sec_fac;
-	unsigned long long llsectors, llcyls;
+	unsigned long long llcyls;
 
 	get_sectorsize(fd);
-	sec_fac = sector_size / 512;
+	sector_factor = sector_size / 512;
 	guess_device_type(fd);
 	heads = cylinders = sectors = 0;
 	kern_heads = kern_sectors = 0;
@@ -925,16 +928,14 @@ get_geometry(int fd, struct geom *g) {
 		pt_sectors ? pt_sectors :
 		kern_sectors ? kern_sectors : 63;
 
-	if (blkdev_get_sectors(fd, &llsectors) == -1)
-		llsectors = 0;
-
-	total_number_of_sectors = llsectors;
+	if (blkdev_get_sectors(fd, &total_number_of_sectors) == -1)
+		total_number_of_sectors = 0;
 
 	sector_offset = 1;
 	if (dos_compatible_flag)
 		sector_offset = sectors;
 
-	llcyls = total_number_of_sectors / (heads * sectors * sec_fac);
+	llcyls = total_number_of_sectors / (heads * sectors * sector_factor);
 	cylinders = llcyls;
 	if (cylinders != llcyls)	/* truncated? */
 		cylinders = ~0;
@@ -1640,7 +1641,7 @@ list_disk_geometry(void) {
 	       heads, sectors, cylinders);
 	if (units_per_sector == 1)
 		printf(_(", total %llu sectors"),
-		       total_number_of_sectors / (sector_size/512));
+		       total_number_of_sectors / sector_factor);
 	printf("\n");
 	printf(_("Units = %s of %d * %d = %d bytes\n"),
 	       str_units(PLURAL),
@@ -1938,7 +1939,8 @@ check(int n, unsigned int h, unsigned int s, unsigned int c,
 static void
 verify(void) {
 	int i, j;
-	unsigned long total = 1;
+	unsigned long long total = 1;
+	unsigned long long n_sectors = (total_number_of_sectors / sector_factor);
 	unsigned long long first[partitions], last[partitions];
 	struct partition *p;
 
@@ -2001,12 +2003,12 @@ verify(void) {
 		}
 	}
 
-	if (total > total_number_of_sectors)
-		printf(_("Total allocated sectors %ld greater than the maximum"
-			" %lld\n"), total, total_number_of_sectors);
-	else if (total < total_number_of_sectors)
-		printf(_("%lld unallocated sectors\n"),
-		       total_number_of_sectors - total);
+	if (total > n_sectors)
+		printf(_("Total allocated sectors %llu greater than the maximum"
+			" %llu\n"), total, n_sectors);
+	else if (total < n_sectors)
+		printf(_("%lld unallocated %d-byte sectors\n"),
+		       n_sectors - total, sector_size);
 }
 
 static void
@@ -2030,7 +2032,7 @@ add_partition(int n, int sys) {
 		if (display_in_cyl_units || !total_number_of_sectors)
 			llimit = heads * sectors * cylinders - 1;
 		else
-			llimit = total_number_of_sectors - 1;
+			llimit = (total_number_of_sectors / sector_factor) - 1;
 		limit = llimit;
 		if (limit != llimit)
 			limit = 0x7fffffff;
@@ -2567,7 +2569,7 @@ tryprocpt(void) {
 			    &ma, &mi, &sz, ptname) != 4)
 			continue;
 		snprintf(devname, sizeof(devname), "/dev/%s", ptname);
-		if (is_probably_full_disk(devname))
+		if (is_whole_disk(devname))
 			try(devname, 0);
 	}
 	fclose(procpt);
@@ -2611,7 +2613,7 @@ main(int argc, char **argv) {
 			*/
 			sector_size = atoi(optarg);
 			if (sector_size != 512 && sector_size != 1024 &&
-			    sector_size != 2048)
+			    sector_size != 2048 && sector_size != 4096)
 				fatal(usage);
 			sector_offset = 2;
 			user_set_sector_size = 1;

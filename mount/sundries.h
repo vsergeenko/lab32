@@ -35,7 +35,10 @@ char *xstrndup (const char *s, int n);
 char *xstrconcat3 (char *, const char *, const char *);
 char *xstrconcat4 (char *, const char *, const char *, const char *);
 
-int parse_spec(const char *spec, char **name, char **value);
+int is_pseudo_fs(const char *type);
+
+char *canonicalize (const char *path);
+char *canonicalize_spec (const char *path);
 
 /* exit status - bits below are ORed */
 #define EX_USAGE	1	/* incorrect invocation or permission */

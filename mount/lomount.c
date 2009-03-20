@@ -23,7 +23,6 @@
 #include "nls.h"
 #include "sundries.h"
 #include "xmalloc.h"
-#include "realpath.h"
 #include "pathnames.h"
 
 #ifndef HAVE_VERSIONSORT
@@ -162,8 +161,7 @@ looplist_open(struct looplist *ll, int flag)
 static void
 looplist_close(struct looplist *ll)
 {
-	if (ll->minors)
-		free(ll->minors);
+	free(ll->minors);
 	if (ll->proc)
 		fclose(ll->proc);
 	ll->minors = NULL;
@@ -881,23 +879,27 @@ set_loop(const char *device, const char *file, unsigned long long offset,
 
 int
 del_loop (const char *device) {
-	int fd;
+	int fd, errsv;
 
 	if ((fd = open (device, O_RDONLY)) < 0) {
-		int errsv = errno;
-		fprintf(stderr, _("loop: can't delete device %s: %s\n"),
-			device, strerror (errsv));
-		return 1;
+		errsv = errno;
+		goto error;
 	}
 	if (ioctl (fd, LOOP_CLR_FD, 0) < 0) {
-		perror ("ioctl: LOOP_CLR_FD");
-		close(fd);
-		return 1;
+		errsv = errno;
+		goto error;
 	}
 	close (fd);
 	if (verbose > 1)
 		printf(_("del_loop(%s): success\n"), device);
 	return 0;
+
+error:
+	fprintf(stderr, _("loop: can't delete device %s: %s\n"),
+		 device, strerror(errsv));
+	if (fd >= 0)
+		close(fd);
+	return 1;
 }
 
 #else /* no LOOP_SET_FD defined */
@@ -942,7 +944,7 @@ usage(void) {
 	fprintf(stderr, _("\nUsage:\n"
   " %1$s loop_device                             give info\n"
   " %1$s -a | --all                              list all used\n"
-  " %1$s -d | --detach <loopdev>                 delete\n"
+  " %1$s -d | --detach <loopdev> [<loopdev> ...] delete\n"
   " %1$s -f | --find                             find unused\n"
   " %1$s -j | --associated <file> [-o <num>]     list all associated with <file>\n"
   " %1$s [ options ] {-f|--find|loopdev} <file>  setup\n"),
@@ -1063,7 +1065,7 @@ main(int argc, char **argv) {
 	if (argc == 1) {
 		usage();
 	} else if (delete) {
-		if (argc != optind+1 || encryption || offset || sizelimit ||
+		if (argc < optind+1 || encryption || offset || sizelimit ||
 				find || all || showdev || assoc || ro)
 			usage();
 	} else if (find) {
@@ -1101,7 +1103,7 @@ main(int argc, char **argv) {
 			return 0;
 		}
 		file = argv[optind];
-	} else {
+	} else if (!delete) {
 		device = argv[optind];
 		if (argc == optind+1)
 			file = NULL;
@@ -1109,9 +1111,10 @@ main(int argc, char **argv) {
 			file = argv[optind+1];
 	}
 
-	if (delete)
-		res = del_loop(device);
-	else if (file == NULL)
+	if (delete) {
+		while (optind < argc)
+			res += del_loop(argv[optind++]);
+	} else if (file == NULL)
 		res = show_loop(device);
 	else {
 		if (passfd && sscanf(passfd, "%d", &pfd) != 1)

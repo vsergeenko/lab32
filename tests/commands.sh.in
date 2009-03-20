@@ -1,7 +1,4 @@
-TOPDIR=@top_srcdir@
-TS_TOPDIR=$TOPDIR/tests
-
-AWK=@AWK@
+TOPDIR="$TS_TOPDIR/.."
 
 # Misc settings
 TS_TESTUSER=${TS_TESTUSER:-"test"}
@@ -11,6 +8,8 @@ TS_HELPER_SYSINFO="$TS_TOPDIR/helpers/test_sysinfo"
 TS_HELPER_PATHS="$TS_TOPDIR/helpers/test_pathnames"
 TS_HELPER_BYTESWAP="$TS_TOPDIR/helpers/test_byteswap"
 TS_HELPER_MD5="$TS_TOPDIR/helpers/test_md5"
+
+TS_HELPER_ISMOUNTED="$TOPDIR/lib/test_ismounted"
 
 # external commands
 TS_ECMD_BLKID="@BLKID@"
@@ -46,5 +45,6 @@ TS_CMD_ISLOCAL=${TS_CMD_ISLOCAL-"$TOPDIR/login-utils/islocal_test"}
 TS_CMD_HWCLOCK=${TS_CMD_HWCLOCK-"$TOPDIR/hwclock/hwclock"}
 TS_CMD_LSCPU=${TS_CMD_LSCPU-"$TOPDIR/sys-utils/lscpu"}
 
+TS_CMD_BLKID=${TS_CMD_BLKID-"$TOPDIR/libs/blkid/bin/blkid"}
 
 

@@ -3,6 +3,8 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #define DEFAULT_SECTOR_SIZE       512
 
@@ -27,8 +29,6 @@
 /* ioctls introduced in 2.2.16, removed in 2.5.58 */
 #define BLKELVGET  _IOR(0x12,106,size_t) /* elevator get */
 #define BLKELVSET  _IOW(0x12,107,size_t) /* elevator set */
-
-#define BLKGETLASTSECT _IO(0x12,108) /* get last sector of block device */
 
 #define BLKBSZGET  _IOR(0x12,112,size_t)
 #define BLKBSZSET  _IOW(0x12,113,size_t)
