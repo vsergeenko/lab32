@@ -1,3 +1,613 @@
+util-linux (2.15~rc1-1) experimental; urgency=low
+
+  [Vincent Deffontaines]
+
+  * fdisk: suggest partprobe(8) and kpartx(8) when BLKRRPART failed
+
+  [Roy Peled]
+
+  * mkfs.cramfs: lower memory requirements for layouts with duplicate files
+
+  [Matthias Koenig]
+
+  * hwclock: omit warning about drift if --noadjfile given
+  * mount: retry on ENOMEDIUM
+  * lscpu: return EXIT_SUCCESS at the end
+  * fdisk: add some missing includes
+  * mkfs.minix: fix size detection
+  * cfdisk: accept yes/no as fallback
+  * losetup: try to set up loop readonly if EACCES
+  * include: move swapheader.h to include
+  * swapon: add swap format detection and pagesize check
+
+  [Tim Gardner]
+
+  * Disable the fallback clause in hwclock when /dev/rtc cannot be opened. 
+    LP: #274402
+
+  [Kalev Soikonen]
+
+  * hwclock: unshadow a diagnostic printf
+  * hwclock: delay loop in set_hardware_clock_exact
+
+  [maximilian attems]
+
+  * mount: sundries.h add klibc support
+  * mount: s/MOUNTED/_PATH_MOUNTED/
+  * disk-utils: s/MOUNTED/_PATH_MOUNTED/
+  * dmesg: nuke old glibc 5 support
+  * misc-utils: write include signal.h directly
+  * whereis: include dirent.h instead sys/dir.h
+  * disk-utils: include fcntl.h directly (mkfs.cramfs, raw)
+  * fdisk: exit(3) needs stdlib.h include
+  * remove CVS keywords
+  * mount: add shortoptions for bind, move and rbind
+  * use getpagesize()
+  * partx: don't redeclare daddr_t
+
+  [CAI Qian]
+
+  * sfdisk: fix Compilation Error
+
+  [Marco d'Itri]
+
+  * rtcwake: support not suspending
+
+  [Jakob Unterwurzacher]
+
+  * ionice: Extend the man page to explain the "none" class and cpu-nice
+    inheritance
+
+  [Alon Bar-Lev]
+
+  * build-sys: add --disable-mount
+
+  [Adam Jackson]
+
+  * dmesg: Add -r (raw) option.
+
+  [David Brownell]
+
+  * hwclock: remove x86_64-specific bogon
+
+  [Karel Zak]
+
+  * mount: add norealtime to mount.8
+  * hwclock: always reads hardware clock.  Closes: #478663
+  * mount: warn on "file_t" selinux context.  red: #390691
+  * selinux: is_selinux_enabled() returns 0, 1 and -1
+  * umount: improve "-d" option for autoclear loops
+  * losetup: clean up code around LO_FLAGS_AUTOCLEAR
+  * write: doesn't check for tty group.  red: #454252
+  * build-sys: cleanup sys-utils/Makefile.am
+  * mount: make file_t SELinux warning optional and shorter
+  * mount: add info about tz=UTC option for FAT to mount.8
+  * losetup: looplist_* refactoring, remove scandir()
+  * rtcwake: cleanup return codes
+  * hwclock: cleanup help output and man page
+  * mount: add docs about utf8=0 for vfat.  red: #454354
+  * hwclock: use carefully synchronize_to_clock_tick() return codes
+  * hwclock: use time limit for synchronization busy wait
+  * hwclock: read_hardware_clock_rtc() need to return error codes
+  * scriptreplay: new implementation is out-of-sync
+  * ionice: cleanup man page
+  * ionice: cleanup error messages, add NLS support
+  * docs: TODO update
+  * tests: detect libvolume_id when mount(8) is compiled
+  * fdisk: remove obsolete information from man page
+  * hwclock: don't open /dev/rtc repeatedly
+  * swapon: -a has to complain, fix leaks
+  * fdisk: warn users about 2.2TB dos partition limit
+  * fdisk: don't check for GPT when asked for disk size only
+  * fdisk: round reported sizes rather than truncate
+  * losetup: remove dependence on minor numbers
+  * login: fix warning "dereferencing type-punned pointer will break
+    strict-aliasing rules"
+  * ionice: add strtol() checks, cleanup usage text and man page
+  * ipcmk: fix error codes and error messages
+  * ipcmk: add NLS support
+  * build-sys: add -luuid to BLKID_LIBS
+  * chrt: add NLS support, clean error messages and return codes
+  * mount: fix typo
+  * mount: add info about /proc/mounts to mount.1
+  * fsck.cramfs: fix compiler warning
+  * login: fix compiler warning (int32 time() arg)
+  * losetup: missing EBUSY error hint message
+  * mount: mtab created multiple times with -a option
+  * mount: remove link to namesys.com
+  * mount: sync FAT info in mount.8 with Documentation/filesystems/vfat.txt
+  * mount: sync tmpfs info in mount.8 with
+    Documentation/filesystems/tmpfs.txt.  red: #465761
+  * ipcs: fix exit codes, remove tailing white-spaces.  red: #465911
+  * hwclock: remove "cli" and "sti" from i386 CMOS code
+  * docs: update TODO list
+  * lscpu: add Hypervisor detection
+  * tests: add mk-lscpu-input.sh
+  * tests: add lscpu(1) test for paravirt. Xen i386
+  * tests: add lscpu(1) test for fullvirt. Xen x86_64
+  * tests: refresh Makefile.am (add missing lscpu tests)
+  * fdisk: cannot create partition with starting beyond 1 TB
+  * fdisk: read /proc/partitions in more robust way
+  * fdisk: support +cylinder notation
+  * namei: new re-written version
+  * namei: add --owners and --long options
+  * losetup: add warning about read-only mode
+  * build-sys: move pivot_root(8) to sys-utils
+  * pivot_root: clean up
+  * tests: update namei reg.test
+  * fdisk: fix man page typo
+  * tools: add checkincludes.pl (from linux kernel)
+  * tools: rename codecheck-config to checkconfig.sh
+  * tools: add checkconfig to top-level Makefile
+  * fdisk: rename ENABLE_CMDTAGQ macro
+  * getopt: remove unnecessary ifdefs
+  * hwclock: clock.h is included more than once
+  * agetty: sys/types.h and time.h are included more than once
+  * login: cleanup includes
+  * rdev: cleanup includes
+  * tailf: unistd.h is included more than once
+  * mount: add i_version support
+  * mount: reorder list of options in mount.8
+  * mount: create separate section for fs-independent options in mount.8
+  * mount: use subsections in mount.8 DESCRIPTION
+  * docs: add feature-requests from RH bugzilla to TODO list
+  * setterm: fix -blank man page
+  * build-sys: add missing AC_C_BIGENDIAN
+  * mkfs.minix: (and fsck) rename bitops.h
+  * include: swapheader.h is missing in Makefile.am
+  * tests: add swabN() regression test
+  * tests: add MD5 regression test
+  * lib: add __BYTE_ORDER to md5.c
+  * include: use __BYTE_ORDER rather than AC specific WORDS_BIGENDIAN
+  * tests: add md5 regression test
+  * mount: fix mount_static_LDADD
+  * Revert "login-utils: several strings without gettext calls"
+  * TODO: add request to use nl_langinfo()
+  * chfn: several strings without gettext calls
+  * simpleinit: cleanup gettext calls, use snprintf()
+  * refresh gitignore
+  * pg: add gettext call for the help string
+  * fdisk: remove unnecessary gettext call
+  * mount: clean up SPEC canonicalization
+  * mount: add rootcontext= SELinux mount option
+  * raw: default to /dev/raw/rawctl
+  * namei: fix buffer overflow
+  * mount: add info about semantics of read-only mount to mount.8
+  * mount: suggest to use blockdev --setro rather than losetup
+  * mount: finalize support of quoted LABELs/UUIDs
+  * umount: cleanup gefs_by_specdir()
+  * ionice: a little cleanup of "none" description
+  * namei: don't duplicate '/' directory
+  * rtcwake: explain supported modes in rtcwake.8
+  * namei: add --vertical option
+  * namei: add missing options to namei.1
+  * rtcwake: add mising .RE to the man page
+  * mount: fix typo in volume_id code
+  * ionice: fix typo in manpage
+  * chrt: output buglet when reporting scheduling class
+  * fdisk: add 0xaf HFS / HFS partition type
+  * mount: non-setuid (POSIX file capabilities) support
+  * tests: check also for /dev/loop/X
+  * fsck.cramfs: segfault with INCLUDE_FS_TESTS and no -x option
+  * docs: add suggestion about TZ=UTC to TODO file
+  * mkfs.minix: add regression test
+  * fsck.minix: add regression test
+  * mkfs.minix: remove local implementation of {set,clr}bit
+  * agetty: check for termios.c_line struct member by autoconf
+  * fdisk: cleanup _PATH_DEV_* macros
+  * blkid: create basic directories
+  * build-sys: define libdir
+  * blkid: add basic configure.ac stuff and blkid.pc
+  * blkid: merge libblkid code from e2fsprogs/lib/blkid
+  * blkid: minor changes to library build system
+  * blkid: add low level probing API
+  * blkid: add adaptec raid
+  * blkid: optimize for string UUIDs
+  * blkid: add DDF raid
+  * blkid: add ISW raid
+  * blkid: add JMicron RAID
+  * blkid: LSI MegaRAID
+  * blkid: NVIDIA raid
+  * blkid: Promise raid
+  * blkid: add Silicon Image Medlay RAID
+  * blkid: add VIA RAID
+  * blkid: update gitignore
+  * blkid: add Linux RAID
+  * blkid: blkdev size fallback
+  * blkid: correctly initialize magics[] arrays
+  * blkid: add ext{2,3,4,4devel} support
+  * blkid: add jfs
+  * blkid: add blkid_probe_get_sb() macro
+  * blkid: add xfs
+  * blkid: fix ext2 SEC_TYPE
+  * blkid: fix xfs label
+  * blkid: add GFS and GFS2
+  * blkid: add romfs
+  * blkid: add ocfs and oracleasm
+  * blkid: add __attribute__ ((format))
+  * blkid: fix blkid_probe_sprintf_version() usage
+  * add reiser and reiser4
+  * blkid: add HFS and HFS+
+  * blkid: add GFS2 UUID support
+  * blkid: add HTFS
+  * blkid: add missing hfs.c
+  * blkid: add iso9600
+  * blkid: add LVM2 support and a fix _sprintf_uuid() bug
+  * blkid: add UDF support
+  * blkid: add VFAT support
+  * blkid: re-order list of filesystems
+  * blkid: add LUKS support
+  * blkid: support detection of multiple signatures
+  * blkid: add version and probe FSInfo
+  * blkid: add highpoint{37x,45x} RAIDs
+  * blkid: add lvm1
+  * blkid: add vxfs
+  * blkid: add minix
+  * blkid: add UFS
+  * blkid: remove unused stuff from Makefile
+  * blkid: add proper copying info
+  * blkid: add TODO file
+  * blkid: add HPFS
+  * blkid: cleanup starts of probing files
+  * blkid: fix highpoint37x offset
+  * blkid: use posix uint32_t in ocfs superblock
+  * blkid: use posix uintXX_t in lvm code
+  * blkid: fix hedeader in ntfs.c
+  * blkid: remove blkid_types.h
+  * blkid: add squashfs
+  * blkid: add netware (NSS)
+  * blkid: add sysv and xenix
+  * build-sys: remove use of devmapper library
+  * blkid: use Requires.private and fix the include directory
+  * blkid: fix file descriptor leak when checking for a module
+  * blkid: remove unnecessary ifdef __cplusplus
+  * blkid: add btrfs support
+  * blkid: add DEBUG_LOWPROBE, cleanup a little debug stuff
+  * blkid: add -p and low-probe mode to blkid binary
+  * blkid: add udev string encoding routines
+  * blkid: add udev ID_FS_* output to blkid binary
+  * blkid: refresh TODO file
+  * blkid: use sizeof() for hfs uuid
+  * blkid: refresh TODO file
+  * tests: create subdirs for test scripts
+  * tests: remove input directory
+  * tests: create expected/$(component)/$(testname)
+  * tests: add support for subdirs to basic test functions
+  * tests: add ./run.sh <component>
+  * tests: fix TS_* paths
+  * tests: cleanup ts/cal scripts
+  * tests: cleanup ts/col scripts
+  * tests: cleanup ts/hwclock
+  * tests: cleanup ts/ipcs
+  * tests: cleanup ts/login
+  * tests: cleanup ts/look
+  * tests: cleanup ts/namei
+  * tests: cleanup ts/paths
+  * tests: cleanup ts/script
+  * tests: cleanup ts/swapon
+  * tests: cleanup ts/mount
+  * tests: fix output string
+  * tests: add "byte-order" to helpers/test_sysinfo
+  * tests: move some generic stuff from ts_init() to a new ts_init_env()
+  * tests: add support for subtests
+  * tests: fix the final message for subtests
+  * tests: add libblkid regression tests (images from e2fsprogs)
+  * blkid: add a note to TODO list
+  * blkid: fix blkid_safe_string()
+  * tests: remove unexpected exit from *_subtest functions
+  * blkid: fix udev output
+  * blkid: add hpfs regression test
+  * blkid: netware SB has to be packed
+  * blkid: add netware regression test
+  * blkid: set size for non-blkdevs, add blkid_probe_strcpy_uuid()
+  * blkid: improve ddf detection
+  * blkid: use blkid_probe_strcpy_uuid() for luks
+  * blkid: remove unnecessary debug message
+  * blkid: fix blkid_do_probe()
+  * blkid: add ddf raid regression test
+  * blkid: fix ..._strncpy_uuid
+  * blkid: add ocfs2 version
+  * blkid: add  to reiser
+  * blkid: add vol_id call to blkid regression test
+  * blkid: add reg.tests for HFS and HFS+
+  * blkid: add uuid and version support to gfs2
+  * blkid: add GFS2 reg. test
+  * blkid: add version support to LVM2
+  * blkid: add lvm2 reg.test
+  * blkid: add blkid_do_safeprobe()
+  * blkid: cleanup _LOGPROBE debug messages
+  * tests: fix typo in low-probe test
+  * blkid: refresh TODO file
+  * blkid: add new options to blkid.8 and help output
+  * blkid: add support for /etc/blkid.conf file
+  * blkid: compile TEST_PROGRAMs
+  * blkid: fix typo (syntax error)
+  * mount: move realpath.c code to lib/
+  * blkid: add blkid_evaluate_spec()
+  * blkid: clean up man pages
+  * blkid: refresh TODO file
+  * blkid: add findfs(8)
+  * build-sys: add --with=fsprobe=builtin
+  * blkid: start to use ABI versioning
+  * build-sys: libtoolize by libtool-2
+  * build-sys: libtoolize mount/Makefile.am
+  * build-sys: add temporary libtool *.m4 stuff
+  * blkid: refresh TODO file
+  * blkid: add Christoph's note about libdisk to TODO
+  * mount: generic blkid/volume_id wrapper, use blkid_evaluate_*
+  * build-sys: use pkg-config for blkid and volume_id
+  * blkid: add TODO hint about DM devnames in sysfs
+  * blkid: check calloc() return value
+  * blkid: add cmdline interface for blkid_probe_filter_usage()
+  * blkid: add TODO hint about blkid_parse_tag_string()
+  * blkid: fix low-probe mode return codes
+  * fsck: move fsck from e2fsprogs to util-linux-ng
+  * lib: make open_device() optional in fsprobe.c
+  * fsck: link with generic fsprobe wrapper
+  * fsck: cosmetic changes (NLS, paths, ...)
+  * lib: add test_ismounted for regression test
+  * tests: add fsck:ismounted reg.test
+  * tests: cleanup ts/bitops
+  * tests: cleanup ts/cramfs/fsck-endianness
+  * tests: cleanup ts/cramfs/mkfs-endianness
+  * tests: cleanup lscpu reg.tests
+  * build-sys: add fsck binary to .gitignore
+  * tests: cleanup ts/minix
+  * tests: cleanup ts/md5
+  * tests: chmod -x ts/lscpu/mk-input.sh
+  * tests: we needn't blkid.sh
+  * tests: refresh cal(1) expected outputs
+  * tests: refresh ipcs expected outputs
+  * blkid: blkid_evaluate_spec() shouldn't ignore $BLKID_FILE
+  * mount: inform about UID and eUID when verbose > 2
+  * tests: disable suid mount test
+  * tests: refresh expected mount(8) outputs
+  * losetup: detach more devices by "-d <loop> [<loop> ..]"
+  * losetup: cleanup man page
+  * tests: remove obsolete stuff from Makefile.am
+  * fsck: remove \007 from warning message
+  * build-sys: add missing files to include/Makefile.am
+  * blkid: fix a syntax nit
+  * fsck: remove useless if-before-free tests
+  * getopt: remove useless if-before-free tests
+  * mount: remove useless if-before-free tests
+  * fdisk: use real sector size in verify() and warn_cylinders()
+  * blockdev: add note that the StartSec is in 512-byte sectors
+  * addpart: 512-byte sectors in code, bytes in man-page
+  * partx: convert hard sector size to 512-byte sectors
+  * partx: don't duplicate lib/blkdev.c code
+  * fdisk: (and partx) remove BLKGETLASTSECT
+  * partx: use ioctls from lib/blkdev.c
+  * docs: add a note about kpartx to TODO
+  * swapon: do_swapon() refactoring (move stat() checks)
+  * swapon: add generic swap_get_header()
+  * swapon: simplify spec to devname conversion
+  * swapon: use err.h stuff
+  * swapon: do_swapon() refactoring (split into two functions)
+  * swapon: rewrite SWSUSPEND signature rather than exec mkswap
+  * swapon: cleanup man page
+  * swapon: add -f/--fixpgsz option
+  * simmpleinit: fix gcc warning (buffer size in read())
+  * mount: fix gcc warning (variable used uninitialized)
+  * blkid: use "char **" rather than "unsigned char **"
+  * blkid: fix gcc warning in blkid_get_cache_filename()
+  * lib: gcc warning in fix fsprobe
+  * lib: fix fsprobe wrapper (const char * is nonsense)
+  * swapon: fix wording in man page
+  * swapon: fix typo s/warn/warnx/
+  * swapon: add error messages for lseek and write
+  * login: remove "switching users" nonsense from man page
+  * fdisk: support "-b 4096" option
+  * blkid: blkid.static make target
+  * build-sys: cleanup --with-fsprobe help string
+  * renice: add -n option for compatibility with POSIX
+  * cal: remove gcc-ism from nl_langinfo() call
+  * flockc: segfaults when file name is not given.  red: #489672
+  * flock: fix printf format error in usage()
+  * flock: add NLS support, remove tailing white-spaces
+  * lib: add is_whole_disk() from fdisk code
+  * mkswap: remove v0 swap space support
+  * lib: add pttype.c for PT types detection
+  * include: add missing files to Makefile.am
+  * lib: pttype: add BSD subpartitions support
+  * lib: pttype: fix DOS detection
+  * lib: pttype - extend the API to work with file descriptors
+  * lib: wholedisk - extend API, add test program
+  * libs: pttype - fix typo
+  * mkswap: zap bootbits
+  * mkswap: clean up man page
+  * blkid: fix non-udev low-probe mode output
+  * lib: fsprobe - fix gcc warning
+  * tests: disable blkid tests when blkid(8) is not compiled
+  * blkid: add missing blkidP.h to Makefile.am
+  * build-sys: refresh generated libtool-2 stuff
+  * include: bitops - explicitly include endian.h
+  * build-sys: add $usrlibexecdir and fix paths for [/usr]/lib64
+  * blkid: fix ocfs2 detection
+  * login: use "remote" as a PAM service name for "login -h"
+  * tests: fix file name is too long (max 99) - gtar
+  * tests: fix typo in lscpu test
+  * docs: update AUTHORS file
+  * docs: update v2.15 ReleaseNotes
+  * build-sys: fix bugs detected by "make distcheck"
+  * build-sys: release++ (v2.15-rc1)
+  * docs: fix typo, cal(8) --> cal(1)
+  * po: update list of .c files
+  * po: merge changes
+  * po: update POTFILES.in
+  * po: rewrite update-potfiles script
+
+  [Pedro Ribeiro]
+
+  * elvtune: add NLS support
+  * fsck.cramfs: add NLS support
+  * mkfs.cramfs: several strings without gettext calls
+  * raw: add NLS support
+  * fdisk: several strings without gettext calls
+  * hwclock: several strings without gettext calls
+  * login-utils: several strings without gettext calls
+  * logger: several strings without gettext calls
+  * losetup: several strings without gettext strings
+  * readprofile: several strings without gettext calls
+  * pg: several strings without gettext calls
+
+  [James Youngman]
+
+  * more: minor fixes to magic()
+
+  [Sukadev Bhattiprolu]
+
+  * mount: document newinstance and ptmxmode options to devpts
+
+  [Scott James Remnant]
+
+  * hwclock: add --systz option to set system clock from itself
+  * debian/control: Add build-dependency on pkg-config
+
+  [Guan Xin]
+
+  * umount: check for overlaid mounts
+  * mount: fix typo
+
+  [Hayden James]
+
+  * ipcmk: new command
+
+  [Alexey Gladkov]
+
+  * Fix dmesg.1 installation
+  * flock: Allow lock directory
+
+  [Eric Sandeen]
+
+  * blkis: fix detection of ext4dev as ext4
+  * blkid: recognize ext3 with test_fs set as ext3
+  * fdisk: doesn't handle large (4KiB) sectors properly
+  * blkid: recognize ext4(dev) without journal
+
+  [Kay Sievers]
+
+  * blkid: vfat - fix declaration
+  * blkid: hfs - use proper native UUID format
+  * blkid: hfs - do not set UUID for emtpy finder info
+
+  [Cai Qian]
+
+  * lscpu: new command
+  * lscpu: --sysroot option and stable cache output
+  * lscpu: regression tests
+
+  [Stephan Maka]
+
+  * ionice: let -p handle multiple PIDs
+
+  [Jim Meyering]
+
+  * blkid: don't dereference NULL upon slashless module dependency line
+  * blkid: remove useless if-before-free tests
+
+  [Sam Varshavchik]
+
+  * mount: cleans up mount(8) troff markup
+
+  [Américo Wang]
+
+  * tests: clean up the testing scripts
+  * tests: remove useless return value checks in testing scripts
+
+  [Sven Jost]
+
+  * blkid: support via raid version 2
+
+  [Signed-off-by: Roy Peled]
+
+  * mkfs.cramfs: add endianness support to cramfs tools
+
+  [Martin Steigerwald]
+
+  * chrt: support CFS SCHED_IDLE priority and document it
+
+  [Samuel Thibault]
+
+  * mkswap: non-linux support
+  * fdisk: don't use get_linux_version() for non-linux
+  * lib: blkdev.c clean up, non-linux support
+  * fdisk: non-linux support (BLK* and HDIO_*)
+  * disk-utils: clean up code, use blkdev_* functions
+  * ldattach: don't compile for non-linux systems
+
+  [Benno Schulenberg]
+
+  * ipcs: ungettextize the spacing of the table headers
+  * ipcs: adjust some field positions and widths for correct alignment
+  * po: update nl.po (from translationproject.org)
+
+  [Denis ChengRq]
+
+  * sfdisk: print version should end with a newline
+
+  [Arkadiusz Miskiewicz]
+
+  * build-sys: tgets is not in ncurses but in tinfo
+
+  [Gabriel Burt]
+
+  * rtcwake: prefer RTC_WKALM_SET over RTC_ALM_SET
+
+  [Mike Frysinger]
+
+  * more: dont use a.out.h
+  * mount: remove spurious newline from mount.8
+
+  [LaMont Jones]
+
+
+  [Lubomir Kundrak]
+
+  * ionice: add -t option.  red: #443842
+
+  [Theodore Ts'o]
+
+  * blkid: Optimize devicemapper support
+  * blkid: Unexport the private symbol blkid_devdirs
+  * blkid: Give a priority bonus to "leaf" devicemapper devices
+  * blkid: Refuse to create a device structure for a non-existent device. 
+    Closes: #502541
+  * blkid: add fallback to ext4 for 2.6.29+ kernels if ext2 is not present
+
+  [Signed-off-by: Guan Xin]
+
+  * umount: no checking mount point removal
+
+  [Hugh Dickins]
+
+  * mkswap: handle 2^32 pages
+
+  [Andrew McGill]
+
+  * script: don't flush input when starting script
+
+  [root]
+
+  * tests: refresh and cleanup cramfs/mkfs
+  * blkid: add -L -U options (evaluation API)
+
+  [Pádraig Brady]
+
+  * cal: determine the first day of week from the locale
+
+  [localization folks]
+
+  * po: update id.po (from translationproject.org) (Arif E. Nugroho)
+  * po: update ja.po (from translationproject.org) (Makoto Kato)
+  * po: update cs.po (from translationproject.org) (Petr Pisar)
+  * po: add zh_CN.po (from translationproject.org) (Ray Wang)
+  * po: update fr.po (from translationproject.org) (Nicolas Provost)
+  * po: update vi.po (from translationproject.org) (Clytie Siddall)
+  * po: update fi.po (from translationproject.org) (Lauri Nurmi)
+
+ -- Scott James Remnant <scott@ubuntu.com>  Mon, 23 Mar 2009 18:07:01 +0000
+
 util-linux (2.14.2-1) unstable; urgency=low
 
   [LaMont Jones]
