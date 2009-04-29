@@ -1,3 +1,38 @@
+util-linux (2.15~rc2-1) experimental; urgency=low
+
+  [Aurelien Jarno]
+
+  * lib: do not include <linux/fd.h> in ismounted.c
+
+  [Matthew Garrett]
+
+  * mount: Add strictatime support
+
+  [Andreas Dilger]
+
+  * blkid: add ZSF support
+
+  [Scott James Remnant]
+
+  * blkid: fix exit codes in blkid(8)
+
+  [Karel Zak]
+
+  * blkid: check idinfo[] index
+  * blkid: add ZSF test
+  * blkid: update TODO
+  * blkid: add TODO note about blkid_evaluate_spec_to_buffer()
+  * blkid: add new requirements to TODO list
+  * login: use open(2) rather then access(2) for $HOME/.hushlogin
+  * docs: update AUTHORS file
+  * blkid: add tst_types.c to Makefile.am
+  * docs: update v2.15 ReleaseNotes
+  * build-sys: release++ (v2.15-rc2)
+  * blkid: rename blkid_debug_init to blkid_init_debug
+  * po: merge changes
+
+ -- Scott James Remnant <scott@ubuntu.com>  Wed, 29 Apr 2009 12:36:23 +0100
+
 util-linux (2.15~rc1-1) experimental; urgency=low
 
   [Vincent Deffontaines]
