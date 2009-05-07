@@ -4,6 +4,10 @@ util-linux (2.15~rc2-1) experimental; urgency=low
 
   * lib: do not include <linux/fd.h> in ismounted.c
 
+  [LaMont Jones]
+  
+  * Package
+
   [Matthew Garrett]
 
   * mount: Add strictatime support
@@ -15,6 +19,8 @@ util-linux (2.15~rc2-1) experimental; urgency=low
   [Scott James Remnant]
 
   * blkid: fix exit codes in blkid(8)
+  * hwclock: pass --noadjfile if /etc/adjtime not writable
+  * hwclock: always pass --rtc to hwclock calls
 
   [Karel Zak]
 
@@ -31,7 +37,7 @@ util-linux (2.15~rc2-1) experimental; urgency=low
   * blkid: rename blkid_debug_init to blkid_init_debug
   * po: merge changes
 
- -- Scott James Remnant <scott@ubuntu.com>  Wed, 29 Apr 2009 12:36:23 +0100
+ -- LaMont Jones <lamont@debian.org>  Mon, 04 May 2009 18:20:35 -0600
 
 util-linux (2.15~rc1-1) experimental; urgency=low
 
