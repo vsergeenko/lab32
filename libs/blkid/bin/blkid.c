@@ -45,7 +45,7 @@ const char *progname = "blkid";
 static void print_version(FILE *out)
 {
 	fprintf(out, "%s from %s (libblkid %s, %s)\n",
-		progname, PACKAGE_STRING, BLKID_VERSION, BLKID_DATE);
+		progname, PACKAGE_STRING, LIBBLKID_VERSION, LIBBLKID_DATE);
 }
 
 static void usage(int error)
@@ -567,7 +567,7 @@ int main(int argc, char **argv)
 		/*
 		 * Evaluate API
 		 */
-		char *res = blkid_evaluate_spec(search_type, search_value, NULL);
+		char *res = blkid_evaluate_tag(search_type, search_value, NULL);
 		if (res) {
 			err = 0;
 			printf("%s\n", res);
