@@ -70,11 +70,6 @@ install: build
 	$(MAKE) install DESTDIR=`pwd`/debian/util-linux INSTALL_STRIP_FLAG=""
 	dh_installdocs -i -s
 	install -m 644 login-utils/README.modems-with-agetty debian/util-linux/usr/share/doc/util-linux/README.modems-with-getty
-ifeq ($(DEB_HOST_ARCH_OS),linux)
-	perl -pi.bak -e 's/agetty/getty/g' debian/util-linux/usr/share/man/man8/getty.8 \
-		  debian/util-linux/usr/share/doc/util-linux/README.*
-	rm `find debian/util-linux/usr -name \*.bak`
-endif
 	dh_installexamples -i -s
 	dh_installmenu -i -s
 	dh_installcron -i -s
@@ -83,10 +78,12 @@ endif
 	dh_movefiles --sourcedir=debian/util-linux -i -s
 	#
 	# XXX - push things to where debian has always(?) had them...
+ifeq ($(DEB_HOST_ARCH_OS),linux)
 	mv debian/util-linux/usr/sbin/*part* debian/util-linux/usr/bin
+	mv debian/util-linux/usr/bin/cytune debian/util-linux/usr/sbin
+endif
 	mv debian/util-linux/usr/bin/tailf debian/util-linux/bin
 	mv debian/util-linux/usr/bin/isosize debian/util-linux/sbin
-	mv debian/util-linux/usr/bin/cytune debian/util-linux/usr/sbin
 	mv debian/util-linux/usr/share/man/man8/linux32.8 debian/util-linux/usr/share/man/man1/linux32.1
 	mv debian/util-linux/usr/share/man/man8/linux64.8 debian/util-linux/usr/share/man/man1/linux64.1
 	# the version in bsdmainutils seems newer.
@@ -125,17 +122,22 @@ endif
 	fi
 	cd debian/util-linux-locales && find usr/share/locale -type f | while read x; do ln $$x ../cfdisk-udeb/$$x; done
 ifeq ($(DEB_HOST_ARCH_OS),linux)
+	install -m 644 debian/mount.fstab debian/mount/usr/share/doc/mount/examples/fstab
 ifeq ($(arch),$(findstring $(arch),powerpc ppc64))
 	mv -f debian/util-linux/sbin/fdisk debian/util-linux/sbin/ddisk
 	mv -f debian/util-linux/usr/share/man/man8/fdisk.8 debian/util-linux/usr/share/man/man8/ddisk.8
 else
 	cd debian/util-linux && if [ -f sbin/hwclock ] ; then ln -sf hwclock.8.gz usr/share/man/man8/clock.8.gz; fi
 endif
+endif
+ifneq ($(DEB_HOST_ARCH_OS),hurd)
 	cd debian/util-linux/sbin ; mv agetty getty
 	cd debian/util-linux/usr/share/man/man8 ; mv agetty.8 getty.8
-	install -m 644 debian/mount.fstab debian/mount/usr/share/doc/mount/examples/fstab
+	perl -pi.bak -e 's/agetty/getty/g' debian/util-linux/usr/share/man/man8/getty.8 \
+		  debian/util-linux/usr/share/doc/util-linux/README.*
+	rm `find debian/util-linux/usr -name \*.bak`
 endif
-ifeq ($(DEB_HOST_GNU_SYSTEM),gnu)
+ifneq ($(DEB_HOST_ARCH_OS),linux)
 	cd debian/util-linux/sbin ; mv mkswap mkswap.linux
 	cd debian/util-linux/usr/share/man/man8 ; mv mkswap.8 mkswap.linux.8
 endif
@@ -163,7 +165,7 @@ binary-arch: build install
 	dh_makeshlibs -s
 	dh_installdeb -s
 	dh_shlibdeps -s
-ifneq ($(DEB_HOST_ARCH_OS),linux)
+ifeq ($(DEB_HOST_ARCH_OS),hurd)
 	echo util-linux:Conflicts=getty >> debian/util-linux.substvars
 endif
 	dh_gencontrol -s -Xbsdutils
