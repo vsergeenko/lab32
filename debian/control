@@ -2,6 +2,7 @@ Source: util-linux
 Build-Depends: libncurses5-dev, libslang2-dev (>=2.0.4), gettext, zlib1g-dev, libblkid-dev, uuid-dev, dpkg-dev (>=1.13.12), libselinux1-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386], debhelper (>=5), lsb-release, pkg-config
 Section: base
 Priority: required
+Uploaders: Scott James Remnant <scott@ubuntu.com>
 Standards-Version: 3.7.3.0
 Maintainer: LaMont Jones <lamont@debian.org>
 XS-Vcs-Browser: http://git.debian.org/?p=users/lamont/util-linux.git
