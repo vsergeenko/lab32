@@ -17,14 +17,17 @@ AUTHORS (merged projects & commands):
 
       flock:           H. Peter Anvin <hpa@zytor.com>
       getopt:          Frodo Looijaard <frodol@dds.nl>
-      schedutils:      Robert Love <rlove@rlove.org>
-      simpleinit:      Richard Gooch <rgooch@atnf.csiro.au>
       hwclock:         Bryan Henderson <bryanh@giraffe-data.com>
-      setarch:         Elliot Lee <sopwith@redhat.com>
-                       Jindrich Novy <jnovy@redhat.com>
+      ipcmk:           Hayden James <hayden.james@gmail.com>
+      ldattach:        Tilman Schmidt <tilman@imap.cc>
+      libblkid:        Theodore Ts'o <tytso@mit.edu>
+      lscpu:           Cai Qian <qcai@redhat.com>
       rtcwake:         David Brownell <david-b@pacbell.net>
                        Bernhard Walle <bwalle@suse.de>
-      ldattach:        Tilman Schmidt <tilman@imap.cc>
+      schedutils:      Robert Love <rlove@rlove.org>
+      setarch:         Elliot Lee <sopwith@redhat.com>
+                       Jindrich Novy <jnovy@redhat.com>
+      simpleinit:      Richard Gooch <rgooch@atnf.csiro.au>
 
 
 CONTRIBUTORS:
@@ -49,6 +52,7 @@ CONTRIBUTORS:
       Bernhard Walle <bwalle@suse.de>
       Cai Qian <qcai@redhat.com>
       Christophe Blaess <Christophe@Blaess.fr>
+      Chris Webb <chris@arachsys.com>
       Claus Hindsgaul <claus_h@image.dk>
       Cliff Wickman <cpw@sgi.com>
       Clytie Siddall <clytie@riverland.net.au>
@@ -143,6 +147,7 @@ CONTRIBUTORS:
       Sven Jost <sven.jost@googlemail.com>
       Theodore Ts'o <tytso@mit.edu>
       Tilman Schmidt <tilman@imap.cc>
+      Tom Prince <tom.prince@ualberta.net>
       Valerie Henson <val_henson@linux.intel.com>
       Vincent Deffontaines <vincent@gryzor.com>
       Volker Schatz <oss@volkerschatz.com>
