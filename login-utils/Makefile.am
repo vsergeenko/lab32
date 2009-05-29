@@ -11,6 +11,7 @@ EXTRA_DIST = README.getty  README.modems-with-agetty  README.poeigl
 if BUILD_AGETTY
 sbin_PROGRAMS += agetty
 dist_man_MANS += agetty.8
+agetty_LDADD = -lutil
 endif
 
 if BUILD_INIT
