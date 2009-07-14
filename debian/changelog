@@ -1,3 +1,75 @@
+util-linux (2.15.1-1) unstable; urgency=low
+
+  [Aurelien Jarno]
+
+  * chrt: don't assume SCHED_BATCH and SCHED_IDLE exist
+  * remaining kFreeBSD hackery for building.  Closes: #527384
+  * metafile changes for kFreeBSD buildability hackery.  Closes: #527384
+
+  [Mike Frysinger]
+
+  * lscpu: fix cpuid code on x86/PIC
+  * losetup: handle symlinks in /dev/loop/
+
+  [LaMont Jones]
+
+  * Add keybuk as uploader.
+  * meta: cleanup rules targets
+
+  [Scott James Remnant]
+
+  * hwclock: only call --systz from the udev rule
+  * hwclock: make start a no-op when udev is running
+  * rules: Install udev rules into /lib/udev/rules.d
+
+  [Chris Webb]
+
+  * fdisk: (and cfdisk) fix to be consistent about maximum heads
+
+  [Rajeev V. Pillai]
+
+  * cal: Highlight today even when month or year specified
+
+  [Tom Prince]
+
+  * cal: uClibc has langinfo.h but not _NL_TIME_WEEK_1STDAY.
+
+  [Karel Zak]
+
+  * build-sys: fix "make -C" bug
+  * build-sys: fix blkid.h include for old e2fsprogs
+  * blkid: make libuuid optional
+  * blkid: fix "hangs forever with partition type mdraid"
+  * blkid: blkid_do_safeprobe() has to be tolerant to RAIDs
+  * blkid: cleanup debug messages and return codes in blkid_do_probe()
+  * mount: fix undefined reference to `security_get_initial_context'.  gentoo:
+    #270168
+  * libblkid: update man page
+  * libblkid: fix reiserfs name
+  * build-sys: add UTIL_{SET,RESTORE}_FLAGS
+  * build-sys: fix blkid detection in configure.ac
+  * tests: add mdraid libblkid test
+  * tests: fix reiserfs test
+  * tests: don't run some mount tests for non-root users
+  * tests: remove broken Xen dumps for lscpu
+  * tests: move lscpu /proc and /sys dumps to tarballs
+  * tests: fix script that creates lscpu dumps
+  * docs: update AUTHORS file
+  * docs: add v2.15.1 ReleaseNotes
+  * docs: add missing commands/projects to AUTHORS file
+  * build-sys: release++ (v2.15.1-rc1)
+  * mount: use "none" fstype for MS_PROPAGATION mounts
+  * mount: move MS_{PROPAGATION,BIND,MOVE} detection
+  * docs: update v2.15.1 ReleaseNotes
+  * build-sys: release++ (v2.15.1)
+  * po: merge changes
+
+  [localization folks]
+
+  * po: update vi.po (from translationproject.org) (Clytie Siddall)
+
+ -- Scott James Remnant <scott@ubuntu.com>  Tue, 14 Jul 2009 18:00:01 +0100
+
 util-linux (2.15.1~rc1-1) unstable; urgency=low
 
   [Aurelien Jarno]
