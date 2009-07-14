@@ -1,7 +1,10 @@
 hwclock and Debian:
 
-A Debian installation will, by default, call hwclock --hctosys during system
-startup and hwclock --systohc during system shutdown.
+When udev is running, hwclock -systz will be called when the RTC clock
+device is created.  When udev is not running, hwclock --hctosys will be
+called during system startup.
+
+In both cases, hwclock --systohc will be called during system shutdown.
 
 To set the date/time of the system, just use the standard UNIX date facilities
 (such as date) or any of the advanced timekeeping utilities (ntp, ntpdate,
