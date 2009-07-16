@@ -110,19 +110,30 @@ endif
 	if [ -f debian/util-linux/sbin/hwclock ] ; then \
 	    install -m 644 debian/hwclock.rules debian/util-linux/lib/udev/rules.d/85-hwclock.rules; \
 	fi
-	# copy library and symlink into udeb
+	# copy blkid library and symlink into udeb
 	ln debian/libblkid1/lib/libblkid.so.1.* debian/libblkid1-udeb/lib/
 	ln debian/libblkid1/lib/libblkid.so.1   debian/libblkid1-udeb/lib/
 	ln debian/util-linux/sbin/blkid debian/util-linux-udeb/sbin/
 	# overwrite copyright
 	install -m 644 debian/libblkid.copyright debian/libblkid1/usr/share/doc/libblkid1/copyright
 	install -m 644 debian/libblkid.copyright debian/libblkid-dev/usr/share/doc/libblkid-dev/copyright
+	# copy uuid library and symlink into udeb
+	ln debian/libuuid1/lib/libuuid.so.1.* debian/libuuid1-udeb/lib/
+	ln debian/libuuid1/lib/libuuid.so.1   debian/libuuid1-udeb/lib/
+	# overwrite copyright
+	install -m 644 debian/libuuid.copyright debian/libuuid1/usr/share/doc/libuuid1/copyright
+	install -m 644 debian/libuuid.copyright debian/uuid-dev/usr/share/doc/uuid-dev/copyright
+	install -m 644 debian/libuuid.copyright debian/uuid-runtime/usr/share/doc/uuid-runtime/copyright
 	# dpkg symbol handling
-	echo "Generating symbols for libblkid1..."
-	dpkg-gensymbols -plibblkid1 -Pdebian/libblkid1 > debian/libblkid1.tmp-patch
-	cat debian/libblkid1.tmp-patch
-	patch debian/libblkid1.symbols < debian/libblkid1.tmp-patch
-	rm debian/libblkid1.tmp-patch
+	for lib in libblkid1 libuuid1; \
+	do \
+		echo "Generating symbols for $$lib..."; \
+		dpkg-gensymbols -p$$lib -Pdebian/$$lib > debian/$$lib.tmp-patch; \
+		cat debian/$$lib.tmp-patch; \
+		patch debian/$$lib.symbols < debian/$$lib.tmp-patch; \
+		rm debian/$$lib.tmp-patch; \
+	done
+	#
 	cd debian; if [ -f util-linux/sbin/fdisk ]; then \
 	    ln util-linux/sbin/*fdisk fdisk-udeb/usr/sbin/; \
 	    S=fdisk-udeb/usr/sbin/cfdisk; if [ -f $$S ]; then mv $$S cfdisk-udeb/usr/sbin/; fi; \
