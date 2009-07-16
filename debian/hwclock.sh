@@ -67,6 +67,10 @@ hwclocksh()
 
     case "$1" in
 	start)
+	    if [ -d /dev/.udev ]; then
+		return 0
+	    fi
+
 	    if [ -w /etc ] && [ ! -f /etc/adjtime ] && [ ! -e /etc/adjtime ]; then
 		echo "0.0 0 0.0" > /etc/adjtime
 	    fi
