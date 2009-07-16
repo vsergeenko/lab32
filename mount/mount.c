@@ -907,9 +907,6 @@ guess_fstype_and_mount(const char *spec, const char *node, const char **types,
    if (*types && strcasecmp (*types, "auto") == 0)
       *types = NULL;
 
-   if (flags & (MS_BIND | MS_MOVE))
-      *types = "none";
-
    if (!*types && !(flags & MS_REMOUNT)) {
       *types = guess_fstype_by_devname(spec);
       if (*types) {
@@ -1317,6 +1314,9 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
   if (loop)
       opt_loopdev = loopdev;
 
+  if (flags & (MS_BIND | MS_MOVE | MS_PROPAGATION))
+      types = "none";
+
   /*
    * Call mount.TYPE for types that require a separate mount program.
    * For the moment these types are ncpfs and smbfs. Maybe also vxfs.
@@ -1536,6 +1536,10 @@ mount_retry:
           break;
       } else if (readwrite) {
 	  error (_("mount: %s%s is write-protected but explicit `-w' flag given"),
+		 bd, spec);
+	  break;
+      } else if (flags & MS_REMOUNT) {
+	  error (_("mount: cannot remount %s%s read-write, is write-protected"),
 		 bd, spec);
 	  break;
       } else {

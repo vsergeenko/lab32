@@ -12,3 +12,7 @@ setterm
 whereis
 kill
 write
+uuidgen
+uuidd
+findfs
+blkid

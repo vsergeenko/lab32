@@ -1,5 +1,0 @@
-SUBDIRS =
-
-if BUILD_LIBBLKID
-SUBDIRS += blkid
-endif

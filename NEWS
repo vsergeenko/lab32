@@ -1,6 +1,14 @@
-util-linux-ng 2.15.1-rc1: May 27 2009
-* see docs/v2.15.1-ReleaseNotes or complete changelog at
-  ftp://ftp.kernel.org/pub/linux/utils/util-linux-ng/v2.15/v2.15.1-rc1-ChangeLog
+util-linux-ng 2.16: Jul  2009
+* see docs/v2.16-ReleaseNotes or complete changelog at
+  ftp://ftp.kernel.org/pub/linux/utils/util-linux-ng/v2.16/v2.16-ChangeLog
+
+util-linux-ng 2.16-rc2: Jul 2 2009
+* see docs/v2.16-ReleaseNotes or complete changelog at
+  ftp://ftp.kernel.org/pub/linux/utils/util-linux-ng/v2.16/v2.16-rc2-ChangeLog
+
+util-linux-ng 2.16-rc1: Jun 28 2009
+* see docs/v2.16-ReleaseNotes or complete changelog at
+  ftp://ftp.kernel.org/pub/linux/utils/util-linux-ng/v2.16/v2.16-rc1-ChangeLog
 
 util-linux-ng 2.15: May 5 2009
 * see docs/v2.15-ReleaseNotes or complete changelog at

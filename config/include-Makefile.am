@@ -1,8 +1,3 @@
-# The original default vaues of bindir and sbindir:
-usrbinexecdir = ${exec_prefix}/bin
-usrsbinexecdir = ${exec_prefix}/sbin
-usrlibexecdir = ${exec_prefix}/$(libdirname)
-
 AM_CPPFLAGS = -include $(top_builddir)/config.h -I$(top_srcdir)/include \
 	-DLOCALEDIR=\"$(localedir)\"
 AM_CFLAGS = -fsigned-char
@@ -16,10 +11,19 @@ dist_noinst_DATA = $(dist_man_MANS)
 
 # Paths to in-tree libraries (use ul_ prefix to avoid possible collisions)
 #
-ul_libblkid_srcdir = $(top_srcdir)/libs/blkid/src
-ul_libblkid_builddir = $(top_builddir)/libs/blkid/src
-ul_libblkid_la = $(top_builddir)/libs/blkid/src/libblkid.la
+# blkid
+ul_libblkid_srcdir = $(top_srcdir)/shlibs/blkid/src
+ul_libblkid_builddir = $(top_builddir)/shlibs/blkid/src
+ul_libblkid_la = $(top_builddir)/shlibs/blkid/src/libblkid.la
 
 $(ul_libblkid_la):
 	$(MAKE) -C $(ul_libblkid_builddir)
+
+# uuid
+ul_libuuid_srcdir = $(top_srcdir)/shlibs/uuid/src
+ul_libuuid_builddir = $(top_builddir)/shlibs/uuid/src
+ul_libuuid_la = $(top_builddir)/shlibs/uuid/src/libuuid.la
+
+$(ul_libuuid_la):
+	$(MAKE) -C $(ul_libuuid_builddir)
 

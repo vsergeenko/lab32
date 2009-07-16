@@ -65,8 +65,6 @@ loop_info64_to_old(const struct loop_info64 *info64, struct loop_info *info)
         return 0;
 }
 
-#define DEV_LOOP_PATH		"/dev/loop"
-#define DEV_PATH		"/dev"
 #define LOOPMAJOR		7
 #define NLOOPS_DEFAULT		8	/* /dev/loop[0-7] */
 
@@ -148,10 +146,10 @@ looplist_open(struct looplist *ll, int flag)
 	ll->flag = flag;
 	ll->ncur = -1;
 
-	if (stat(DEV_PATH, &st) == -1 || (!S_ISDIR(st.st_mode)))
+	if (stat(_PATH_DEV, &st) == -1 || (!S_ISDIR(st.st_mode)))
 		return -1;			/* /dev doesn't exist */
 
-	if (stat(DEV_LOOP_PATH, &st) == 0 && S_ISDIR(st.st_mode))
+	if (stat(_PATH_DEV_LOOP, &st) == 0 && S_ISDIR(st.st_mode))
 		ll->flag |= LLFLG_SUBDIR;	/* /dev/loop/ exists */
 
 	if ((ll->flag & LLFLG_USEDONLY) &&
@@ -184,8 +182,8 @@ looplist_open_dev(struct looplist *ll, int lnum)
 	/* create a full device path */
 	snprintf(ll->name, sizeof(ll->name),
 		ll->flag & LLFLG_SUBDIR ?
-			DEV_LOOP_PATH "/%d" :
-			DEV_PATH "/loop%d",
+			_PATH_DEV_LOOP "/%d" :
+			_PATH_DEV "loop%d",
 		lnum);
 
 	fd = open(ll->name, O_RDONLY);
@@ -336,8 +334,8 @@ looplist_next(struct looplist *ll)
 	 */
 	if (!ll->minors) {
 		ll->nminors = (ll->flag & LLFLG_SUBDIR) ?
-			loop_scandir(DEV_LOOP_PATH, &ll->minors, 0) :
-			loop_scandir(DEV_PATH, &ll->minors, 1);
+			loop_scandir(_PATH_DEV_LOOP, &ll->minors, 0) :
+			loop_scandir(_PATH_DEV, &ll->minors, 1);
 		ll->ncur = -1;
 	}
 	for (++ll->ncur; ll->ncur < ll->nminors; ll->ncur++) {
@@ -352,6 +350,28 @@ done:
 }
 
 #ifdef MAIN
+
+static int
+set_capacity(const char *device)
+{
+	int errsv;
+	int fd = open(device, O_RDONLY);
+
+	if (fd == -1)
+		goto err;
+
+	if (ioctl(fd, LOOP_SET_CAPACITY) != 0)
+		goto err;
+
+	return 0;
+err:
+	errsv = errno;
+	fprintf(stderr, _("loop: can't set capacity on device %s: %s\n"),
+					device, strerror (errsv));
+	if (fd != -1)
+		close(fd);
+	return 2;
+}
 
 static int
 show_loop_fd(int fd, char *device) {
@@ -483,8 +503,7 @@ show_associated_loop_devices(char *filename, unsigned long long offset, int isof
 /* check if the loopfile is already associated with the same given
  * parameters.
  *
- * returns: -1 error
- *           0 unused
+ * returns:  0 unused / error
  *           1 loop device already used
  */
 static int
@@ -499,17 +518,15 @@ is_associated(int dev, struct stat *file, unsigned long long offset, int isoff)
 	            file->st_ino == linfo64.lo_inode &&
 		    (isoff == 0 || offset == linfo64.lo_offset))
 			ret = 1;
-		return ret;
-	}
-	if (ioctl(dev, LOOP_GET_STATUS, &linfo) == 0) {
+
+	} else if (ioctl(dev, LOOP_GET_STATUS, &linfo) == 0) {
 		if (file->st_dev == linfo.lo_device &&
 	            file->st_ino == linfo.lo_inode &&
 		    (isoff == 0 || offset == linfo.lo_offset))
 			ret = 1;
-		return ret;
 	}
 
-	return errno == ENXIO ? 0 : -1;
+	return ret;
 }
 
 /* check if the loop file is already used with the same given
@@ -555,18 +572,14 @@ loopfile_used_with(char *devname, const char *filename, unsigned long long offse
 	if (!is_loop_device(devname))
 		return 0;
 
-	if (stat(filename, &statbuf) == -1) {
-		perror(filename);
-		return -1;
-	}
+	if (stat(filename, &statbuf) == -1)
+		return 0;
 
 	fd = open(devname, O_RDONLY);
-	if (fd == -1) {
-		perror(devname);
-		return -1;
-	}
-	ret = is_associated(fd, &statbuf, offset, 1);
+	if (fd == -1)
+		return 0;
 
+	ret = is_associated(fd, &statbuf, offset, 1);
 	close(fd);
 	return ret;
 }
@@ -950,6 +963,7 @@ usage(void) {
   " %1$s -a | --all                              list all used\n"
   " %1$s -d | --detach <loopdev> [<loopdev> ...] delete\n"
   " %1$s -f | --find                             find unused\n"
+  " %1$s -c | --set-capacity <loopdev>           resize\n"
   " %1$s -j | --associated <file> [-o <num>]     list all associated with <file>\n"
   " %1$s [ options ] {-f|--find|loopdev} <file>  setup\n"),
 		progname);
@@ -976,7 +990,7 @@ int
 main(int argc, char **argv) {
 	char *p, *offset, *sizelimit, *encryption, *passfd, *device, *file, *assoc;
 	char *keysize;
-	int delete, find, c, all;
+	int delete, find, c, all, capacity;
 	int res = 0;
 	int showdev = 0;
 	int ro = 0;
@@ -986,6 +1000,7 @@ main(int argc, char **argv) {
 	unsigned long long off, slimit;
 	struct option longopts[] = {
 		{ "all", 0, 0, 'a' },
+		{ "set-capacity", 0, 0, 'c' },
 		{ "detach", 0, 0, 'd' },
 		{ "encryption", 1, 0, 'e' },
 		{ "find", 0, 0, 'f' },
@@ -1007,7 +1022,7 @@ main(int argc, char **argv) {
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	delete = find = all = 0;
+	capacity = delete = find = all = 0;
 	off = 0;
         slimit = 0;
 	assoc = offset = sizelimit = encryption = passfd = NULL;
@@ -1017,11 +1032,14 @@ main(int argc, char **argv) {
 	if ((p = strrchr(progname, '/')) != NULL)
 		progname = p+1;
 
-	while ((c = getopt_long(argc, argv, "ade:E:fhj:k:No:p:rsv",
+	while ((c = getopt_long(argc, argv, "acde:E:fhj:k:No:p:rsv",
 				longopts, NULL)) != -1) {
 		switch (c) {
 		case 'a':
 			all = 1;
+			break;
+		case 'c':
+			capacity = 1;
 			break;
 		case 'r':
 			ro = 1;
@@ -1070,16 +1088,20 @@ main(int argc, char **argv) {
 		usage();
 	} else if (delete) {
 		if (argc < optind+1 || encryption || offset || sizelimit ||
-				find || all || showdev || assoc || ro)
+		    capacity || find || all || showdev || assoc || ro)
 			usage();
 	} else if (find) {
-		if (all || assoc || argc < optind || argc > optind+1)
+		if (capacity || all || assoc || argc < optind || argc > optind+1)
 			usage();
 	} else if (all) {
 		if (argc > 2)
 			usage();
 	} else if (assoc) {
-		if (encryption || showdev || passfd || ro)
+		if (capacity || encryption || showdev || passfd || ro)
+			usage();
+	} else if (capacity) {
+		if (argc != optind + 1 || encryption || offset || sizelimit ||
+		    showdev || ro)
 			usage();
 	} else {
 		if (argc < optind+1 || argc > optind+2)
@@ -1118,6 +1140,8 @@ main(int argc, char **argv) {
 	if (delete) {
 		while (optind < argc)
 			res += del_loop(argv[optind++]);
+	} else if (capacity) {
+		res = set_capacity(device);
 	} else if (file == NULL)
 		res = show_loop(device);
 	else {
