@@ -1,4 +1,4 @@
-AC_INIT(util-linux-ng, 2.15.1-rc1, kzak@redhat.com)
+AC_INIT(util-linux-ng, 2.16, kzak@redhat.com)
 
 AC_PREREQ(2.60)
 
@@ -20,6 +20,17 @@ PACKAGE_VERSION_RELEASE=0
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
 LIBBLKID_DATE="10-Feb-2009"
+LIBBLKID_LT_MAJOR=1
+LIBBLKID_LT_MINOR=1
+LIBBLKID_LT_MICRO=0
+LIBBLKID_VERSION_INFO=`expr $LIBBLKID_LT_MAJOR + $LIBBLKID_LT_MINOR`:$LIBBLKID_LT_MICRO:$LIBBLKID_LT_MINOR
+
+dnl libuuid version
+LIBUUID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
+LIBUUID_LT_MAJOR=1
+LIBUUID_LT_MINOR=3
+LIBUUID_LT_MICRO=0
+LIBUUID_VERSION_INFO=`expr $LIBUUID_LT_MAJOR + $LIBUUID_LT_MINOR`:$LIBUUID_LT_MICRO:$LIBUUID_LT_MINOR
 
 # Check whether exec_prefix=/usr:
 case $exec_prefix:$prefix in
@@ -39,12 +50,19 @@ NONE:NONE | NONE:/usr | /usr:*)
   esac ;;
 esac
 
-# lib64
-case ${libdir} in
-  *lib64) libdirname=lib64 ;;
-  *) libdirname=lib
-esac
+libdirname=`basename "$libdir"`
 AC_SUBST([libdirname])
+
+# The original default values of {bin,sbin,lib}dir
+usrbin_execdir='${exec_prefix}/bin'
+AC_SUBST([usrbin_execdir])
+
+usrsbin_execdir='${exec_prefix}/sbin'
+AC_SUBST([usrsbin_execdir])
+
+usrlib_execdir='${exec_prefix}/'$libdirname
+AC_SUBST([usrlib_execdir])
+
 
 AC_PROG_CC_STDC
 AC_GNU_SOURCE
@@ -84,9 +102,13 @@ AC_CHECK_HEADERS(
 	linux/tiocl.h \
 	linux/version.h \
 	locale.h \
-	stdlib.h \
+	stdint.h \
+	inttypes.h \
 	pty.h \
 	mntent.h \
+        net/if.h \
+	net/if_dl.h \
+        netinet/in.h \
 	rpcsvc/nfs_prot.h \
 	scsi/scsi.h \
 	stdlib.h \
@@ -94,12 +116,18 @@ AC_CHECK_HEADERS(
 	sys/disklabel.h \
 	sys/ioctl.h \
 	sys/io.h \
+	sys/time.h \
 	sys/mkdev.h \
 	sys/prctl.h \
 	sys/queue.h \
+	sys/sockio.h \
+	sys/file.h \
+	sys/ioctl.h \
 	sys/stat.h \
 	sys/types.h \
+	sys/un.h \
 	sys/user.h \
+	sys/resource.h \
 	unistd.h ])
 AC_CHECK_HEADERS([linux/raw.h],
 		 [AM_CONDITIONAL([HAVE_RAW], [true])],
@@ -115,15 +143,29 @@ AC_CHECK_FUNCS(
 	nanosleep \
 	personality \
 	updwtmp \
+	jrand48 \
 	lchown \
 	llseek \
 	lseek64 \
 	strtoull \
+	sysconf \
+	getdtablesize \
+	getrlimit \
+	srandom \
+	setresgid \
+	setresuid \
 	inotify_init \
 	prctl \
 	__secure_getenv \
 	rpmatch])
 AC_FUNC_FSEEKO
+
+AC_CHECK_FUNCS([openat fstatat unlinkat], [have_openat=yes], [have_openat=no])
+
+AC_CHECK_MEMBER(struct sockaddr.sa_len,
+		AC_DEFINE_UNQUOTED(HAVE_SA_LEN,1,[Define if struct sockaddr contains sa_len]),,
+	[#include <sys/types.h>
+	 #include <sys/socket.h>])
 
 dnl Static compilation
 m4_define([UTIL_STATIC_PROGRAMS], [losetup, mount, umount, fdisk, sfdisk, blkid])
@@ -145,6 +187,16 @@ m4_foreach([UTIL_PRG], m4_defn([UTIL_STATIC_PROGRAMS]), [
   esac
   AM_CONDITIONAL([HAVE_STATIC_]m4_toupper(UTIL_PRG),
     [test "x$static_[]UTIL_PRG" = xyes])
+])
+
+dnl UTIL_PKG_STATIC(VARIABLE, MODULES)
+dnl ----------------------------------
+AC_DEFUN([UTIL_PKG_STATIC], [
+  if AC_RUN_LOG([pkg-config --exists --print-errors "$2"]); then
+    $1=`pkg-config --libs --static "$2"`
+  else
+    AC_MSG_ERROR([pkg-config description of $2, needed for static build, is not available])
+  fi
 ])
 
 dnl UTIL_CHECK_LIB(LIBRARY, FUNCTION, [VARSUFFIX = $1]))
@@ -178,6 +230,16 @@ AC_DEFUN([UTIL_RESTORE_FLAGS], [
   LDFLAGS="$old_LDFLAGS"
 ])
 
+
+AC_ARG_ENABLE([tls],
+  AS_HELP_STRING([--disable-tls], [disable use of thread local support]),
+  [], enable_tls=yes
+)
+if test "x$enable_tls" = xyes; then
+  AX_TLS
+fi
+
+
 AC_ARG_ENABLE([mount],
   AS_HELP_STRING([--disable-mount], [do not build mount utilities]),
   [], enable_mount=check
@@ -195,40 +257,79 @@ AM_CONDITIONAL(BUILD_MOUNT, test "x$build_mount" = xyes)
 
 
 AC_ARG_ENABLE([fsck],
-  AS_HELP_STRING([--enable-fsck], [do build fsck]),
-  [], enable_fsck=no
+  AS_HELP_STRING([--disable-fsck], [do not build fsck]),
+  [], enable_fsck=yes
 )
 AM_CONDITIONAL(BUILD_FSCK, test "x$enable_fsck" = xyes)
 
 
-UTIL_CHECK_LIB(uuid, uuid_is_null)
-if test "x$have_uuid" = xno; then
-  AC_MSG_WARN([uuid library is not found; mkswap(8) will not generate UUIDs])
+AC_ARG_ENABLE([libuuid],
+  AS_HELP_STRING([--disable-libuuid], [do not build libuuid and uuid utilities]),
+  [], enable_libuuid=yes
+)
+AC_SUBST([LIBUUID_VERSION])
+AC_SUBST([LIBUUID_VERSION_INFO])
+AM_CONDITIONAL(BUILD_LIBUUID, test "x$enable_libuuid" = xyes)
+have_uuid=yes
+
+if test "x$enable_libuuid" = xno; then
+  # Check for external (e2fsprogs) libuuid
+  PKG_CHECK_MODULES(UUID, uuid, [have_uuid=yes], [have_uuid=no])
+  if test "x$have_uuid" = xno; then
+    # system without pkg-config or so, try classic check
+    AC_CHECK_LIB(uuid, uuid_is_null, [have_uuid=yes], [have_uuid=no])
+  fi
+  if test "x$have_uuid" = xyes; then
+    UTIL_SET_FLAGS($UUID_CFLAGS, $UUID_CFLAGS, $UUID_LIBS)
+    AC_CHECK_HEADERS([uuid.h uuid/uuid.h], [break], [])
+    UTIL_RESTORE_FLAGS
+  fi
+else
+  # internal library
+  AC_DEFINE(HAVE_UUID_H, 1, [Define to 1 if you have the <uuid.h> header file.])
 fi
 
-UTIL_CHECK_LIB(util, openpty)
-UTIL_CHECK_LIB(termcap, tgetnum)
+if test "x$have_uuid" = xyes; then
+  AC_DEFINE(HAVE_LIBUUID, 1, [Define to 1 if you have the -luuid.])
+else
+  AC_MSG_WARN([uuid library is not found; mkswap(8) will not generate UUIDs])
+fi
+AM_CONDITIONAL(HAVE_UUID, test "x$have_uuid" = xyes)
+# default
+: ${UUID_LIBS='-luuid'}
 
 
-AC_ARG_WITH([fsprobe],
-  [AS_HELP_STRING([--with-fsprobe=LIB], [library to guess filesystems, LIB should be builtin|blkid|volume_id, default is blkid])],
-  [], [with_fsprobe=blkid]
+AC_ARG_ENABLE([uuidd],
+  AS_HELP_STRING([--disable-uuidd], [do not build the uuid daemon]),
+  [], enable_uuidd=auto
 )
 
-build_libblkid=no
-have_blkid=no
-have_volume_id=no
+case "$enable_uuidd:$have_uuid" in
+yes:no)
+  AC_MSG_ERROR([cannot enable uuidd when libuuid is disabled]) ;;
+auto:*)
+  enable_uuidd=$have_uuid ;;
+esac
+if test "x$enable_uuidd" = xyes; then
+  AC_DEFINE(HAVE_UUIDD, 1, [Define to 1 if you want to use uuid daemon.])
+fi
+AM_CONDITIONAL(BUILD_UUIDD, test "x$enable_uuidd" = xyes)
 
-if test "x$with_fsprobe" = xbuiltin; then
-  have_blkid=yes
-  build_libblkid=yes
-  AC_SUBST(LIBBLKID_VERSION)
-  AC_DEFINE_UNQUOTED(LIBBLKID_VERSION, "$LIBBLKID_VERSION", [libblkid version string])
-  AC_DEFINE_UNQUOTED(LIBBLKID_DATE, "$LIBBLKID_DATE", [libblkid date string])
-  AC_DEFINE(HAVE_BLKID_EVALUATE_TAG, 1, [Define to 1 if you have the blkid_evaluate_tag().])
-  AC_DEFINE(HAVE_BLKID_H, 1, [Define to 1 if you have the <blkid.h> header file.])
-elif test "x$build_mount" = xyes || test "x$enable_fsck" = xyes; then
-  if test "x$with_fsprobe" = xblkid; then
+
+AC_ARG_ENABLE([libblkid],
+  AS_HELP_STRING([--disable-libblkid], [do not build libblkid and blkid utilities]),
+  [], enable_libblkid=yes
+)
+AC_SUBST([LIBBLKID_VERSION])
+AC_SUBST([LIBBLKID_VERSION_INFO])
+AM_CONDITIONAL(BUILD_LIBBLKID, test "x$enable_libblkid" = xyes)
+AC_DEFINE_UNQUOTED(LIBBLKID_VERSION, "$LIBBLKID_VERSION", [libblkid version string])
+AC_DEFINE_UNQUOTED(LIBBLKID_DATE, "$LIBBLKID_DATE", [libblkid date string])
+have_blkid=yes
+
+if test "x$enable_libblkid" = xno; then
+  if test "x$build_mount" = xyes || test "x$enable_fsck" = xyes; then
+    # Check for external (e2fsprogs) libblkid
     PKG_CHECK_MODULES(BLKID, blkid, [have_blkid=yes], [have_blkid=no])
     if test "x$have_blkid" = xno; then
       # system without pkg-config or so, try classic check
@@ -239,56 +340,36 @@ elif test "x$build_mount" = xyes || test "x$enable_fsck" = xyes; then
       AC_CHECK_HEADERS([blkid.h blkid/blkid.h], [break], [])
       UTIL_RESTORE_FLAGS
     fi
-  elif test "x$with_fsprobe" = xvolume_id; then
-    PKG_CHECK_MODULES(VOLUME_ID, volume_id, [have_volume_id=yes], [have_volume_id=no])
-    if test "x$have_volume_id" = xno; then
-      # system without pkg-config or so, try classic check
-      AC_CHECK_LIB(volume_id, volume_id_probe_all, [have_volume_id=yes], [have_volume_id=no])
+    if test -n "$enable_static_programs"; then
+      # TODO check only when mount of fsck are requested
+      UTIL_PKG_STATIC([BLKID_LIBS_STATIC], [blkid])
     fi
   fi
+else
+  # internal library
+  AC_DEFINE(HAVE_BLKID_H, 1, [Define to 1 if you have the <blkid.h> header file.])
+  AC_DEFINE(HAVE_BLKID_EVALUATE_TAG, 1, [Define to 1 if you have the blkid_evaluate_tag().])
 fi
 
-if  test "x$have_blkid" = xyes; then
+if test "x$have_blkid" = xyes; then
   AC_DEFINE(HAVE_LIBBLKID, 1, [Define to 1 if you have the -lblkid.])
-elif test "x$have_volume_id" = xno; then
+else
   if test "x$build_mount" = xyes; then
-    AC_MSG_ERROR([libblkid or libvolume_id is needed to build util-linux-ng mount])
+    AC_MSG_ERROR([libblkid is needed to build util-linux-ng mount])
   fi
   if test "x$enable_fsck" = xyes; then
-    AC_MSG_ERROR([libblkid or libvoume_id is needed to build util-linux-ng fsck])
+    AC_MSG_ERROR([libblkid is needed to build util-linux-ng fsck])
   fi
 fi
-
 AM_CONDITIONAL(HAVE_BLKID, test "x$have_blkid" = xyes)
-AM_CONDITIONAL(HAVE_VOLUME_ID, test "x$have_volume_id" = xyes)
-AM_CONDITIONAL(BUILD_LIBBLKID, test "x$build_libblkid" = xyes)
-
-
-dnl UTIL_PKG_STATIC(VARIABLE, MODULES)
-dnl ----------------------------------
-AC_DEFUN([UTIL_PKG_STATIC], [
-  if AC_RUN_LOG([pkg-config --exists --print-errors "$2"]); then
-    $1=`pkg-config --libs --static "$2"`
-  else
-    AC_MSG_ERROR([pkg-config description of $2, needed for static build, is not available])
-  fi
-])
-
-# These default values should work in most cases:
+# default
 : ${BLKID_LIBS='-lblkid -luuid'}
-: ${VOLUME_ID_LIBS='-lvolume_id'}
-
-# ... but for static build, we need to consult pkg-config:
-if test -n "$enable_static_programs"; then
-  case $with_fsprobe in
-  blkid) UTIL_PKG_STATIC([BLKID_LIBS_STATIC], [blkid]) ;;
-  volume_id) UTIL_PKG_STATIC([VOLUME_ID_LIBS_STATIC], [libvolume_id]) ;;
-  esac
-fi
 
 AC_ARG_VAR([BLKID_LIBS_STATIC], [-l options for linking statically with blkid])
-AC_ARG_VAR([VOLUME_ID_LIBS_STATIC], [-l options for linking statically with volume_id])
 
+
+UTIL_CHECK_LIB(util, openpty)
+UTIL_CHECK_LIB(termcap, tgetnum)
 
 AM_GNU_GETTEXT_VERSION([0.14.1])
 AM_GNU_GETTEXT([external])
@@ -566,6 +647,31 @@ fi
 AM_CONDITIONAL(BUILD_CRAMFS, test "x$build_cramfs" = xyes)
 
 
+AC_ARG_ENABLE([switch_root],
+  AS_HELP_STRING([--disable-switch_root], [do not build switch_root]),
+  [], enable_switch_root=check
+)
+
+if test "x$enable_switch_root" = xno; then
+  build_switch_root=no
+else
+  build_switch_root=yes
+  case $enable_switch_root:$linux_os in
+  yes:no) AC_MSG_ERROR([switch_root selected for non-linux system]);;
+  check:no) AC_MSG_WARN([non-linux system; do not build switch_root])
+            build_switch_root=no;;
+  esac
+  if test "x$build_switch_root" = xyes; then
+    case $enable_switch_root:$have_openat in
+    yes:no) AC_MSG_ERROR([switch_root selected but openat() function not found]);;
+    check:no) AC_MSG_WARN([openat() function not found; do not build switch_root])
+              build_switch_root=no;;
+    esac
+  fi
+fi
+AM_CONDITIONAL(BUILD_SWITCH_ROOT, test "x$build_switch_root" = xyes)
+
+
 AC_ARG_ENABLE([elvtune],
   AS_HELP_STRING([--enable-elvtune], [build elvtune (only works with 2.2 and 2.4 kernels)]),
   [], enable_elvtune=no
@@ -796,7 +902,6 @@ LIBS=""
 AC_CONFIG_HEADERS(config.h)
 
 AC_CONFIG_FILES([
-Makefile
 disk-utils/Makefile
 fdisk/Makefile
 fsck/Makefile
@@ -804,24 +909,29 @@ getopt/Makefile
 hwclock/Makefile
 include/Makefile
 lib/Makefile
-libs/Makefile
-libs/blkid/blkid.pc
-libs/blkid/Makefile
-libs/blkid/bin/Makefile
-libs/blkid/src/Makefile
-libs/blkid/src/probers/Makefile
 login-utils/Makefile
+Makefile
+misc-utils/chkdupexe:misc-utils/chkdupexe.pl
 misc-utils/Makefile
 mount/Makefile
 partx/Makefile
 po/Makefile.in
 schedutils/Makefile
+shlibs/blkid/blkid.pc
+shlibs/blkid/Makefile
+shlibs/blkid/src/Makefile
+shlibs/blkid/src/probers/Makefile
+shlibs/uuid/uuid.pc
+shlibs/uuid/Makefile
+shlibs/uuid/man/Makefile
+shlibs/uuid/src/Makefile
+shlibs/Makefile
 sys-utils/Makefile
-text-utils/Makefile
-tests/Makefile
-tests/helpers/Makefile
 tests/commands.sh
-misc-utils/chkdupexe:misc-utils/chkdupexe.pl
+tests/helpers/Makefile
+tests/Makefile
+text-utils/Makefile
 ])
+
 
 AC_OUTPUT

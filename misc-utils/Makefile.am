@@ -1,21 +1,52 @@
 include $(top_srcdir)/config/include-Makefile.am
 
-EXTRA_DIST = README.flushb
+EXTRA_DIST = README.flushb uuidd.rc
 
 bin_PROGRAMS =
+sbin_PROGRAMS =
+usrsbin_exec_PROGRAMS =
 
-usrbinexec_PROGRAMS = cal ddate logger look mcookie \
+usrbin_exec_PROGRAMS = cal ddate logger look mcookie \
 	namei script whereis scriptreplay
 EXTRA_DIST += README.cal README.ddate README.namei README.namei2
 
 mcookie_SOURCES = mcookie.c ../lib/md5.c
 
-usrbinexec_SCRIPTS = chkdupexe
+usrbin_exec_SCRIPTS = chkdupexe
 
 CLEANFILES = chkdupexe
 
 dist_man_MANS = cal.1 chkdupexe.1 ddate.1 logger.1 look.1 mcookie.1 \
 	namei.1 script.1 whereis.1 scriptreplay.1
+
+if BUILD_LIBUUID
+usrbin_exec_PROGRAMS += uuidgen
+dist_man_MANS += uuidgen.1
+uuidgen_LDADD = $(ul_libuuid_la)
+uuidgen_CFLAGS = -I$(ul_libuuid_srcdir)
+if BUILD_UUIDD
+usrsbin_exec_PROGRAMS += uuidd
+dist_man_MANS += uuidd.8
+uuidd_LDADD = $(ul_libuuid_la)
+uuidd_CFLAGS = -I$(ul_libuuid_srcdir)
+endif
+endif
+
+if BUILD_LIBBLKID
+sbin_PROGRAMS += blkid findfs
+dist_man_MANS += blkid.8 findfs.8
+blkid_LDADD = $(ul_libblkid_la)
+blkid_CFLAGS = -I$(ul_libblkid_srcdir)
+findfs_LDADD = $(ul_libblkid_la)
+findfs_CFLAGS = -I$(ul_libblkid_srcdir)
+if HAVE_STATIC_BLKID
+sbin_PROGRAMS += blkid.static
+blkid_static_SOURCES = $(blkid_SOURCES)
+blkid_static_LDFLAGS = "-all-static"		# libtool option
+blkid_static_LDADD = $(ul_libblkid_la)
+blkid_static_CFLAGS = -I$(ul_libblkid_srcdir)
+endif
+endif
 
 if HAVE_TINFO
 cal_LDADD = -ltinfo @NCURSES_LIBS@
@@ -35,7 +66,7 @@ endif
 
 if HAVE_NCURSES
 if LINUX
-usrbinexec_PROGRAMS += setterm
+usrbin_exec_PROGRAMS += setterm
 dist_man_MANS += setterm.1
 endif
 if HAVE_TINFO
@@ -52,19 +83,18 @@ dist_man_MANS += kill.1
 endif
 
 if BUILD_RENAME
-usrbinexec_PROGRAMS += rename
+usrbin_exec_PROGRAMS += rename
 dist_man_MANS += rename.1
 endif
 
 if BUILD_RESET
-dist_usrbinexec_SCRIPTS = reset
+dist_usrbin_exec_SCRIPTS = reset
 dist_man_MANS += reset.1
 endif
 EXTRA_DIST += README.reset reset.033c
 
 if BUILD_WRITE
-
-usrbinexec_PROGRAMS += write
+usrbin_exec_PROGRAMS += write
 dist_man_MANS += write.1
 write_CFLAGS = $(SUID_CFLAGS) $(AM_CFLAGS)
 write_LDFLAGS = $(SUID_LDFLAGS) $(AM_LDFLAGS)
@@ -72,8 +102,8 @@ write_LDFLAGS = $(SUID_LDFLAGS) $(AM_LDFLAGS)
 if USE_TTY_GROUP
 if MAKEINSTALL_DO_CHOWN
 install-exec-hook::
-	chgrp tty $(DESTDIR)$(usrbinexecdir)/write
-	chmod g+s $(DESTDIR)$(usrbinexecdir)/write
+	chgrp tty $(DESTDIR)$(usrbin_execdir)/write
+	chmod g+s $(DESTDIR)$(usrbin_execdir)/write
 endif
 endif
 endif
