@@ -1,4 +1,4 @@
-util-linux (2.16-1) unstable; urgency=low
+util-linux (2.16-2) experimental; urgency=low
 
   [John Keeping]
 
@@ -66,7 +66,7 @@ util-linux (2.16-1) unstable; urgency=low
   * docs: remove obsolete information from fstab example.  Closes: #507700
   * umount: clean up help output.  Closes: #320500
   * mount: add info about obsolete vfat options to mount.8.  Closes: #329856
-  * losetup: suggest to use modprobe rather than insmod in losetup.8. 
+  * losetup: suggest to use modprobe rather than insmod in losetup.8.
     Closes: #334796
   * mount: a little clean up info about loopdevs in man page.  Closes: #478600
   * build-sys: fix libuuid Makefile.am
@@ -183,7 +183,7 @@ util-linux (2.16-1) unstable; urgency=low
   * po: update vi.po (from translationproject.org) (Clytie Siddall)
   * po: update cs.po (from translationproject.org) (Petr Pisar)
 
- -- Scott James Remnant <scott@ubuntu.com>  Thu, 16 Jul 2009 14:41:50 +0100
+ -- LaMont Jones <lamont@debian.org>  Tue, 21 Jul 2009 15:58:40 -0600
 
 util-linux (2.15.1-1) unstable; urgency=low
 
