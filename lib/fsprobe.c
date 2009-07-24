@@ -31,8 +31,13 @@ open_device(const char *devname)
 		int fd = open(devname, O_RDONLY);
 		if (fd >= 0)
 			return fd;
+#ifdef ENOMEDIUM
+		/* ENOMEDIUM is Linux-only */
 		if (errno != ENOMEDIUM)
 			break;
+#else
+		break
+#endif
 		if (retries >= CRDOM_NOMEDIUM_RETRIES)
 			break;
 		++retries;
