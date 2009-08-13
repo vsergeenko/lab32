@@ -1,4 +1,0 @@
-libblkid 1 libblkid1 (>=1.37-1)
-udeb: libblkid 1 libblkid1-udeb
-libuuid 1 libuuid1 (> 1.40.3-1)
-udeb: libuuid 1 libuuid1-udeb

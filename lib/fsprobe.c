@@ -36,7 +36,7 @@ open_device(const char *devname)
 		if (errno != ENOMEDIUM)
 			break;
 #else
-		break
+		break;
 #endif
 		if (retries >= CRDOM_NOMEDIUM_RETRIES)
 			break;

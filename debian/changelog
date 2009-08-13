@@ -1,3 +1,30 @@
+util-linux (2.16-2.1) unstable; urgency=low
+
+  [ Aurelien Jarno ]
+  * Non-maintainer upload.
+  * Upload to unstable.
+  * Don't ship *.la files.
+  * Add avr32 to debian/control (closes: bug#528518).
+  
+  [ Michael Biebl ]
+  * Remove the outdated debian/shlibs.local file.
+  * Remove the auto-update of symbols files from debian/rules.
+  * Remove symbols from the debian/libuuid1.symbols files which were never
+    part of the public ABI, like uuid_pack/uuid_unpack and were falsely
+    copied over from e2fsprogs.
+  * Strip the Debian revision in the symbols files.
+  * Create a shlibs file for libblkid1 and libuuid1 and bump it to >= 2.16 to
+    ensure correct udeb shlibs dependencies.
+    (closes: bug#539100, bug#538940).
+  * Remove *.la files and empty /usr/include and /usr/lib/pkgconfig
+    directories from the util-linux package.
+
+  [ Cyril Brulebois ]
+  * Only check for ENOMEDIUM when ENOMEDIUM is defined. Fixes build on
+    GNU/kFreeBSD. (closes: bug#539054).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Wed, 05 Aug 2009 21:20:07 +0000
+
 util-linux (2.16-2) experimental; urgency=low
 
   [John Keeping]
