@@ -1,3 +1,17 @@
+util-linux (2.16-3) unstable; urgency=low
+
+  [Kel Modderman]
+
+  * hwclockfirst.sh: initscript LSB header in conflict with update-rc.d
+    options.  Closes: #487196
+
+  [LaMont Jones]
+
+  * hwclock*.sh: one more round of header tweaks.  Closes: #520607
+  * Acknowledge Aurelien Jarno NMU
+
+ -- LaMont Jones <lamont@debian.org>  Thu, 13 Aug 2009 06:28:34 -0600
+
 util-linux (2.16-2.1) unstable; urgency=low
 
   [ Aurelien Jarno ]
