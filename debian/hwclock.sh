@@ -18,7 +18,7 @@
 
 ### BEGIN INIT INFO
 # Provides:          hwclock
-# Required-Start:    $local_fs
+# Required-Start:    checkroot
 # Required-Stop:     $local_fs
 # Default-Start:     S
 # Default-Stop:      0 6
