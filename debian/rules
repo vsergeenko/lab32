@@ -107,6 +107,7 @@ endif
 	    install -m 755 debian/hwclock.sh debian/util-linux/etc/init.d/hwclock.sh; \
 	    install -m 755 debian/hwclock.sh debian/util-linux/etc/init.d/hwclockfirst.sh; \
 	    sed -i -e '/^FIRST=/s/no/yes/' -e '/Provides:/s/ck/ckfirst/' \
+		-e '/Required-Start:/s/.local_fs/mountdevsubfs/' \
 	    	-e '/Required-Stop:/s/.local_fs/umountroot/' \
 		-e '/Default-Start:/a# Default-Stop:' -e '/Default-Stop:/d' \
 		debian/util-linux/etc/init.d/hwclockfirst.sh; \
