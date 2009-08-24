@@ -76,6 +76,7 @@
 #include "pathnames.h"
 #include "xstrncpy.h"
 #include "nls.h"
+#include "usleep.h"
 
 static void usage(void), int_handler(int), write_user(struct utmp *);
 static void wall(void), write_wtmp(void), unmount_disks(void);
@@ -281,7 +282,7 @@ main(int argc, char *argv[])
 			if (fgets (line, sizeof(line), fp) != NULL &&
 			    strncasecmp (line, "HALT_ACTION", 11) == 0 &&
 			    iswhitespace(line[11])) {
-				p = index(line, '\n');
+				p = strchr(line, '\n');
 				if (p)
 					*p = 0;		/* strip final '\n' */
 				p = line+11;
