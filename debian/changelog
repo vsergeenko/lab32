@@ -1,4 +1,4 @@
-util-linux (2.16.1-1) unstable; urgency=low
+util-linux (2.16.1-2) unstable; urgency=low
 
   [Zdenek Behan]
 
@@ -65,6 +65,10 @@ util-linux (2.16.1-1) unstable; urgency=low
   * docs: add v2.16.1 ReleaseNotes
   * build-sys: release++ (v2.16.1)
   * po: merge changes
+
+  [LaMont Jones]
+  * meta: fix misc:Depends
+  * Depends: install-info, set -e in postrm
 
   [localization folks]
 
