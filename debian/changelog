@@ -1,3 +1,78 @@
+util-linux (2.16.1-1) unstable; urgency=low
+
+  [Zdenek Behan]
+
+  * tests: fdisk doslabel test also checks changing partition type
+  * tests: fdisk doslabel test also checks setting partition active
+  * tests: test for basic functionality of sun labels
+
+  [Peter De Wachter]
+
+  * mkswap: unbreak -c ("check") option.
+
+  [Florian Zumbiehl]
+
+  * libblkid: fix buffer overflow in blkid_encode_string()
+
+  [Peter Volkov]
+
+  * mount: mention mtab for single mount point mount in mount.8
+
+  [Petter Reinholdtsen]
+
+  * meta: util-linux Depends: initscripts.  Closes: #546834
+
+  [Scott James Remnant]
+
+  * versionsort() prototype changed
+
+  [Peter Breitenlohner]
+
+  * mkfs.8: incomplete sentence and formatting
+  * vipw.8: remove erroneous empty line, formatting
+  * umount.8: command line for umount helpers, formatting
+  * cytune.8: missing description of `-S', formatting
+  * hexdump.1: erroneous .Nm ""
+  * ul.1: erroneous .SH instead of .Sh
+  * ctrlaltdel.8: formatting
+  * various other manpage formatting
+
+  [Daniel Mierswa]
+
+  * replace bcopy,bzero,index and rindex
+  * libblkid: allow linking with uClibc
+  * replace usleep() for systems that don't have them
+
+  [Karel Zak]
+
+  * libblkid: fix FALSE definition
+  * tailf: report inotify_add_watch() problems
+  * libblkid: fix ext2 detection on systems with ext4 only
+  * libblkid: fix cache->probe memory leak
+  * dmesg: add -r to help output
+  * mount: add info about ext{3,4} barriers to mount.8
+  * mount: clean up mount.8
+  * Revert "mount: clean up mount.8"
+  * mount: clean up mount.8
+  * hwclocks: use time limit for KDGHWCLK busy wait
+  * mount: add info about ext{3,4} barriers to mount.8
+  * mount: clean up mount.8
+  * Revert "mount: clean up mount.8"
+  * mount: clean up mount.8
+  * libblkid: add *.ko.gz support to modules.dep parser
+  * mkswap: fix memory leaks, cleanup check_blocks()
+  * docs: update AUTHORS file
+  * docs: add v2.16.1 ReleaseNotes
+  * build-sys: release++ (v2.16.1)
+  * po: merge changes
+
+  [localization folks]
+
+  * po: fix grammar glitch in german translation (Hendrik Lönngren)
+  * po: update ja.po (from translationproject.org) (Makoto Kato)
+
+ -- LaMont Jones <lamont@debian.org>  Thu, 17 Sep 2009 05:16:55 -0600
+
 util-linux (2.16-3) unstable; urgency=low
 
   [Kel Modderman]
