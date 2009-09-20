@@ -1,3 +1,18 @@
+util-linux (2.16.1-3) unstable; urgency=low
+
+  [Jonas Meurer]
+
+  * provide initramfs-tools hook to copy /sbin/blkid into initramfs. 
+    Closes: #544669
+
+  [LaMont Jones]
+
+  * meta: drop Depends: install-info, install-info calls in preinst/postrm. 
+    Based on the patch in the bug.  Closes: #547430, #547320
+  * rules: remove usr/share/info/dir.gz.  Closes: #547488
+
+ -- LaMont Jones <lamont@debian.org>  Sun, 20 Sep 2009 15:58:15 -0600
+
 util-linux (2.16.1-2) unstable; urgency=low
 
   [Zdenek Behan]
