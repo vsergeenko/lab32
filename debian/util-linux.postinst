@@ -3,9 +3,6 @@
 umask 022
 set -e
 
-install-info --quiet --section "Development" "Development" \
-  --description="System V interprocess communication facilities" \
-  /usr/share/info/ipc.info.gz
 update-alternatives --install /usr/bin/pager pager /bin/more 50 \
   --slave /usr/share/man/man1/pager.1.gz pager.1.gz /usr/share/man/man1/more.1.gz
 update-alternatives --install /usr/bin/pager pager /usr/bin/pg 10 \
