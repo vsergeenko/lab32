@@ -87,42 +87,67 @@ struct blkid_struct_tag
 typedef struct blkid_struct_tag *blkid_tag;
 
 /*
+ * Chain IDs
+ */
+enum {
+	BLKID_CHAIN_SUBLKS,	/* FS/RAID superblocks (enabled by default) */
+	BLKID_CHAIN_TOPLGY,	/* Block device topology */
+	BLKID_CHAIN_PARTS,	/* Partition tables */
+
+	BLKID_NCHAINS		/* number of chains */
+};
+
+struct blkid_chain {
+	const struct blkid_chaindrv *driver;	/* chain driver */
+
+	int		enabled;	/* boolean */
+	int		flags;		/* BLKID_<chain>_* */
+	int		binary;		/* boolean */
+	int		idx;		/* index of the current prober */
+	unsigned long	*fltr;		/* filter or NULL */
+	void		*data;		/* private chain data or NULL */
+};
+
+/*
+ * Chain driver
+ */
+struct blkid_chaindrv {
+	const int	id;		/* BLKID_CHAIN_* */
+	const char	*name;		/* name of chain (for debug purpose) */
+	const int	dflt_flags;	/* default chain flags */
+	const int	dflt_enabled;	/* default enabled boolean */
+	int		has_fltr;	/* boolean */
+
+	const struct blkid_idinfo **idinfos; /* description of probing functions */
+	const size_t	nidinfos;	/* number of idinfos */
+
+	/* driver operations */
+	int		(*probe)(blkid_probe, struct blkid_chain *);
+	int		(*safeprobe)(blkid_probe, struct blkid_chain *);
+	void		(*free_data)(blkid_probe, void *);
+};
+
+/*
  * Low-level probe result
  */
 #define BLKID_PROBVAL_BUFSIZ	64
-#define BLKID_PROBVAL_NVALS	8	/* see blkid.h BLKID_PROBREQ_* */
+
+#define BLKID_NVALS_SUBLKS	10
+#define BLKID_NVALS_TOPLGY	3
+#define BLKID_NVALS_PARTS	1
+
+/* Max number of all values in probing result */
+#define BLKID_NVALS             (BLKID_NVALS_SUBLKS + \
+				 BLKID_NVALS_TOPLGY + \
+				 BLKID_NVALS_PARTS)
 
 struct blkid_prval
 {
 	const char	*name;			/* value name */
 	unsigned char	data[BLKID_PROBVAL_BUFSIZ]; /* value data */
 	size_t		len;			/* length of value data */
-};
 
-/*
- * Low-level probing control struct
- */
-struct blkid_struct_probe
-{
-	int			fd;		/* device file descriptor */
-	blkid_loff_t		off;		/* begin of data on the device */
-	blkid_loff_t		size;		/* end of data on the device */
-
-	unsigned char		*sbbuf;		/* superblok buffer */
-	size_t			sbbuf_len;	/* size of data in superblock buffer */
-
-	unsigned char		*buf;		/* seek buffer */
-	blkid_loff_t		buf_off;	/* offset of seek buffer */
-	size_t			buf_len;	/* size of data in seek buffer */
-	size_t			buf_max;	/* allocated size of seek buffer */
-
-	struct blkid_prval	vals[BLKID_PROBVAL_NVALS];
-	int			nvals;
-
-	int			probreq;	/* BLKID_PROBREQ_* flags */
-	int			idx;		/* index of the last prober */
-
-	unsigned long		*fltr;		/* filter */
+	struct blkid_chain	*chain;		/* owner */
 };
 
 #define BLKID_SB_BUFSIZ		0x11000
@@ -144,7 +169,7 @@ struct blkid_idmag
  */
 struct blkid_idinfo
 {
-	const char	*name;		/* FS/RAID name */
+	const char	*name;		/* fs, raid or partition table name */
 	int		usage;		/* BLKID_USAGE_* flag */
 	int		flags;		/* BLKID_IDINFO_* flags */
 
@@ -162,6 +187,38 @@ struct blkid_idinfo
  * and valid linux swap on the same device).
  */
 #define BLKID_IDINFO_TOLERANT	(1 << 1)
+
+/*
+ * Low-level probing control struct
+ */
+struct blkid_struct_probe
+{
+	int			fd;		/* device file descriptor */
+	blkid_loff_t		off;		/* begin of data on the device */
+	blkid_loff_t		size;		/* end of data on the device */
+	dev_t			devno;		/* device number (st.st_rdev) */
+	unsigned int		blkssz;		/* sector size (BLKSSZGET ioctl) */
+	mode_t			mode;		/* struct stat.sb_mode */
+
+	unsigned char		*sbbuf;		/* superblok buffer */
+	size_t			sbbuf_len;	/* size of data in superblock buffer */
+
+	unsigned char		*buf;		/* seek buffer */
+	blkid_loff_t		buf_off;	/* offset of seek buffer */
+	size_t			buf_len;	/* size of data in seek buffer */
+	size_t			buf_max;	/* allocated size of seek buffer */
+
+	struct blkid_chain	chains[BLKID_NCHAINS];	/* array of chains */
+	struct blkid_chain	*cur_chain;		/* current chain */
+
+	struct blkid_prval	vals[BLKID_NVALS];	/* results */
+	int			nvals;		/* number of assigned vals */
+
+	/* obsolete */
+	int                     probreq;        /* BLKID_PROBREQ_* flags */
+	int                     idx;            /* index of the last prober */
+	unsigned long           *fltr;          /* filter */
+};
 
 /*
  * Evaluation methods (for blkid_eval_* API)
@@ -282,6 +339,7 @@ struct dir_list {
 	struct dir_list *next;
 };
 extern void blkid__scan_dir(char *, dev_t, struct dir_list **, char **);
+extern int blkid_driver_has_major(const char *drvname, int major);
 
 /* lseek.c */
 extern blkid_loff_t blkid_llseek(int fd, blkid_loff_t offset, int whence);
@@ -314,29 +372,71 @@ extern void blkid_free_dev(blkid_dev dev);
 unsigned char *blkid_probe_get_buffer(blkid_probe pr,
                                 blkid_loff_t off, blkid_loff_t len);
 
+extern unsigned char *blkid_probe_get_sector(blkid_probe pr, unsigned int sector);
+
+extern int blkid_probe_get_dimension(blkid_probe pr,
+	                blkid_loff_t *off, blkid_loff_t *size);
+
+extern int blkid_probe_set_dimension(blkid_probe pr,
+	                blkid_loff_t off, blkid_loff_t size);
+
 /* returns superblok according to 'struct blkid_idmag' */
 #define blkid_probe_get_sb(_pr, _mag, type) \
 			((type *) blkid_probe_get_buffer((_pr),\
 					(_mag)->kboff << 10, sizeof(type)))
 
+extern blkid_partlist blkid_probe_get_partlist(blkid_probe pr);
+
+extern void blkid_probe_chain_reset_vals(blkid_probe pr, struct blkid_chain *chn);
+extern int blkid_probe_chain_copy_vals(blkid_probe pr, struct blkid_chain *chn,
+			                struct blkid_prval *vals, int nvals);
+extern struct blkid_prval *blkid_probe_assign_value(blkid_probe pr, const char *name);
+extern void blkid_probe_append_vals(blkid_probe pr, struct blkid_prval *vals, int nvals);
+
+extern struct blkid_chain *blkid_probe_get_chain(blkid_probe pr);
+
+extern struct blkid_prval *__blkid_probe_get_value(blkid_probe pr, int num);
+extern struct blkid_prval *__blkid_probe_lookup_value(blkid_probe pr, const char *name);
+
+extern unsigned long *blkid_probe_get_filter(blkid_probe pr, int chain, int create);
+extern int __blkid_probe_invert_filter(blkid_probe pr, int chain);
+extern int __blkid_probe_reset_filter(blkid_probe pr, int chain);
+extern int __blkid_probe_filter_types(blkid_probe pr, int chain, int flag, char *names[]);
+
+extern void *blkid_probe_get_binary_data(blkid_probe pr, struct blkid_chain *chn);
+
 extern int blkid_probe_set_value(blkid_probe pr, const char *name,
                 unsigned char *data, size_t len);
 extern int blkid_probe_vsprintf_value(blkid_probe pr, const char *name,
                 const char *fmt, va_list ap);
-extern int blkid_probe_set_version(blkid_probe pr, const char *version);
-extern int blkid_probe_sprintf_version(blkid_probe pr, const char *fmt, ...)
-		__attribute__ ((format (printf, 2, 3)));
+extern int blkid_probe_sprintf_value(blkid_probe pr, const char *name,
+                const char *fmt, ...);
 
-extern int blkid_probe_set_label(blkid_probe pr, unsigned char *label, size_t len);
-extern int blkid_probe_set_utf8label(blkid_probe pr, unsigned char *label,
-                size_t len, int enc);
-extern int blkid_probe_sprintf_uuid(blkid_probe pr, unsigned char *uuid,
-                size_t len, const char *fmt, ...)
-		__attribute__ ((format (printf, 4, 5)));
-extern int blkid_probe_strncpy_uuid(blkid_probe pr, unsigned char *str, size_t len);
+extern void blkid_unparse_uuid(const unsigned char *uuid, char *str, size_t len);
 
-extern int blkid_probe_set_uuid(blkid_probe pr, unsigned char *uuid);
-extern int blkid_probe_set_uuid_as(blkid_probe pr, unsigned char *uuid, const char *name);
+/* filter bitmap macros */
+#define blkid_bmp_wordsize		(8 * sizeof(unsigned long))
+#define blkid_bmp_idx_bit(item)		(1UL << ((item) % blkid_bmp_wordsize))
+#define blkid_bmp_idx_byte(item)	((item) / blkid_bmp_wordsize)
+
+#define blkid_bmp_set_item(bmp, item)	\
+		((bmp)[ blkid_bmp_idx_byte(item) ] |= blkid_bmp_idx_bit(item))
+
+#define blkid_bmp_unset_item(bmp, item)	\
+		((bmp)[ bmp_idx_byte(item) ] &= ~bmp_idx_bit(item))
+
+#define blkid_bmp_get_item(bmp, item)	\
+		((bmp)[ blkid_bmp_idx_byte(item) ] & blkid_bmp_idx_bit(item))
+
+#define blkid_bmp_nwords(max_items) \
+		(((max_items) + blkid_bmp_wordsize) / blkid_bmp_wordsize)
+
+#define blkid_bmp_nbytes(max_items) \
+		(blkid_bmp_nwords(max_items) * sizeof(unsigned long))
+
+/* encode.c */
+extern size_t blkid_encode_to_utf8(int enc, unsigned char *dest, size_t len,
+			const unsigned char *src, size_t count);
 
 #define BLKID_ENC_UTF16BE	0
 #define BLKID_ENC_UTF16LE	1

@@ -1,0 +1,255 @@
+/*
+ * topology - gathers information about device topology
+ *
+ * Copyright 2009 Red Hat, Inc.  All rights reserved.
+ *
+ * This file may be redistributed under the terms of the
+ * GNU Lesser General Public License.
+ */
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stddef.h>
+
+#include "topology.h"
+
+/**
+ * SECTION:topology
+ * @title: Topology information
+ * @short_description: block device tolology information.
+ *
+ * The tolology chain provides details about Linux block devices, for more
+ * information see:
+ *
+ *      Linux kernel Documentation/ABI/testing/sysfs-block
+ *
+ * NAME=value (tags) interface is enabled by blkid_probe_enable_topology(),
+ * and provides:
+ *
+ * @MINIMUM_IO_SIZE: minimum size which is the device's preferred unit of I/O.
+ *                   For RAID arrays it is often the stripe chunk size.
+ *
+ * @OPTIMAL_IO_SIZE: usually the stripe width for RAID or zero. For RAID arrays
+ *                   it is usually the stripe width or the internal track size.
+ *
+ * @ALIGNMENT_OFFSET: indicates how many bytes the beginning o the device is
+ *                    offset from the disk's natural alignment.
+ *
+ * Binary interface:
+ *
+ * blkid_probe_get_tolology()
+ *
+ * blkid_topology_get_'VALUENAME'()
+ */
+static int topology_probe(blkid_probe pr, struct blkid_chain *chn);
+static void topology_free(blkid_probe pr, void *data);
+
+/*
+ * Binary interface
+ */
+struct blkid_struct_topology {
+	unsigned long	alignment_offset;
+	unsigned long	minimum_io_size;
+	unsigned long	optimal_io_size;
+};
+
+/*
+ * Topology chain probing functions
+ */
+static const struct blkid_idinfo *idinfos[] =
+{
+	&sysfs_tp_idinfo,
+	&md_tp_idinfo,
+	&dm_tp_idinfo,
+	&evms_tp_idinfo
+};
+
+
+/*
+ * Driver definition
+ */
+const struct blkid_chaindrv topology_drv = {
+	.id           = BLKID_CHAIN_TOPLGY,
+	.name         = "topology",
+	.dflt_enabled = FALSE,
+	.idinfos      = idinfos,
+	.nidinfos     = ARRAY_SIZE(idinfos),
+	.probe        = topology_probe,
+	.safeprobe    = topology_probe,
+	.free_data    = topology_free
+};
+
+/**
+ * blkid_probe_enable_topology:
+ * @pr: probe
+ * @enable: TRUE/FALSE
+ *
+ * Enables/disables the topology probing for non-binary interface.
+ *
+ * Returns: 0 on success, or -1 in case of error.
+ */
+int blkid_probe_enable_topology(blkid_probe pr, int enable)
+{
+	if (!pr)
+		return -1;
+	pr->chains[BLKID_CHAIN_TOPLGY].enabled = enable;
+	return 0;
+}
+
+/**
+ * blkid_probe_get_topology:
+ * @pr: probe
+ *
+ * This is a binary interface for topology values. See also blkid_topology_*
+ * functions.
+ *
+ * This function is independent on blkid_do_[safe,full]probe() and
+ * blkid_probe_enable_topology() calls.
+ *
+ * Returns: blkid_tolopogy, or NULL in case of error.
+ */
+blkid_topology blkid_probe_get_topology(blkid_probe pr)
+{
+	return (blkid_topology) blkid_probe_get_binary_data(pr,
+			&pr->chains[BLKID_CHAIN_TOPLGY]);
+}
+
+/*
+ * The blkid_do_probe() backend.
+ */
+static int topology_probe(blkid_probe pr, struct blkid_chain *chn)
+{
+	int i = 0;
+
+	if (!pr || chn->idx < -1)
+		return -1;
+	if (chn->idx < -1)
+		return -1;
+
+	if (chn->binary) {
+		DBG(DEBUG_LOWPROBE, printf("initialize topology binary data\n"));
+
+		if (chn->data)
+			/* reset binary data */
+			memset(chn->data, 0,
+					sizeof(struct blkid_struct_topology));
+		else {
+			chn->data = calloc(1,
+					sizeof(struct blkid_struct_topology));
+			if (!chn->data)
+				return -1;
+		}
+	}
+
+	blkid_probe_chain_reset_vals(pr, chn);
+
+	DBG(DEBUG_LOWPROBE,
+		printf("--> starting probing loop [TOPOLOGY idx=%d]\n",
+		chn->idx));
+
+	i = chn->idx + 1;
+
+	for ( ; i < ARRAY_SIZE(idinfos); i++) {
+		const struct blkid_idinfo *id = idinfos[i];
+
+		chn->idx = i;
+
+		if (id->probefunc) {
+			DBG(DEBUG_LOWPROBE, printf(
+				"%s: call probefunc()\n", id->name));
+			if (id->probefunc(pr, NULL) != 0)
+				continue;
+		}
+
+		DBG(DEBUG_LOWPROBE,
+			printf("<-- leaving probing loop (type=%s) [TOPOLOGY idx=%d]\n",
+			id->name, chn->idx));
+		return 0;
+	}
+
+	DBG(DEBUG_LOWPROBE,
+		printf("<-- leaving probing loop (failed) [TOPOLOGY idx=%d]\n",
+		chn->idx));
+	return 1;
+}
+
+static void topology_free(blkid_probe pr, void *data)
+{
+	free(data);
+}
+
+static int topology_set_value(blkid_probe pr, const char *name,
+				size_t structoff, unsigned long data)
+{
+	struct blkid_chain *chn = blkid_probe_get_chain(pr);
+
+	if (!chn)
+		return -1;
+
+	if (chn->binary) {
+		unsigned long *v =
+			(unsigned long *) (chn->data + structoff);
+		*v = data;
+		return 0;
+	}
+	return blkid_probe_sprintf_value(pr, name, "%llu", data);
+}
+
+int blkid_topology_set_alignment_offset(blkid_probe pr, unsigned long val)
+{
+	return topology_set_value(pr,
+			"ALIGNMENT_OFFSET",
+			offsetof(struct blkid_struct_topology, alignment_offset),
+			val);
+}
+
+int blkid_topology_set_minimum_io_size(blkid_probe pr, unsigned long val)
+{
+	return topology_set_value(pr,
+			"MINIMUM_IO_SIZE",
+			offsetof(struct blkid_struct_topology, minimum_io_size),
+			val);
+}
+
+int blkid_topology_set_optimal_io_size(blkid_probe pr, unsigned long val)
+{
+	return topology_set_value(pr,
+			"OPTIMAL_IO_SIZE",
+			offsetof(struct blkid_struct_topology, optimal_io_size),
+			val);
+}
+
+/**
+ * blkid_topology_get_alignment_offset:
+ * @tp: topology
+ *
+ * Returns: alignment offset in bytes or 0.
+ */
+unsigned long blkid_topology_get_alignment_offset(blkid_topology tp)
+{
+	return tp ? tp->alignment_offset : 0;
+}
+
+/**
+ * blkid_topology_get_minimum_io_size:
+ * @tp: topology
+ *
+ * Returns: minimum io size in bytes or 0.
+ */
+unsigned long blkid_topology_get_minimum_io_size(blkid_topology tp)
+{
+	return tp ? tp->minimum_io_size : 0;
+}
+
+/**
+ * blkid_topology_get_optimal_io_size
+ * @tp: topology
+ *
+ * Returns: optimal io size in bytes or 0.
+ */
+unsigned long blkid_topology_get_optimal_io_size(blkid_topology tp)
+{
+	return tp ? tp->optimal_io_size : 0;
+}
+
