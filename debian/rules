@@ -67,7 +67,7 @@ install: build
 	$(MAKE) install DESTDIR=`pwd`/debian/util-linux INSTALL_STRIP_FLAG=""
 	dh_installdocs -i -s
 	install -m 644 login-utils/README.modems-with-agetty debian/util-linux/usr/share/doc/util-linux/README.modems-with-getty
-	install -m 755 debian/util-linux.initramfs debian/util-linux/usr/share/initramfs-tools/hooks/util-linux
+	install -m 755 debian/util-linux.initramfs debian/util-linux/usr/share/initramfs-tools/hooks/utillinux
 	dh_installexamples -i -s
 	dh_installmenu -i -s
 	dh_installcron -i -s
