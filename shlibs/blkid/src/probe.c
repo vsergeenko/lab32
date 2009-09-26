@@ -518,29 +518,32 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 		struct stat sb;
 
 		if (fstat(fd, &sb))
-			return -1;
+			goto err;
 
 		pr->mode = sb.st_mode;
 
-		if (S_ISBLK(sb.st_mode)) {
+		if (S_ISBLK(sb.st_mode))
 			blkdev_get_size(fd, (unsigned long long *) &pr->size);
-			pr->devno = sb.st_rdev;
-		} else
-			pr->size = sb.st_size;
-	}
-	if (!pr->size)
-		return -1;
+		else if (S_ISCHR(sb.st_mode))
+			pr->size = 1;		/* UBI devices are char... */
+		else if (S_ISREG(sb.st_mode))
+			pr->size = sb.st_size;	/* regular file */
 
-	/* read SB to test if the device is readable */
-	if (!blkid_probe_get_buffer(pr, 0, 0x200)) {
-		DBG(DEBUG_LOWPROBE,
-			printf("failed to prepare a device for low-probing\n"));
-		return -1;
+		if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode))
+			pr->devno = sb.st_rdev;
 	}
+
+	if (!pr->size)
+		goto err;
 
 	DBG(DEBUG_LOWPROBE, printf("ready for low-probing, offset=%zd, size=%zd\n",
 				pr->off, pr->size));
 	return 0;
+err:
+	DBG(DEBUG_LOWPROBE,
+		printf("failed to prepare a device for low-probing\n"));
+	return -1;
+
 }
 
 int blkid_probe_get_dimension(blkid_probe pr,
@@ -842,7 +845,8 @@ dev_t blkid_probe_get_devno(blkid_probe pr)
 	if (!pr->devno) {
 		struct stat sb;
 
-		if (fstat(pr->fd, &sb) == 0 && S_ISBLK(sb.st_mode))
+		if (fstat(pr->fd, &sb) == 0 &&
+		    (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)))
 			pr->devno = sb.st_rdev;
 	}
 	return pr->devno;
@@ -911,6 +915,9 @@ int blkid_probe_numof_values(blkid_probe pr)
  * @data: pointer to return value data or NULL
  * @len: pointer to return value length or NULL
  *
+ * Note, the @len returns length of the @data, including the terminating
+ * '\0' character.
+ *
  * Returns: 0 on success, or -1 in case of error.
  */
 int blkid_probe_get_value(blkid_probe pr, int num, const char **name,
@@ -937,6 +944,9 @@ int blkid_probe_get_value(blkid_probe pr, int num, const char **name,
  * @name: name of value
  * @data: pointer to return value data or NULL
  * @len: pointer to return value length or NULL
+ *
+ * Note, the @len returns length of the @data, including the terminating
+ * '\0' character.
  *
  * Returns: 0 on success, or -1 in case of error.
  */
@@ -1011,5 +1021,23 @@ void blkid_unparse_uuid(const unsigned char *uuid, char *str, size_t len)
 		uuid[8], uuid[9],
 		uuid[10], uuid[11], uuid[12], uuid[13], uuid[14],uuid[15]);
 #endif
+}
+
+
+/* Removes whitespace from the right-hand side of a string (trailing
+ * whitespace).
+ *
+ * Returns size of the new string (without \0).
+ */
+size_t blkid_rtrim_whitespace(unsigned char *str)
+{
+	size_t i = strlen((char *) str);
+
+	while (i--) {
+		if (!isspace(str[i]))
+			break;
+	}
+	str[++i] = '\0';
+	return i;
 }
 

@@ -229,7 +229,9 @@ static void probe_one(blkid_cache cache, const char *ptname,
 		    dev->bid_devno == devno)
 			goto set_pri;
 
-		if (stat(device, &st) == 0 && S_ISBLK(st.st_mode) &&
+		if (stat(device, &st) == 0 &&
+		    (S_ISBLK(st.st_mode) ||
+		     (S_ISCHR(st.st_mode) && !strncmp(ptname, "ubi", 3))) &&
 		    st.st_rdev == devno) {
 			devname = blkid_strdup(device);
 			goto get_dev;
@@ -388,6 +390,53 @@ evms_probe_all(blkid_cache cache, int only_if_new)
 	return num;
 }
 
+static void
+ubi_probe_all(blkid_cache cache, int only_if_new)
+{
+	const char **dirname;
+
+	for (dirname = dirlist; *dirname; dirname++) {
+		DBG(DEBUG_DEVNAME, printf("probing UBI volumes under %s\n",
+					  *dirname));
+
+		DIR		*dir;
+		struct dirent	*iter;
+
+		dir = opendir(*dirname);
+		if (dir == NULL)
+			continue ;
+
+		while ((iter = readdir(dir)) != NULL) {
+			char		*name;
+			struct stat	st;
+			dev_t		dev;
+
+			name = iter->d_name;
+#ifdef _DIRENT_HAVE_D_TYPE
+			if (iter->d_type != DT_UNKNOWN &&
+			    iter->d_type != DT_CHR && iter->d_type != DT_LNK)
+				continue;
+#endif
+			if (!strcmp(name, ".") || !strcmp(name, "..") ||
+			    !strstr(name, "ubi"))
+				continue;
+			if (!strcmp(name, "ubi_ctrl"))
+				continue;
+			if (blkid_fstatat(dir, *dirname, name, &st, 0))
+				continue;
+
+			dev = st.st_rdev;
+
+			if (!S_ISCHR(st.st_mode) || !minor(dev))
+				continue;
+			DBG(DEBUG_DEVNAME, printf("UBI vol %s/%s: devno 0x%04X\n",
+				  *dirname, name, (int) dev));
+			probe_one(cache, name, dev, BLKID_PRI_UBI, only_if_new);
+		}
+		closedir(dir);
+	}
+}
+
 /*
  * Read the device data for all available block devices in the system.
  */
@@ -419,6 +468,7 @@ static int probe_all(blkid_cache cache, int only_if_new)
 #ifdef VG_DIR
 	lvm_probe_all(cache, only_if_new);
 #endif
+	ubi_probe_all(cache, only_if_new);
 
 	proc = fopen(PROC_PARTITIONS, "r");
 	if (!proc)

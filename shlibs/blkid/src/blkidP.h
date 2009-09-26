@@ -17,6 +17,8 @@
 #define CONFIG_BLKID_DEBUG 1
 
 #include <sys/types.h>
+#include <dirent.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -279,6 +281,9 @@ struct blkid_struct_cache
 
 extern char *blkid_strdup(const char *s);
 extern char *blkid_strndup(const char *s, const int length);
+extern char *blkid_strconcat(const char *a, const char *b, const char *c);
+extern int blkid_fstatat(DIR *dir, const char *dirname, const char *filename,
+			struct stat *st, int nofollow);
 
 #define BLKID_CACHE_FILE	"/etc/blkid.tab"
 #define BLKID_CONFIG_FILE	"/etc/blkid.conf"
@@ -294,6 +299,7 @@ extern char *blkid_strndup(const char *s, const int length);
 /*
  * Priority settings for different types of devices
  */
+#define BLKID_PRI_UBI	50
 #define BLKID_PRI_DM	40
 #define BLKID_PRI_EVMS	30
 #define BLKID_PRI_LVM	20
@@ -413,6 +419,7 @@ extern int blkid_probe_sprintf_value(blkid_probe pr, const char *name,
                 const char *fmt, ...);
 
 extern void blkid_unparse_uuid(const unsigned char *uuid, char *str, size_t len);
+extern size_t blkid_rtrim_whitespace(unsigned char *str);
 
 /* filter bitmap macros */
 #define blkid_bmp_wordsize		(8 * sizeof(unsigned long))
