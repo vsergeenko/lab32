@@ -115,6 +115,7 @@ endif
 	fi
 	if [ -f debian/util-linux/sbin/hwclock ] ; then \
 	    install -m 644 debian/hwclock.rules debian/util-linux/lib/udev/rules.d/85-hwclock.rules; \
+	    install -m 755 debian/hwclock-set debian/util-linux/lib/udev/hwclock-set; \
 	fi
 	# copy blkid library and symlink into udeb
 	ln debian/libblkid1/lib/libblkid.so.1.* debian/libblkid1-udeb/lib/
