@@ -134,7 +134,7 @@ struct blkid_chaindrv {
  */
 #define BLKID_PROBVAL_BUFSIZ	64
 
-#define BLKID_NVALS_SUBLKS	10
+#define BLKID_NVALS_SUBLKS	12
 #define BLKID_NVALS_TOPLGY	3
 #define BLKID_NVALS_PARTS	1
 
@@ -160,10 +160,10 @@ struct blkid_prval
 struct blkid_idmag
 {
 	const char	*magic;		/* magic string */
-	unsigned	len;		/* length of magic */
+	unsigned int	len;		/* length of magic */
 
 	long		kboff;		/* kilobyte offset of superblock */
-	unsigned	sboff;		/* byte offset within superblock */
+	unsigned int	sboff;		/* byte offset within superblock */
 };
 
 /*
@@ -198,9 +198,12 @@ struct blkid_struct_probe
 	int			fd;		/* device file descriptor */
 	blkid_loff_t		off;		/* begin of data on the device */
 	blkid_loff_t		size;		/* end of data on the device */
+
 	dev_t			devno;		/* device number (st.st_rdev) */
 	unsigned int		blkssz;		/* sector size (BLKSSZGET ioctl) */
 	mode_t			mode;		/* struct stat.sb_mode */
+
+	int			flags;		/* private libray flags */
 
 	unsigned char		*sbbuf;		/* superblok buffer */
 	size_t			sbbuf_len;	/* size of data in superblock buffer */
@@ -215,12 +218,10 @@ struct blkid_struct_probe
 
 	struct blkid_prval	vals[BLKID_NVALS];	/* results */
 	int			nvals;		/* number of assigned vals */
-
-	/* obsolete */
-	int                     probreq;        /* BLKID_PROBREQ_* flags */
-	int                     idx;            /* index of the last prober */
-	unsigned long           *fltr;          /* filter */
 };
+
+/* flags */
+#define BLKID_PRIVATE_FD	(1 << 1)	/* see blkid_new_probe_from_filename() */
 
 /*
  * Evaluation methods (for blkid_eval_* API)

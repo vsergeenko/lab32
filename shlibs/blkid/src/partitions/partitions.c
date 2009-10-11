@@ -38,12 +38,11 @@
  * <informalexample>
  *  <programlisting>
  * blkid_probe pr;
- * int fd;
  * const char *ptname;
  *
- * fd = open(devname, O_RDONLY);
- * pr = blkid_new_probe();
- * blkid_probe_set_device(pr, fd, 0, 0);
+ * pr = blkid_new_probe_from_filename(devname);
+ * if (!pr)
+ *	err("%s: faild to open device", devname);
  *
  * blkid_probe_enable_partitions(pr, TRUE);
  * blkid_do_fullprobe(pr);
@@ -52,7 +51,6 @@
  * printf("%s partition type detected\n", pttype);
  *
  * blkid_free_probe(pr);
- * close(fd);
  *
  * // don't forget to check return codes in your code!
  *  </programlisting>
@@ -65,11 +63,10 @@
  * blkid_probe pr;
  * blkid_partlist ls;
  * int nparts, i;
- * int fd;
  *
- * fd = open(devname, O_RDONLY);
- * pr = blkid_new_probe();
- * blkid_probe_set_device(pr, fd, 0, 0);
+ * pr = blkid_new_probe_from_filename(devname);
+ * if (!pr)
+ *	err("%s: faild to open device", devname);
  *
  * ls = blkid_probe_get_partitions(pr);
  * nparts = blkid_partlist_numof_partitions(ls);
@@ -84,7 +81,6 @@
  * }
  *
  * blkid_free_probe(pr);
- * close(fd);
  *
  * // don't forget to check return codes in your code!
  *  </programlisting>
@@ -261,6 +257,14 @@ int blkid_probe_filter_partitions_type(blkid_probe pr, int flag, char *names[])
  *
  * This function is independent on blkid_do_[safe,full]probe() and
  * blkid_probe_enable_partitions() calls.
+ *
+ * WARNING: the returned object will be overwritten by the next
+ *          blkid_probe_get_partitions() call for the same @pr. If you want to
+ *          use more blkid_partlist objects in the same time you have to create
+ *          more blkid_probe handlers (see blkid_new_probe()).
+ *
+ * TODO:    add blkid_ref() and blkid_unref() to allows to use blkid_partlist
+ *          independently on libblkid probing stuff.
  *
  * Returns: list of partitions, or NULL in case of error.
  */

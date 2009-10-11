@@ -7,6 +7,9 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE([check-news -Wall foreign 1.9 dist-bzip2])
 
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])],
+                            [AC_SUBST([AM_DEFAULT_VERBOSITY], [1])])
+
 AC_CONFIG_SRCDIR(mount/mount.c)
 
 AC_PREFIX_DEFAULT([/usr])
@@ -70,6 +73,8 @@ AC_SUBST([usrlib_execdir])
 AC_PROG_CC_STDC
 AC_GNU_SOURCE
 AC_CANONICAL_HOST
+AC_C_CONST
+AC_C_VOLATILE
 AC_C_BIGENDIAN
 
 dnl libtool-2
@@ -353,6 +358,7 @@ else
   # internal library
   AC_DEFINE(HAVE_BLKID_H, 1, [Define to 1 if you have the <blkid.h> header file.])
   AC_DEFINE(HAVE_BLKID_EVALUATE_TAG, 1, [Define to 1 if you have the blkid_evaluate_tag().])
+  AC_DEFINE(HAVE_BLKID_PROBE_ENABLE_PARTITIONS, 1, [Define to 1 if you have the blkid_probe_enable_partitions().])
 fi
 
 if test "x$have_blkid" = xyes; then
@@ -370,7 +376,6 @@ AM_CONDITIONAL(HAVE_BLKID, test "x$have_blkid" = xyes)
 : ${BLKID_LIBS='-lblkid -luuid'}
 
 AC_ARG_VAR([BLKID_LIBS_STATIC], [-l options for linking statically with blkid])
-
 
 UTIL_CHECK_LIB(util, openpty)
 UTIL_CHECK_LIB(termcap, tgetnum)
@@ -462,6 +467,11 @@ printf(__progname);
 ]])],
 [AC_DEFINE(HAVE___PROGNAME, 1, Do we have __progname?)
 ])
+
+
+AC_CHECK_TYPES([union semun], [], [], [[
+#include <sys/sem.h>
+]])
 
 
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -562,6 +572,10 @@ dnl fallocate could be available as libc function or as syscall only
 UTIL_CHECK_SYSCALL([fallocate])
 AC_CHECK_FUNCS([fallocate])
 
+dnl unshare could be available as libc function or as syscall only
+UTIL_CHECK_SYSCALL([unshare])
+AC_CHECK_FUNCS([unshare])
+
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <time.h>
 #include <unistd.h>
@@ -658,7 +672,6 @@ AC_ARG_ENABLE([switch_root],
   AS_HELP_STRING([--disable-switch_root], [do not build switch_root]),
   [], enable_switch_root=check
 )
-
 if test "x$enable_switch_root" = xno; then
   build_switch_root=no
 else
@@ -677,6 +690,79 @@ else
   fi
 fi
 AM_CONDITIONAL(BUILD_SWITCH_ROOT, test "x$build_switch_root" = xyes)
+
+
+AC_ARG_ENABLE([pivot_root],
+  AS_HELP_STRING([--disable-pivot_root], [do not build pivot_root]),
+  [], enable_pivot_root=check
+)
+if test "x$enable_pivot_root" = xno; then
+  build_pivot_root=no
+else
+  build_pivot_root=yes
+  case $enable_pivot_root:$linux_os in
+  yes:no) AC_MSG_ERROR([pivot_root selected for non-linux system]);;
+  check:no) AC_MSG_WARN([non-linux system; do not build pivot_root])
+            build_pivot_root=no;;
+  esac
+  if test "x$build_pivot_root" = xyes; then
+    case $enable_pivot_root:$util_cv_syscall_pivot_root in
+    yes:no) AC_MSG_ERROR([pivot_root selected but pivot_root syscall not found]);;
+    check:no) AC_MSG_WARN([pivot_root syscall not found; do not build pivot_root])
+              build_pivot_root=no;;
+    esac
+  fi
+fi
+AM_CONDITIONAL(BUILD_PIVOT_ROOT, test "x$build_pivot_root" = xyes)
+
+
+AC_ARG_ENABLE([fallocate],
+  AS_HELP_STRING([--disable-fallocate], [do not build fallocate]),
+  [], enable_fallocate=check
+)
+if test "x$enable_fallocate" = xno; then
+  build_fallocate=no
+else
+  build_fallocate=yes
+  case $enable_fallocate:$linux_os in
+  yes:no) AC_MSG_ERROR([fallocate selected for non-linux system]);;
+  check:no) AC_MSG_WARN([non-linux system; do not build fallocate])
+            build_fallocate=no;;
+  esac
+  if test "x$build_fallocate" = xyes; then
+    case $enable_fallocate:$util_cv_syscall_fallocate in
+    yes:no) AC_MSG_ERROR([fallocate selected but fallocate syscall not found]);;
+    check:no) AC_MSG_WARN([fallocate syscall not found; do not build fallocate])
+              build_fallocate=no;;
+    esac
+  fi
+fi
+AM_CONDITIONAL(BUILD_FALLOCATE, test "x$build_fallocate" = xyes)
+
+
+AC_ARG_ENABLE([unshare],
+  AS_HELP_STRING([--disable-unshare], [do not build unshare]),
+  [], enable_unshare=check
+)
+if test "x$enable_unshare" = xno; then
+  build_unshare=no
+else
+  build_unshare=yes
+  case $enable_unshare:$linux_os in
+  yes:no) AC_MSG_ERROR([unshare selected for non-linux system]);;
+  check:no) AC_MSG_WARN([non-linux system; do not build unshare])
+            build_unshare=no;;
+  esac
+  if test "x$build_unshare" = xyes; then
+    case $enable_unshare:$util_cv_syscall_unshare in
+    yes:no) AC_MSG_ERROR([unshare selected but unshare syscall not found]);;
+    check:no) AC_MSG_WARN([unshare syscall not found; do not build unshare])
+              build_unshare=no;;
+    esac
+  fi
+fi
+AM_CONDITIONAL(BUILD_UNSHARE, test "x$build_unshare" = xyes)
+
 
 
 AC_ARG_ENABLE([elvtune],
@@ -896,6 +982,12 @@ AC_ARG_ENABLE([makeinstall-chown],
   [], enable_makeinstall_chown=yes
 )
 AM_CONDITIONAL(MAKEINSTALL_DO_CHOWN, test "x$enable_makeinstall_chown" = xyes)
+
+AC_ARG_ENABLE([makeinstall-setuid],
+  AS_HELP_STRING([--disable-makeinstall-setuid], [do not do setuid chmod operations during "make install"]),
+  [], enable_makeinstall_setuid=yes
+)
+AM_CONDITIONAL(MAKEINSTALL_DO_SETUID, test "x$enable_makeinstall_setuid" = xyes)
 
 
 AC_ARG_VAR([SUID_CFLAGS],

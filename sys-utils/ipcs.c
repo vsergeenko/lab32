@@ -77,9 +77,7 @@ struct shm_info {
 /* The last arg of semctl is a union semun, but where is it defined?
    X/OPEN tells us to define it ourselves, but until recently
    Linux include files would also define it. */
-#if defined (__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
-/* union semun is defined by including <sys/sem.h> */
-#else
+#ifndef HAVE_UNION_SEMUN
 /* according to X/OPEN we have to define it ourselves */
 union semun {
 	int val;
@@ -90,11 +88,9 @@ union semun {
 #endif
 
 /* X/OPEN (Jan 1987) does not define fields key, seq in struct ipc_perm;
-   libc 4/5 does not mention struct ipc_term at all, but includes
-   <linux/ipc.h>, which defines a struct ipc_perm with such fields.
    glibc-1.09 has no support for sysv ipc.
    glibc 2 uses __key, __seq */
-#if defined (__GNU_LIBRARY__) && __GNU_LIBRARY__ > 1
+#if defined (__GLIBC__) && __GLIBC__ >= 2
 #define KEY __key
 #else
 #define KEY key

@@ -11,30 +11,23 @@ libblkid
  - add -<BE|LE> suffix to test images for native-endian filesystems (e.g. swap)
    and add support for such functionality to tests/ts/blkid/low-probe
 
- - do we really need to depend on libuuid? Maybe the default should be
-   use in-tree code rather and link against libuuid -- especially when we
-   need it for uuid_unparse() only.
-
  - consolidate "getsize" stuff (see getsize.c and lib/blkdev.c)
 
  - cleanup __attribute__ usage
-
- - add stripe size / alignment retrival support to libbkid for use
-   with mkfs.  This would allow to deprecate libdisk from xfsprogs (1)
-   in favour of a common libblkid.
-
-   [ -- Christoph Hellwig, 16 Feb 2009 ]
-   (1) http://git.kernel.org/?p=fs/xfs/xfsprogs-dev.git;a=tree;f=libdisk;
 
  - add values:
 
 	FSSIZE   -- filesystem size (klibc requirement)
 
-	SBOFFSET -- superblock offset; offset where SB was detected 
-                    (swapon requirement to check details from swap header)
+ - add reference counters to the binary interfaces. Currently, all chain 
+   data are allocated in blkid_probe and cannot be used independently on 
+   the probing stuff.
 
-        MAGIC    -- magic string
-	MAGICLEN -- length of magic string
+	blkid_topology tp = blkdi_probe_get_topology(pr)
+
+	blkid_ref(tp);
+	...
+	blkid_unref(tp);
 
 fdisk(s)
 --------
@@ -47,10 +40,6 @@ fdisk(s)
 
 misc
 ----
-
- * add a new command (unshare, clone, or so...) with all kinds of
-   clone(2) options.
-   http://thread.gmane.org/gmane.linux.utilities.util-linux-ng/2178
 
  * add to lib/blkdev.c code for /proc/partitions parsing -- unfortunate we
    duplicate this code in many places. The parser has to support unlimited

@@ -45,7 +45,7 @@ struct vfat_super_block {
 /* 43*/	unsigned char	vs_serno[4];
 /* 47*/	unsigned char	vs_label[11];
 /* 52*/	unsigned char   vs_magic[8];
-/* 5a*/	unsigned char	vs_dummy2[164];
+/* 5a*/	unsigned char	vs_dummy2[0x1fe - 0x5a];
 /*1fe*/	unsigned char	vs_pmagic[2];
 };
 
@@ -58,18 +58,20 @@ struct msdos_super_block {
 /* 0e*/	uint16_t	ms_reserved;
 /* 10*/	uint8_t		ms_fats;
 /* 11*/	unsigned char	ms_dir_entries[2];
-/* 13*/	unsigned char	ms_sectors[2];
+/* 13*/	unsigned char	ms_sectors[2]; /* =0 iff V3 or later */
 /* 15*/	unsigned char	ms_media;
-/* 16*/	uint16_t	ms_fat_length;
+/* 16*/	uint16_t	ms_fat_length; /* Sectors per FAT */
 /* 18*/	uint16_t	ms_secs_track;
 /* 1a*/	uint16_t	ms_heads;
 /* 1c*/	uint32_t	ms_hidden;
-/* 20*/	uint32_t	ms_total_sect;
-/* 24*/	unsigned char	ms_unknown[3];
+/* V3 BPB */
+/* 20*/	uint32_t	ms_total_sect; /* iff ms_sectors == 0 */
+/* V4 BPB */
+/* 24*/	unsigned char	ms_unknown[3]; /* Phys drive no., resvd, V4 sig (0x29) */
 /* 27*/	unsigned char	ms_serno[4];
 /* 2b*/	unsigned char	ms_label[11];
 /* 36*/	unsigned char   ms_magic[8];
-/* 3d*/	unsigned char	ms_dummy2[192];
+/* 3e*/	unsigned char	ms_dummy2[0x1fe - 0x3e];
 /*1fe*/	unsigned char	ms_pmagic[2];
 };
 
@@ -143,6 +145,10 @@ static int probe_fat_nomagic(blkid_probe pr, const struct blkid_idmag *mag)
 	if (!ms)
 		return -1;
 
+	/* Old floppies have a valid MBR signature */
+	if (ms->ms_pmagic[0] != 0x55 || ms->ms_pmagic[1] != 0xAA)
+		return 1;
+
 	/* heads check */
 	if (ms->ms_heads == 0)
 		return 1;
@@ -183,14 +189,14 @@ static int probe_vfat(blkid_probe pr, const struct blkid_idmag *mag)
 	struct vfat_super_block *vs;
 	struct msdos_super_block *ms;
 	struct vfat_dir_entry *dir;
-	const unsigned char *vol_label = 0, *tmp;
+	const unsigned char *vol_label = NULL, *tmp;
 	unsigned char	*vol_serno;
 	int maxloop = 100;
 	uint16_t sector_size, dir_entries, reserved;
 	uint32_t sect_count, fat_size, dir_size, cluster_count, fat_length;
 	uint32_t buf_size, start_data_sect, next, root_start, root_dir_entries;
 	const char *version = NULL;
-
+	unsigned char sb_buf[512], label_buf[11];
 
 	/* non-standard magic strings */
 	if (mag->len <= 2 && probe_fat_nomagic(pr, mag) != 0)
@@ -235,6 +241,12 @@ static int probe_vfat(blkid_probe pr, const struct blkid_idmag *mag)
 	if (cluster_count > FAT32_MAX)
 		return 1;
 
+	/* all basic checks pass -- save the superblock to avoid overwriting
+	 * by the next blkid_probe_get_buffer() call */
+	memcpy(sb_buf, vs, sizeof(sb_buf));
+	ms = (struct msdos_super_block *) sb_buf;
+	vs = (struct vfat_super_block *) sb_buf;
+
 	if (ms->ms_fat_length) {
 		/* the label may be an attribute in the root directory */
 		root_start = (reserved + fat_size) * sector_size;
@@ -262,6 +274,7 @@ static int probe_vfat(blkid_probe pr, const struct blkid_idmag *mag)
 		unsigned char *buf;
 		uint16_t fsinfo_sect;
 
+
 		/* Search the FAT32 root dir for the label attribute */
 		buf_size = vs->vs_cluster_size * sector_size;
 		start_data_sect = reserved + fat_size;
@@ -286,8 +299,12 @@ static int probe_vfat(blkid_probe pr, const struct blkid_idmag *mag)
 			count = buf_size / sizeof(struct vfat_dir_entry);
 
 			vol_label = search_fat_label(dir, count);
-			if (vol_label)
+			if (vol_label) {
+				/* save the root dir entry label */
+				memcpy(label_buf, vol_label, sizeof(label_buf));
+				vol_label = label_buf;
 				break;
+			}
 
 			/* get FAT entry */
 			fat_entry_off = (reserved * sector_size) +

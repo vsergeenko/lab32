@@ -141,6 +141,47 @@ blkid_probe blkid_new_probe(void)
 }
 
 /**
+ * blkid_new_probe_from_filename:
+ * @filename: device or regular file
+ *
+ * This function is same as call open(filename), blkid_new_probe() and
+ * blkid_probe_set_device(pr, fd, 0, 0).
+ *
+ * The @filename is closed by blkid_free_probe() or by the
+ * blkid_probe_set_device() call.
+ *
+ * Returns: a pointer to the newly allocated probe struct or NULL in case of
+ * error.
+ */
+blkid_probe blkid_new_probe_from_filename(const char *filename)
+{
+	int fd = -1;
+	blkid_probe pr = NULL;
+
+	if (!filename)
+		return NULL;
+
+	fd = open(filename, O_RDONLY);
+	if (fd < 0)
+		return NULL;
+
+	pr = blkid_new_probe();
+	if (!pr)
+		goto err;
+
+	if (blkid_probe_set_device(pr, fd, 0, 0))
+		goto err;
+
+	pr->flags |= BLKID_PRIVATE_FD;
+	return pr;
+err:
+	if (fd >= 0)
+		close(fd);
+	blkid_free_probe(pr);
+	return NULL;
+}
+
+/**
  * blkid_free_probe:
  * @pr: probe
  *
@@ -163,6 +204,9 @@ void blkid_free_probe(blkid_probe pr)
 	}
 	free(pr->buf);
 	free(pr->sbbuf);
+
+	if ((pr->flags & BLKID_PRIVATE_FD) && pr->fd >= 0)
+		close(pr->fd);
 	free(pr);
 }
 
@@ -275,8 +319,9 @@ void *blkid_probe_get_binary_data(blkid_probe pr, struct blkid_chain *chn)
  * blkid_reset_probe:
  * @pr: probe
  *
- * Cleanup probing result. This function does not touch probing filters
- * and keeps assigned device.
+ * Zeroize probing results and resets the current probing (this has impact to
+ * blkid_do_probe() only). This function does not touch probing filters and
+ * keeps assigned device.
  */
 void blkid_reset_probe(blkid_probe pr)
 {
@@ -287,6 +332,8 @@ void blkid_reset_probe(blkid_probe pr)
 
 	blkid_probe_reset_buffer(pr);
 	blkid_probe_reset_vals(pr);
+
+	pr->cur_chain = NULL;
 
 	for (i = 0; i < BLKID_NCHAINS; i++)
 		pr->chains[i].idx = -1;
@@ -490,10 +537,10 @@ unsigned char *blkid_probe_get_buffer(blkid_probe pr,
  * @pr: probe
  * @fd: device file descriptor
  * @off: begin of probing area
- * @size: size of probing area
+ * @size: size of probing area (zero means whole device/file)
  *
  * Assigns the device to probe control struct, resets internal buffers and
- * reads 512 bytes from device to the buffers.
+ * resets the current probing.
  *
  * Returns: -1 in case of failure, or 0 on success.
  */
@@ -505,6 +552,10 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 
 	blkid_reset_probe(pr);
 
+	if ((pr->flags & BLKID_PRIVATE_FD) && pr->fd >= 0)
+		close(pr->fd);
+
+	pr->flags &= ~BLKID_PRIVATE_FD;
 	pr->fd = fd;
 	pr->off = off;
 	pr->size = 0;
@@ -586,7 +637,8 @@ int blkid_probe_set_dimension(blkid_probe pr,
  * Calls probing functions in all enabled chains. The superblocks chain is
  * enabled by default. The blkid_do_probe() stores result from only one
  * probing function. It's necessary to call this routine in a loop to get
- * resuluts from all probing functions in all chains.
+ * results from all probing functions in all chains. The probing is reseted
+ * by blkid_reset_probe() or by filter functions.
  *
  * This is string-based NAME=value interface only.
  *
@@ -627,21 +679,33 @@ int blkid_do_probe(blkid_probe pr)
 		return -1;
 
 	do {
-		struct blkid_chain *chn;
+		struct blkid_chain *chn = pr->cur_chain;
 
-		if (!pr->cur_chain)
-			pr->cur_chain = &pr->chains[0];
-		else if (pr->cur_chain < &pr->chains[BLKID_NCHAINS - 1])
-			pr->cur_chain += sizeof(struct blkid_chain);
-		else
-			return 1;	/* all chains already probed */
+		if (!chn)
+			chn = pr->cur_chain = &pr->chains[0];
 
-		chn = pr->cur_chain;
+		/* we go to the next chain only when the previous probing
+		 * result was nothing (rc == 1) and when the current chain is
+		 * disabled or we are at end of the current chain (chain->idx +
+		 * 1 == sizeof chain)
+		 */
+		else if (rc == 1 && (chn->enabled == FALSE ||
+				     chn->idx + 1 == chn->driver->nidinfos)) {
+
+			int idx = chn->driver->id + 1;
+
+			if (idx < BLKID_NCHAINS)
+				chn = pr->cur_chain = &pr->chains[idx];
+			else
+				return 1;	/* all chains already probed */
+		}
+
 		chn->binary = FALSE;		/* for sure... */
 
-		DBG(DEBUG_LOWPROBE, printf("chain probe %s %s\n",
+		DBG(DEBUG_LOWPROBE, printf("chain probe %s %s (idx=%d)\n",
 				chn->driver->name,
-				chn->enabled? "ENABLED" : "DISABLED"));
+				chn->enabled? "ENABLED" : "DISABLED",
+				chn->idx));
 
 		if (!chn->enabled)
 			continue;

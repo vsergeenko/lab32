@@ -22,7 +22,7 @@
 
 int main(int argc, char *argv[])
 {
-	int fd, rc;
+	int rc;
 	char *devname;
 	blkid_probe pr;
 	blkid_topology tp;
@@ -35,17 +35,10 @@ int main(int argc, char *argv[])
 	}
 
 	devname = argv[1];
-
-	fd = open(devname, O_RDONLY);
-	if (fd < 0)
-		errx(EXIT_FAILURE, "%s: open() failed", devname);
-
-	pr = blkid_new_probe();
+	pr = blkid_new_probe_from_filename(devname);
 	if (!pr)
-		errx(EXIT_FAILURE, "faild to allocate a new libblkid probe");
-
-	if (blkid_probe_set_device(pr, fd, 0, 0) != 0)
-		errx(EXIT_FAILURE, "failed to assign device to libblkid probe");
+		err(EXIT_FAILURE, "%s: faild to create a new libblkid probe",
+				devname);
 
 	/*
 	 * check Filesystems / Partitions overwrite
@@ -62,7 +55,7 @@ int main(int argc, char *argv[])
 
 		if (!blkid_probe_lookup_value(pr, "TYPE", &type, NULL))
 			errx(EXIT_FAILURE, "%s: appears to contain an existing "
-					"filesystem (%s)", devname, type);
+					"%s superblock", devname, type);
 
 		if (!blkid_probe_lookup_value(pr, "PTTYPE", &type, NULL))
 			errx(EXIT_FAILURE, "%s: appears to contain an partition "
