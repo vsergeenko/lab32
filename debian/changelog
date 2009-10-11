@@ -1,3 +1,30 @@
+util-linux (2.16.1-4) unstable; urgency=low
+
+  [Petter Reinholdtsen]
+
+  * 85-hwclock.rules only ran hwclock if BADYEAR defined.  Closes: #543375
+
+  [Hiroyuki Yamamoto]
+
+  * drop rdev on hurd.  Closes: #547808
+
+  [Karel Zak]
+
+  * libblkid: fix blkid_probe_set_utf8label() call for Joliet
+  * libblkid: trim tailing whitespace from unicode LABELs.  LP: #432215
+  * libblkid: prefer ISO9660 PVD Label to Joliet Label
+
+  [LaMont Jones]
+
+  * initramfs doesn't like hyphens in hook names.  Closes: #544669
+  * Merge remote branch 'origin/stable/v2.16' into stable/v2.16
+
+  [Florentin Duneau]
+
+  * Fix typo on swapon.8 manpage.  Closes: #487497
+
+ -- LaMont Jones <lamont@debian.org>  Sat, 10 Oct 2009 19:29:39 -0600
+
 util-linux (2.16.1-3) unstable; urgency=low
 
   [Jonas Meurer]
