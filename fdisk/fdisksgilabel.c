@@ -99,19 +99,6 @@ struct systypes sgi_sys_types[] = {
 	{0, NULL }
 };
 
-static inline unsigned short
-__swap16(unsigned short x) {
-        return (((uint16_t)(x) & 0xFF) << 8) | (((uint16_t)(x) & 0xFF00) >> 8);
-}
-
-static inline uint32_t
-__swap32(uint32_t x) {
-        return (((x & 0xFF) << 24) |
-		((x & 0xFF00) << 8) |
-		((x & 0xFF0000) >> 8) |
-		((x & 0xFF000000) >> 24));
-}
-
 static int
 sgi_get_nsect(void) {
 	return SSWAP16(sgilabel->devparam.nsect);
@@ -750,7 +737,7 @@ create_sgilabel(void)
 		}
 	}
 
-	memset(MBRbuffer, 0, sizeof(MBRbuffer));
+	zeroize_mbr_buffer();
 	sgilabel->magic = SSWAP32(SGI_LABEL_MAGIC);
 	sgilabel->boot_part = SSWAP16(0);
 	sgilabel->swap_part = SSWAP16(1);

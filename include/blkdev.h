@@ -36,6 +36,14 @@
 
 #endif /* BLKROSET */
 
+/* block device topology ioctls, introduced in 2.6.32 */
+#ifndef BLKIOMIN
+#define BLKIOMIN   _IO(0x12,120)
+#define BLKIOOPT   _IO(0x12,121)
+#define BLKALIGNOFF _IO(0x12,122)
+#define BLKPBSZGET _IO(0x12,123)
+#endif
+
 #ifndef HDIO_GETGEO
 # ifdef __linux__
 #  define HDIO_GETGEO 0x0301

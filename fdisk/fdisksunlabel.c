@@ -203,7 +203,7 @@ void create_sunlabel(void)
 #else
 	other_endian = 0;
 #endif
-	memset(MBRbuffer, 0, sizeof(MBRbuffer));
+	zeroize_mbr_buffer();
 	sunlabel->magic = SSWAP16(SUN_LABEL_MAGIC);
 	sunlabel->sanity = SSWAP32(SUN_LABEL_SANE);
 	sunlabel->version = SSWAP32(SUN_LABEL_VERSION);
@@ -382,7 +382,7 @@ void verify_sun(void)
         else
             array[i] = -1;
     }
-    qsort(array,SIZE(array),sizeof(array[0]),
+    qsort(array,ARRAY_SIZE(array),sizeof(array[0]),
 	  (int (*)(const void *,const void *)) verify_sun_cmp);
     if (array[0] == -1) {
     	printf(_("No partitions defined\n"));

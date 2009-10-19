@@ -100,12 +100,12 @@
 #include <termios.h>
 #include <mntent.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <signal.h>
 
 #include "minix.h"
 #include "nls.h"
 #include "pathnames.h"
+#include "bitops.h"
 
 #define ROOT_INO 1
 
@@ -145,7 +145,8 @@ static char current_name[MAX_DEPTH*(NAME_MAX+1)+1];
 static char * inode_buffer = NULL;
 #define Inode (((struct minix_inode *) inode_buffer)-1)
 #define Inode2 (((struct minix2_inode *) inode_buffer)-1)
-static char super_block_buffer[BLOCK_SIZE];
+
+static char *super_block_buffer;
 #define Super (*(struct minix_super_block *)super_block_buffer)
 #define INODES ((unsigned long)Super.s_ninodes)
 #define ZONES ((unsigned long)(version2 ? Super.s_zones : Super.s_nzones))
@@ -166,8 +167,8 @@ static unsigned char * zone_count = NULL;
 static void recursive_check(unsigned int ino);
 static void recursive_check2(unsigned int ino);
 
-#define inode_in_use(x) (isset(inode_map,(x)))
-#define zone_in_use(x) (isset(zone_map,(x)-FIRSTZONE+1))
+#define inode_in_use(x) (isset(inode_map,(x)) != 0)
+#define zone_in_use(x) (isset(zone_map,(x)-FIRSTZONE+1) != 0)
 
 #define mark_inode(x) (setbit(inode_map,(x)),changed=1)
 #define unmark_inode(x) (clrbit(inode_map,(x)),changed=1)
@@ -584,6 +585,11 @@ static void
 read_superblock(void) {
 	if (BLOCK_SIZE != lseek(IN, BLOCK_SIZE, SEEK_SET))
 		die(_("seek failed"));
+
+	super_block_buffer = calloc(1, BLOCK_SIZE);
+	if (!super_block_buffer)
+		die(_("unable to alloc buffer for superblock"));
+
 	if (BLOCK_SIZE != read(IN, super_block_buffer, BLOCK_SIZE))
 		die(_("unable to read super block"));
 	if (MAGIC == MINIX_SUPER_MAGIC) {

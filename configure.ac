@@ -14,7 +14,7 @@ AC_CONFIG_SRCDIR(mount/mount.c)
 
 AC_PREFIX_DEFAULT([/usr])
 
-GTK_DOC_CHECK(1.10)
+GTK_DOC_CHECK([1.10])
 AC_PATH_PROG([XSLTPROC], [xsltproc])
 
 dnl version details from <major>.<minor>[-<suffix>]
@@ -165,6 +165,7 @@ AC_CHECK_FUNCS(
 	setresuid \
 	inotify_init \
 	prctl \
+	getmntinfo \
 	__secure_getenv \
 	rpmatch])
 AC_FUNC_FSEEKO

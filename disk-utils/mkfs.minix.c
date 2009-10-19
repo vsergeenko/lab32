@@ -68,7 +68,6 @@
 #include <stdlib.h>
 #include <termios.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <mntent.h>
 #include <getopt.h>
 
@@ -76,6 +75,7 @@
 #include "minix.h"
 #include "nls.h"
 #include "pathnames.h"
+#include "bitops.h"
 
 #define MINIX_ROOT_INO 1
 #define MINIX_BAD_INO 2
@@ -111,7 +111,7 @@ static char * inode_buffer = NULL;
 #define Inode (((struct minix_inode *) inode_buffer)-1)
 #define Inode2 (((struct minix2_inode *) inode_buffer)-1)
 
-static char super_block_buffer[BLOCK_SIZE];
+static char *super_block_buffer;
 static char boot_block_buffer[512];
 #define Super (*(struct minix_super_block *)super_block_buffer)
 #define INODES ((unsigned long)Super.s_ninodes)
@@ -131,8 +131,7 @@ static unsigned short good_blocks_table[MAX_GOOD_BLOCKS];
 static int used_good_blocks = 0;
 static unsigned long req_nr_inodes = 0;
 
-#define inode_in_use(x) (isset(inode_map,(x)))
-#define zone_in_use(x) (isset(zone_map,(x)-FIRSTZONE+1))
+#define zone_in_use(x) (isset(zone_map,(x)-FIRSTZONE+1) != 0)
 
 #define mark_inode(x) (setbit(inode_map,(x)))
 #define unmark_inode(x) (clrbit(inode_map,(x)))
@@ -395,7 +394,10 @@ setup_tables(void) {
 	int i;
 	unsigned long inodes;
 
-	memset(super_block_buffer,0,BLOCK_SIZE);
+	super_block_buffer = calloc(1, BLOCK_SIZE);
+	if (!super_block_buffer)
+		die(_("unable to alloc buffer for superblock"));
+
 	memset(boot_block_buffer,0,512);
 	Super.s_magic = magic;
 	Super.s_log_zone_size = 0;

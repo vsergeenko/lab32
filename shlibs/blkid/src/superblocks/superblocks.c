@@ -50,6 +50,8 @@
  *
  * @UUID: filesystem UUID (lower case)
  *
+ * @UUID_SUB: subvolume uuid (e.g. btrfs)
+ *
  * @UUID_RAW: raw UUID from FS superblock
  *
  * @EXT_JOURNAL: external journal UUID
@@ -95,6 +97,7 @@ static const struct blkid_idinfo *idinfos[] =
 	&lvm1_idinfo,
 	&snapcow_idinfo,
 	&luks_idinfo,
+	&vmfs_volume_idinfo,
 
 	/* Filesystems */
 	&vfat_idinfo,
@@ -132,7 +135,8 @@ static const struct blkid_idinfo *idinfos[] =
 	&netware_idinfo,
 	&btrfs_idinfo,
 	&ubifs_idinfo,
-	&bfs_idinfo
+	&bfs_idinfo,
+	&vmfs_fs_idinfo
 };
 
 /*
