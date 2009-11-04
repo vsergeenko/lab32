@@ -23,7 +23,6 @@
 #include "dos.h"
 
 #define GPT_PRIMARY_LBA	1
-#define GPT_BLOCK_SIZE	512
 
 /* Signature - “EFI PART” */
 #define GPT_HEADER_SIGNATURE 0x5452415020494645ULL
@@ -67,7 +66,16 @@ struct gpt_header {
 	uint32_t	sizeof_partition_entry;
 	uint32_t	partition_entry_array_crc32;
 
-	uint8_t		reserved2[GPT_BLOCK_SIZE - 92];
+	/*
+	 * The rest of the block is reserved by UEFI and must be zero. EFI
+	 * standard handles this by:
+	 *
+	 * uint8_t		reserved2[ BLKSSZGET - 92 ];
+	 *
+	 * This definition is useless in practice. It is necessary to read
+	 * whole block from the device rather than sizeof(struct gpt_header)
+	 * only.
+	 */
 } __attribute__ ((packed));
 
 /*** not used
@@ -104,7 +112,7 @@ static inline unsigned char *get_lba_buffer(blkid_probe pr,
 					uint64_t lba, size_t bytes)
 {
 	return blkid_probe_get_buffer(pr,
-			GPT_BLOCK_SIZE * lba, bytes);
+			blkid_probe_get_sectorsize(pr) * lba, bytes);
 }
 
 static inline int guidcmp(efi_guid_t left, efi_guid_t right)
@@ -115,7 +123,7 @@ static inline int guidcmp(efi_guid_t left, efi_guid_t right)
 static int last_lba(blkid_probe pr, uint64_t *lba)
 {
 	blkid_loff_t sz = blkid_probe_get_size(pr);
-	if (sz < GPT_BLOCK_SIZE)
+	if (sz < blkid_probe_get_sectorsize(pr))
 		return -1;
 
 	*lba = (sz >> 9) - 1;
@@ -185,19 +193,31 @@ static struct gpt_header *get_gpt_header(
 	uint32_t crc, orgcrc;
 	uint64_t lu, fu;
 	size_t esz;
+	uint32_t hsz, ssz;
 
-	h = (struct gpt_header *) get_lba_buffer(pr, lba, sizeof(*h));
+	ssz = blkid_probe_get_sectorsize(pr);
+
+	/* whole sector is allocated for GPT header */
+	h = (struct gpt_header *) get_lba_buffer(pr, lba, ssz);
 	if (!h)
 		return NULL;
 
 	if (le64_to_cpu(h->signature) != GPT_HEADER_SIGNATURE)
 		return NULL;
 
+	hsz = le32_to_cpu(h->header_size);
+
+	/* EFI: The HeaderSize must be greater than 92 and must be less
+	 *      than or equal to the logical block size.
+	 */
+	if (hsz > ssz || hsz < sizeof(*h))
+		return NULL;
+
 	/* Header has to be verified when header_crc32 is zero */
 	orgcrc = le32_to_cpu(h->header_crc32);
 	h->header_crc32 = 0;
 
-	crc = count_crc32((unsigned char *) h, le32_to_cpu(h->header_size));
+	crc = count_crc32((unsigned char *) h, hsz);
 	if (crc != orgcrc) {
 		DBG(DEBUG_LOWPROBE, printf("GPT header corrupted\n"));
 		return NULL;
@@ -235,7 +255,8 @@ static struct gpt_header *get_gpt_header(
 		return NULL;
 	}
 
-	/* The header seems valid, save it */
+	/* The header seems valid, save it
+	 * (we don't care about zeros in hdr->reserved2 area) */
 	memcpy(hdr, h, sizeof(*h));
 	h = hdr;
 
@@ -266,6 +287,7 @@ static int probe_gpt_pt(blkid_probe pr, const struct blkid_idmag *mag)
 	blkid_partlist ls;
 	int i;
 	uint64_t fu, lu;
+	uint32_t ssf;
 
 
 	if (last_lba(pr, &lastlba))
@@ -293,6 +315,8 @@ static int probe_gpt_pt(blkid_probe pr, const struct blkid_idmag *mag)
 	if (!tab)
 		goto err;
 
+	ssf = blkid_probe_get_sectorsize(pr) / 512;
+
 	fu = le64_to_cpu(h->first_usable_lba);
 	lu = le64_to_cpu(h->last_usable_lba);
 
@@ -301,25 +325,27 @@ static int probe_gpt_pt(blkid_probe pr, const struct blkid_idmag *mag)
 		blkid_partition par;
 		uint64_t start = le64_to_cpu(e->starting_lba);
 		uint64_t size = le64_to_cpu(e->ending_lba) -
-					le64_to_cpu(e->starting_lba);
+					le64_to_cpu(e->starting_lba) + 1ULL;
 
 		/* 00000000-0000-0000-0000-000000000000 entry */
 		if (!guidcmp(e->partition_type_guid, GPT_UNUSED_ENTRY_GUID))
 			continue;
 
 		/* the partition has to inside usable range */
-		if (start < fu || start + size > lu) {
+		if (start < fu || start + size - 1 > lu) {
 			DBG(DEBUG_LOWPROBE, printf(
 				"GPT entry[%d] overflows usable area - ignore\n",
 				i));
 			continue;
 		}
 
-		par = blkid_partlist_add_partition(ls, tab, 0, start, size);
+		par = blkid_partlist_add_partition(ls, tab, 0,
+						start * ssf, size * ssf);
 		if (!par)
 			goto err;
 
-		blkid_partition_set_utf8name(par, (unsigned char *) e->partition_name,
+		blkid_partition_set_utf8name(par,
+			(unsigned char *) e->partition_name,
 			sizeof(e->partition_name), BLKID_ENC_UTF16LE);
 
 		blkid_partition_set_uuid(par,
@@ -348,9 +374,6 @@ const struct blkid_idinfo gpt_pt_idinfo =
 	 * unfortunately almost all EFI GPT implemenations allow to optionaly
 	 * skip the legacy MBR. We follows this behavior and MBR is optional.
 	 * See is_valid_pmbr().
-	 *
-	 * It would be possible to check for "EFI PART" at begin of the disk,
-	 * but the primary GPT is not required (in force mode).
 	 *
 	 * It means we have to always call probe_gpt_pt().
 	 */

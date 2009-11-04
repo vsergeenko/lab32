@@ -330,6 +330,7 @@ AC_ARG_ENABLE([libblkid],
   AS_HELP_STRING([--disable-libblkid], [do not build libblkid and blkid utilities]),
   [], enable_libblkid=yes
 )
+AC_SUBST([LIBBLKID_DATE])
 AC_SUBST([LIBBLKID_VERSION])
 AC_SUBST([LIBBLKID_VERSION_INFO])
 AM_CONDITIONAL(BUILD_LIBBLKID, test "x$enable_libblkid" = xyes)
@@ -358,8 +359,7 @@ if test "x$enable_libblkid" = xno; then
 else
   # internal library
   AC_DEFINE(HAVE_BLKID_H, 1, [Define to 1 if you have the <blkid.h> header file.])
-  AC_DEFINE(HAVE_BLKID_EVALUATE_TAG, 1, [Define to 1 if you have the blkid_evaluate_tag().])
-  AC_DEFINE(HAVE_BLKID_PROBE_ENABLE_PARTITIONS, 1, [Define to 1 if you have the blkid_probe_enable_partitions().])
+  AC_DEFINE(HAVE_LIBBLKID_INTERNAL, 1, [Define to 1 if you have the in-tree libblkid.])
 fi
 
 if test "x$have_blkid" = xyes; then
@@ -1022,6 +1022,7 @@ shlibs/blkid/Makefile
 shlibs/blkid/docs/Makefile
 shlibs/blkid/docs/version.xml
 shlibs/blkid/src/Makefile
+shlibs/blkid/src/blkid.h
 shlibs/blkid/src/superblocks/Makefile
 shlibs/blkid/src/topology/Makefile
 shlibs/blkid/src/partitions/Makefile
