@@ -23,18 +23,16 @@ srcs_mount = fstab.c mount_mntent.c getusername.c lomount.c devname.c devname.h 
 #    between CFLAGS and CPPFLAGS, we follow this behaviour and use CFLAGS only.
 ldadd_common =
 ldadd_static =
-cflags_common =
-
-# generic libtool options for all static programs
-ldflags_static ="-all-static"
+cflags_common = $(AM_CFLAGS)
+ldflags_static = -all-static
 
 mount_SOURCES = mount.c $(srcs_mount) ../lib/setproctitle.c
-mount_CFLAGS = $(SUID_CFLAGS) $(AM_CFLAGS) $(cflags_common)
+mount_CFLAGS = $(SUID_CFLAGS) $(cflags_common)
 mount_LDFLAGS = $(SUID_LDFLAGS) $(AM_LDFLAGS)
 mount_LDADD = $(ldadd_common)
 
 umount_SOURCES = umount.c $(srcs_mount)
-umount_CFLAGS = $(SUID_CFLAGS) $(AM_CFLAGS) $(cflags_common)
+umount_CFLAGS = $(SUID_CFLAGS) $(cflags_common)
 umount_LDFLAGS = $(SUID_LDFLAGS) $(AM_LDFLAGS)
 umount_LDADD = $(ldadd_common)
 
@@ -74,7 +72,7 @@ endif
 if BUILD_LIBBLKID
 ldadd_common += $(ul_libblkid_la)
 ldadd_static += $(ul_libblkid_la)
-cflags_common += -I$(ul_libblkid_srcdir)
+cflags_common += -I$(ul_libblkid_incdir)
 else
 ldadd_common += $(BLKID_LIBS)
 ldadd_static += $(BLKID_LIBS_STATIC)

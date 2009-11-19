@@ -247,6 +247,12 @@ void blkid_probe_chain_reset_vals(blkid_probe pr, struct blkid_chain *chn)
 	pr->nvals = nvals;
 }
 
+static void blkid_probe_chain_reset_position(struct blkid_chain *chn)
+{
+	if (chn)
+		chn->idx = -1;
+}
+
 /*
  * Copies chain values from probing result to @vals, the max size of @vals is
  * @nvals and returns real number of values.
@@ -298,13 +304,14 @@ void *blkid_probe_get_binary_data(blkid_probe pr, struct blkid_chain *chn)
 		return NULL;
 
 	pr->cur_chain = chn;
-	chn->idx = -1;			/* start probing from scratch */
 	chn->binary = TRUE;
+	blkid_probe_chain_reset_position(chn);
 
 	rc = chn->driver->probe(pr, chn);
 
 	chn->binary = FALSE;
 	pr->cur_chain = NULL;
+	blkid_probe_chain_reset_position(chn);
 
 	if (rc != 0)
 		return NULL;
@@ -336,7 +343,7 @@ void blkid_reset_probe(blkid_probe pr)
 	pr->cur_chain = NULL;
 
 	for (i = 0; i < BLKID_NCHAINS; i++)
-		pr->chains[i].idx = -1;
+		blkid_probe_chain_reset_position(&pr->chains[i]);
 }
 
 /***
@@ -381,7 +388,7 @@ unsigned long *blkid_probe_get_filter(blkid_probe pr, int chain, int create)
 	/* always when you touch the chain filter all indexes are reseted and
 	 * probing starts from scratch
 	 */
-	chn->idx = -1;
+	blkid_probe_chain_reset_position(chn);
 	pr->cur_chain = NULL;
 
 	if (!chn->driver->has_fltr || (!chn->fltr && !create))
@@ -754,10 +761,13 @@ int blkid_do_safeprobe(blkid_probe pr)
 		if (!chn->enabled)
 			continue;
 
-		chn->idx = - 1;
+		blkid_probe_chain_reset_position(chn);
+
+		rc = chn->driver->safeprobe(pr, chn);
+
+		blkid_probe_chain_reset_position(chn);
 
 		/* rc: -2 ambivalent, -1 = error, 0 = success, 1 = no result */
-		rc = chn->driver->safeprobe(pr, chn);
 		if (rc < 0)
 			goto done;	/* error */
 		if (rc == 0)
@@ -804,10 +814,13 @@ int blkid_do_fullprobe(blkid_probe pr)
 		if (!chn->enabled)
 			continue;
 
-		chn->idx = - 1;
+		blkid_probe_chain_reset_position(chn);
+
+		rc = chn->driver->probe(pr, chn);
+
+		blkid_probe_chain_reset_position(chn);
 
 		/* rc: -1 = error, 0 = success, 1 = no result */
-		rc = chn->driver->probe(pr, chn);
 		if (rc < 0)
 			goto done;	/* error */
 		if (rc == 0)
@@ -848,6 +861,25 @@ struct blkid_prval *blkid_probe_assign_value(
 	return v;
 }
 
+int blkid_probe_reset_last_value(blkid_probe pr)
+{
+	struct blkid_prval *v;
+
+	if (pr == NULL || pr->nvals == 0)
+		return -1;
+
+	v = &pr->vals[pr->nvals - 1];
+
+	DBG(DEBUG_LOWPROBE,
+		printf("un-assigning %s [%s]\n", v->name, v->chain->driver->name));
+
+	memset(v, 0, sizeof(struct blkid_prval));
+	pr->nvals--;
+
+	return 0;
+
+}
+
 int blkid_probe_set_value(blkid_probe pr, const char *name,
 		unsigned char *data, size_t len)
 {
@@ -878,7 +910,7 @@ int blkid_probe_vsprintf_value(blkid_probe pr, const char *name,
 	len = vsnprintf((char *) v->data, sizeof(v->data), fmt, ap);
 
 	if (len <= 0) {
-		pr->nvals--; /* reset the latest assigned value */
+		blkid_probe_reset_last_value(pr);
 		return -1;
 	}
 	v->len = len + 1;
@@ -1025,7 +1057,6 @@ int blkid_probe_lookup_value(blkid_probe pr, const char *name,
 		*data = (char *) v->data;
 	if (len)
 		*len = v->len;
-	DBG(DEBUG_LOWPROBE, printf("returning %s value\n", v->name));
 	return 0;
 }
 
