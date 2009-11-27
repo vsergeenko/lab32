@@ -1,4 +1,4 @@
-AC_INIT(util-linux-ng, 2.16, kzak@redhat.com)
+AC_INIT(util-linux-ng, 2.17-rc1, kzak@redhat.com)
 
 AC_PREREQ(2.60)
 
@@ -25,7 +25,7 @@ PACKAGE_VERSION_RELEASE=0
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="10-Feb-2009"
+LIBBLKID_DATE="20-Nov-2009"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -145,6 +145,7 @@ AC_CHECK_DECLS([_NL_TIME_WEEK_1STDAY],[],[],[[#include <langinfo.h>]])
 
 AC_CHECK_FUNCS(
 	[inet_aton \
+	futimens \
 	fsync \
 	getdomainname \
 	get_current_dir_name \
