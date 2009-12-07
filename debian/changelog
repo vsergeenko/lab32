@@ -1,3 +1,9 @@
+util-linux (2.17~rc1-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- LaMont Jones <lamont@debian.org>  Sun, 06 Dec 2009 18:56:21 -0700
+
 util-linux (2.16-3) unstable; urgency=low
 
   [Kel Modderman]
