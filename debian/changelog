@@ -1,3 +1,66 @@
+util-linux (2.16.2-0) unstable; urgency=low
+
+  [Milan Broz]
+
+  * libuuid: remove .UE macro from libuuid man pages.
+
+  [Ken Kopin]
+
+  * Fix typo in dmesg manpage.
+
+  [Mike Frysinger]
+
+  * tailf: fix printf format
+  * swapon: handle <=linux-2.6.19 bug in /proc/swaps
+
+  [Cristian Rodríguez]
+
+  * fdformat: fix memory leak in verify_disk()
+
+  [Lawrence Rust]
+
+  * libblkid: fix FAT super block definition
+
+  [Scott James Remnant]
+
+  * hwclock: do not access hardware clock when using --systz
+  * hwclock: set kernel timezone with --systz --utc
+
+  [Peter Breitenlohner]
+
+  * mkswap: restore device argument in mkswap.8 synopsis
+
+  [kevin.granade@gmail.com]
+
+  * mount: document changed semantics of tmpfs size option in mount.8
+
+  [Theodore Ts'o]
+
+  * lib: fix file descriptor leak in is_mounted()
+
+  [Karel Zak]
+
+  * libblkid: fix typo (swsupend -> swsuspend)
+  * switch_root: remove TIOCSCTTY and setsid().  red: #519237
+  * libblkid: add missing packed attributes, add new UFS magic strings
+  * mount: update list of pseudo filesystems
+  * sfdisk: dump has to be $LANG insensitive
+  * mount: more explicitly explain 'strictatime' in mount.8
+  * libblkid: fix the default cache file path
+  * fsck.minix: fix broken zone checking
+  * docs: update AUTHORS file
+  * docs: add v2.16.2 ReleaseNotes
+  * build-sys: release++ (v2.16.2)
+  * po: merge changes
+
+  [localization folks]
+
+  * po: update vi.po (from translationproject.org) (Clytie Siddall)
+  * po: update pl.po (from translationproject.org) (Jakub Bogusz)
+  * po: update id.po (from translationproject.org) (Arif E. Nugroho)
+
+ -- LaMont Jones <lamont@debian.org>  Sun, 06 Dec 2009 17:38:15 -0700
+
 util-linux (2.16.1-4) unstable; urgency=low
 
   [Petter Reinholdtsen]
