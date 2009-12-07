@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: util-linux-ng 2.15-rc2\n"
+"Project-Id-Version: util-linux-ng 2.16-rc2\n"
 "Report-Msgid-Bugs-To: Karel Zak <kzak@redhat.com>\n"
-"POT-Creation-Date: 2009-09-07 10:26+0200\n"
-"PO-Revision-Date: 2009-05-13 20:37+0930\n"
+"POT-Creation-Date: 2009-11-30 16:27+0100\n"
+"PO-Revision-Date: 2009-09-19 18:16+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -170,7 +170,7 @@ msgstr ""
 msgid "Formatting ... "
 msgstr "Đang định dạng ... "
 
-#: disk-utils/fdformat.c:49 disk-utils/fdformat.c:84
+#: disk-utils/fdformat.c:49 disk-utils/fdformat.c:86
 #, c-format
 msgid "done\n"
 msgstr "hoàn tất\n"
@@ -189,7 +189,7 @@ msgstr "Đọc: "
 msgid "Problem reading cylinder %d, expected %d, read %d\n"
 msgstr "Có vấn đề khi đọc hình trụ %d, mong chờ %d, đọc %d\n"
 
-#: disk-utils/fdformat.c:79
+#: disk-utils/fdformat.c:80
 #, c-format
 msgid ""
 "bad data in cyl %d\n"
@@ -198,12 +198,12 @@ msgstr ""
 "dữ liệu xấu tại hình trụ %d\n"
 "Đang tiếp tục ... "
 
-#: disk-utils/fdformat.c:94
+#: disk-utils/fdformat.c:96
 #, c-format
 msgid "usage: %s [ -n ] device\n"
 msgstr "sử dụng: %s [ -n ] thiết bị\n"
 
-#: disk-utils/fdformat.c:116 disk-utils/fsck.minix.c:1282
+#: disk-utils/fdformat.c:118 disk-utils/fsck.minix.c:1282
 #: disk-utils/isosize.c:181 disk-utils/mkfs.bfs.c:115 disk-utils/mkfs.c:52
 #: disk-utils/mkfs.cramfs.c:813 disk-utils/mkfs.minix.c:571
 #: disk-utils/mkswap.c:461 misc-utils/ddate.c:179 misc-utils/rename.c:79
@@ -212,25 +212,25 @@ msgstr "sử dụng: %s [ -n ] thiết bị\n"
 msgid "%s (%s)\n"
 msgstr "%s (%s)\n"
 
-#: disk-utils/fdformat.c:130
+#: disk-utils/fdformat.c:132
 #, c-format
 msgid "%s: not a block device\n"
 msgstr "%s: không phải là thiết bị khối\n"
 
-#: disk-utils/fdformat.c:140
+#: disk-utils/fdformat.c:142
 msgid "Could not determine current format type"
 msgstr "Không thể xác định được kiểu định dạng hiện thời"
 
-#: disk-utils/fdformat.c:141
+#: disk-utils/fdformat.c:143
 #, c-format
 msgid "%s-sided, %d tracks, %d sec/track. Total capacity %d kB.\n"
 msgstr "%s mặt, %d rãnh, %d giây/rãnh. Tổng dung lượng %d kB.\n"
 
-#: disk-utils/fdformat.c:142
+#: disk-utils/fdformat.c:144
 msgid "Double"
 msgstr "Đôi"
 
-#: disk-utils/fdformat.c:142
+#: disk-utils/fdformat.c:144
 msgid "Single"
 msgstr "Đơn"
 
@@ -4956,20 +4956,6 @@ msgstr "%s: không có phân vùng như vậy\n"
 msgid "unrecognized format - using sectors\n"
 msgstr "định dạng không nhận ra - sử dụng rãnh ghi\n"
 
-#: fdisk/sfdisk.c:933
-#, c-format
-msgid "# partition table of %s\n"
-msgstr "# bảng phân vùng của %s\n"
-
-#: fdisk/sfdisk.c:934
-#, c-format
-msgid ""
-"unit: sectors\n"
-"\n"
-msgstr ""
-"đơn vị: rãnh ghi\n"
-"\n"
-
 #: fdisk/sfdisk.c:944
 #, c-format
 msgid "unimplemented format - using %s\n"
@@ -5030,21 +5016,6 @@ msgstr ""
 #, c-format
 msgid "   Device Boot Start   End    MiB    #blocks   Id  System\n"
 msgstr "   Thiết bị Khởi động Đầu     MiB    #Khối   Id  Hệ thống\n"
-
-#: fdisk/sfdisk.c:1062
-#, c-format
-msgid " start=%9lu"
-msgstr " đầu=%9lu"
-
-#: fdisk/sfdisk.c:1063
-#, c-format
-msgid ", size=%9lu"
-msgstr ", cỡ=%9lu"
-
-#: fdisk/sfdisk.c:1067
-#, c-format
-msgid ", bootable"
-msgstr ", khởi động được"
 
 #: fdisk/sfdisk.c:1128
 #, c-format
@@ -6212,33 +6183,33 @@ msgstr ""
 "Đồng hồ Phần cứng không chứa thời gian thích hợp, vì thế chúng ta không thể "
 "đặt Thời gian của Hệ thống từ đó.\n"
 
-#: hwclock/hwclock.c:728 hwclock/hwclock.c:804
+#: hwclock/hwclock.c:728 hwclock/hwclock.c:805
 #, c-format
 msgid "Calling settimeofday:\n"
 msgstr "Đang gọi lệnh giờ settimeofday:\n"
 
-#: hwclock/hwclock.c:729 hwclock/hwclock.c:806
+#: hwclock/hwclock.c:729 hwclock/hwclock.c:807
 #, c-format
 msgid "\ttv.tv_sec = %ld, tv.tv_usec = %ld\n"
 msgstr "\ttv.tv_sec = %ld, tv.tv_usec = %ld\n"
 
-#: hwclock/hwclock.c:731 hwclock/hwclock.c:808
+#: hwclock/hwclock.c:731 hwclock/hwclock.c:809
 #, c-format
 msgid "\ttz.tz_minuteswest = %d\n"
 msgstr "\ttz.tz_minuteswest = %d\n"
 
-#: hwclock/hwclock.c:734 hwclock/hwclock.c:811
+#: hwclock/hwclock.c:734 hwclock/hwclock.c:812
 #, c-format
 msgid "Not setting system clock because running in test mode.\n"
 msgstr ""
 "Không thiết lập đồng hồ hệ thống bở vì đang chạy trong chế độ thử nghiệm.\n"
 
-#: hwclock/hwclock.c:743 hwclock/hwclock.c:820
+#: hwclock/hwclock.c:743 hwclock/hwclock.c:821
 #, c-format
 msgid "Must be superuser to set system clock.\n"
 msgstr "Cần phải là người dùng root để đặt đồng hồ hệ thống.\n"
 
-#: hwclock/hwclock.c:746 hwclock/hwclock.c:823
+#: hwclock/hwclock.c:746 hwclock/hwclock.c:824
 msgid "settimeofday() failed"
 msgstr "settimeofday() không thành công"
 
@@ -6247,19 +6218,19 @@ msgstr "settimeofday() không thành công"
 msgid "Current system time: %ld = %s\n"
 msgstr "Thời gian hệ thống hiện thời: %ld = %s\n"
 
-#: hwclock/hwclock.c:805
+#: hwclock/hwclock.c:806
 #, c-format
 msgid "\tUTC: %s\n"
 msgstr "\tUTC: %s\n"
 
-#: hwclock/hwclock.c:852
+#: hwclock/hwclock.c:853
 #, c-format
 msgid ""
 "Not adjusting drift factor because the Hardware Clock previously contained "
 "garbage.\n"
 msgstr "Không chỉnh độ lệnh thời gian vì Đồng hồ phần cứng chứa rác.\n"
 
-#: hwclock/hwclock.c:857
+#: hwclock/hwclock.c:858
 #, c-format
 msgid ""
 "Not adjusting drift factor because last calibration time is zero,\n"
@@ -6268,7 +6239,7 @@ msgstr ""
 "Không chỉnh độ lệnh thời gian vì lần định thời gian cuối cùng bằng 0,\n"
 "vì thế lịch sử xấu, và cần khởi động lại việc định thời gian.\n"
 
-#: hwclock/hwclock.c:863
+#: hwclock/hwclock.c:864
 #, c-format
 msgid ""
 "Not adjusting drift factor because it has been less than a day since the "
@@ -6277,7 +6248,7 @@ msgstr ""
 "Không chỉnh độ lệnh thời gian vì nó nhỏ hơn một ngày kể từ lần định thời "
 "gian cuối cùng.\n"
 
-#: hwclock/hwclock.c:911
+#: hwclock/hwclock.c:912
 #, c-format
 msgid ""
 "Clock drifted %.1f seconds in the past %d seconds in spite of a drift factor "
@@ -6288,22 +6259,22 @@ msgstr ""
 "sai lệch %f giây/ngày.\n"
 "Chỉnh lại độ sai lệch %f giây/ngày\n"
 
-#: hwclock/hwclock.c:961
+#: hwclock/hwclock.c:962
 #, c-format
 msgid "Time since last adjustment is %d seconds\n"
 msgstr "Thời gian kể từ lần chỉnh cuối cùng là %d giây\n"
 
-#: hwclock/hwclock.c:963
+#: hwclock/hwclock.c:964
 #, c-format
 msgid "Need to insert %d seconds and refer time back %.6f seconds ago\n"
 msgstr "Cần thêm %d giây và chuyển thời gian ngược lại %.6f giây\n"
 
-#: hwclock/hwclock.c:992
+#: hwclock/hwclock.c:993
 #, c-format
 msgid "Not updating adjtime file because of testing mode.\n"
 msgstr "Không cập nhật thời gian chỉnh vì chế độ thử nghiệm.\n"
 
-#: hwclock/hwclock.c:993
+#: hwclock/hwclock.c:994
 #, c-format
 msgid ""
 "Would have written the following to %s:\n"
@@ -6312,24 +6283,24 @@ msgstr ""
 "Ghi nhớ cái sau tới %s:\n"
 "%s"
 
-#: hwclock/hwclock.c:1001
+#: hwclock/hwclock.c:1002
 #, c-format
 msgid ""
 "Could not open file with the clock adjustment parameters in it (%s) for "
 "writing"
 msgstr "Không thể mở tập tin chứa các tham số điều chỉnh đồng hồ (%s) để ghi"
 
-#: hwclock/hwclock.c:1006 hwclock/hwclock.c:1011
+#: hwclock/hwclock.c:1007 hwclock/hwclock.c:1012
 #, c-format
 msgid "Could not update file with the clock adjustment parameters (%s) in it"
 msgstr "Không thể cập nhật tập tin chứa các tham số điều chỉnh đồng hồ (%s)"
 
-#: hwclock/hwclock.c:1017
+#: hwclock/hwclock.c:1018
 #, c-format
 msgid "Drift adjustment parameters not updated.\n"
 msgstr "Không cập nhật các tham số chỉnh sai lệch.\n"
 
-#: hwclock/hwclock.c:1058
+#: hwclock/hwclock.c:1059
 #, c-format
 msgid ""
 "The Hardware Clock does not contain a valid time, so we cannot adjust it.\n"
@@ -6337,7 +6308,7 @@ msgstr ""
 "Đồng hồ Phần cứng không có thời gian thích hợp, vì thế chúng ta không thể "
 "chỉnh.\n"
 
-#: hwclock/hwclock.c:1066
+#: hwclock/hwclock.c:1067
 #, c-format
 msgid ""
 "Not setting clock because last adjustment time is zero, so history is bad."
@@ -6345,32 +6316,27 @@ msgstr ""
 "Sẽ không đặt đồng hồ vì thời gian điều chỉnh cuối cùng là số không thì lịch "
 "sử sai."
 
-#: hwclock/hwclock.c:1089
+#: hwclock/hwclock.c:1090
 #, c-format
 msgid "Needed adjustment is less than one second, so not setting clock.\n"
 msgstr "Cần chỉnh ít hơn một giây, vì thế không đặt đồng hồ.\n"
 
-#: hwclock/hwclock.c:1115
+#: hwclock/hwclock.c:1116
 #, c-format
 msgid "Using %s.\n"
 msgstr "Sử dụng %s.\n"
 
-#: hwclock/hwclock.c:1117
+#: hwclock/hwclock.c:1118
 #, c-format
 msgid "No usable clock interface found.\n"
 msgstr "Không tìm thấy giao diện đồng hồ có thể sử dụng nào.\n"
 
-#: hwclock/hwclock.c:1219 hwclock/hwclock.c:1226
+#: hwclock/hwclock.c:1222 hwclock/hwclock.c:1228
 #, c-format
 msgid "Unable to set system clock.\n"
 msgstr "Không đặt được đồng hồ hệ thống.\n"
 
-#: hwclock/hwclock.c:1230
-#, c-format
-msgid "Clock in UTC, not changed.\n"
-msgstr "Đồng hồ theo UTC nên không thay đổi gì.\n"
-
-#: hwclock/hwclock.c:1259
+#: hwclock/hwclock.c:1258
 #, c-format
 msgid ""
 "The kernel keeps an epoch value for the Hardware Clock only on an Alpha "
@@ -6382,17 +6348,17 @@ msgstr ""
 "Bản sao này của hwclock được biên dịch cho một máy khác Alpha\n"
 "(và vì thế đoán rằng không chạy trên một máy Alpha). Không thực hiện gì.\n"
 
-#: hwclock/hwclock.c:1268
+#: hwclock/hwclock.c:1267
 #, c-format
 msgid "Unable to get the epoch value from the kernel.\n"
 msgstr "Không lấy được giá trị khởi đầu từ nhân.\n"
 
-#: hwclock/hwclock.c:1270
+#: hwclock/hwclock.c:1269
 #, c-format
 msgid "Kernel is assuming an epoch value of %lu\n"
 msgstr "Nhân đang giữ giá trị khởi đầu là %lu\n"
 
-#: hwclock/hwclock.c:1273
+#: hwclock/hwclock.c:1272
 #, c-format
 msgid ""
 "To set the epoch value, you must use the 'epoch' option to tell to what "
@@ -6401,22 +6367,22 @@ msgstr ""
 "Để đặt giá trị khởi đầu, bạn cần sử dụng tùy chọn 'epoch' để thông báo giá "
 "trị muốn đặt.\n"
 
-#: hwclock/hwclock.c:1276
+#: hwclock/hwclock.c:1275
 #, c-format
 msgid "Not setting the epoch to %d - testing only.\n"
 msgstr "Không đặt khởi đầu thành %d - chỉ thử nghiệm.\n"
 
-#: hwclock/hwclock.c:1279
+#: hwclock/hwclock.c:1278
 #, c-format
 msgid "Unable to set the epoch value in the kernel.\n"
 msgstr "Không đặt được giá trị khởi đầu trong nhân.\n"
 
-#: hwclock/hwclock.c:1292 misc-utils/cal.c:345 misc-utils/kill.c:189
+#: hwclock/hwclock.c:1291 misc-utils/cal.c:345 misc-utils/kill.c:189
 #, c-format
 msgid "%s from %s\n"
 msgstr "%s từ %s\n"
 
-#: hwclock/hwclock.c:1313
+#: hwclock/hwclock.c:1312
 #, c-format
 msgid ""
 "hwclock - query and set the hardware clock (RTC)\n"
@@ -6494,7 +6460,7 @@ msgstr ""
 "  -D | --debug        chế độ gỡ lỗi\n"
 "\n"
 
-#: hwclock/hwclock.c:1348
+#: hwclock/hwclock.c:1347
 #, c-format
 msgid ""
 "  -J|--jensen, -A|--arc, -S|--srm, -F|--funky-toy\n"
@@ -6505,17 +6471,17 @@ msgstr ""
 "       báo hwclock biết kiểu alpha bạn có (xem hwclock(8))\n"
 "\n"
 
-#: hwclock/hwclock.c:1435
+#: hwclock/hwclock.c:1434
 #, c-format
 msgid "%s: Unable to connect to audit system\n"
 msgstr "%s: không thể kết nối để kiểm tra chặt chẽ hệ thống\n"
 
-#: hwclock/hwclock.c:1553
+#: hwclock/hwclock.c:1552
 #, c-format
 msgid "%s takes no non-option arguments.  You supplied %d.\n"
 msgstr "%s lấy các tham số không tùy chọn.  Bạn đã cung cấp %d.\n"
 
-#: hwclock/hwclock.c:1560
+#: hwclock/hwclock.c:1559
 #, c-format
 msgid ""
 "You have specified multiple functions.\n"
@@ -6524,7 +6490,7 @@ msgstr ""
 "Bạn phải chỉ ra nhiều hàm.\n"
 "Bạn chỉ có thể thực hiện một hàm mỗi lần.\n"
 
-#: hwclock/hwclock.c:1567
+#: hwclock/hwclock.c:1566
 #, c-format
 msgid ""
 "%s: The --utc and --localtime options are mutually exclusive.  You specified "
@@ -6533,7 +6499,7 @@ msgstr ""
 "%s: Các tùy chọn « --utc » và « --localtime » loại trừ lẫn nhau.  Bạn lại đưa "
 "ra cả hai.\n"
 
-#: hwclock/hwclock.c:1574
+#: hwclock/hwclock.c:1573
 #, c-format
 msgid ""
 "%s: The --adjust and --noadjfile options are mutually exclusive.  You "
@@ -6542,7 +6508,7 @@ msgstr ""
 "%s: Các tùy chọn « --adjust » và « --noadjust » loại trừ lẫn nhau.  Bạn lại "
 "đưa ra cả hai.\n"
 
-#: hwclock/hwclock.c:1581
+#: hwclock/hwclock.c:1580
 #, c-format
 msgid ""
 "%s: The --adjfile and --noadjfile options are mutually exclusive.  You "
@@ -6551,29 +6517,29 @@ msgstr ""
 "%s: Các tùy chọn « --adjfile » và « --noadjfile » loại trừ lẫn nhau.  Bạn lại "
 "đưa ra cả hai.\n"
 
-#: hwclock/hwclock.c:1590
+#: hwclock/hwclock.c:1589
 #, c-format
 msgid "%s: With --noadjfile, you must specify either --utc or --localtime\n"
 msgstr "%s: Với « --noadjfile », bạn phải chỉ ra « --utc » hoặc « --localtime »\n"
 
-#: hwclock/hwclock.c:1604
+#: hwclock/hwclock.c:1603
 #, c-format
 msgid "No usable set-to time.  Cannot set clock.\n"
 msgstr "Không có thời gian set-to nào có thể sử dụng. Không thể đặt đồng hồ\n"
 
-#: hwclock/hwclock.c:1621
+#: hwclock/hwclock.c:1620
 #, c-format
 msgid "Sorry, only the superuser can change the Hardware Clock.\n"
 msgstr ""
 "Rất tiếc, nhưng chỉ người dùng root mới có thể thay đổi Đồng hồ Phần cứng.\n"
 
-#: hwclock/hwclock.c:1626
+#: hwclock/hwclock.c:1625
 #, c-format
 msgid "Sorry, only the superuser can change the System Clock.\n"
 msgstr ""
 "Rất tiếc, nhưng chỉ người dùng root mới có thể thay đổi Đồng hồ Hệ thống.\n"
 
-#: hwclock/hwclock.c:1631
+#: hwclock/hwclock.c:1630
 #, c-format
 msgid ""
 "Sorry, only the superuser can change the Hardware Clock epoch in the "
@@ -8348,145 +8314,138 @@ msgid "%s: $TERM is not defined.\n"
 msgstr "%s: $TERM (thiết bị cuối) chưa định nghĩa.\n"
 
 #: misc-utils/uuidd.c:46
-#, fuzzy, c-format
+#, c-format
 msgid "Usage: %s [-d] [-p pidfile] [-s socketpath] [-T timeout]\n"
-msgstr ""
-"sử dụng: last [-#] [-f tập_tin] [-t tty] [-h tên_máy] [người_dùng ...]\n"
+msgstr "Sử dụng: %s [-d] [-p tập_tin_PID] [-s đường_dẫn_ổ_cắm] [-T thời_hạn]\n"
 
 #: misc-utils/uuidd.c:48
 #, c-format
 msgid "       %s [-r|t] [-n num] [-s socketpath]\n"
-msgstr ""
+msgstr "       %s [-r|t] [-n số] [-s đường_dẫn_ổ_cắm]\n"
 
 #: misc-utils/uuidd.c:50
-#, fuzzy, c-format
+#, c-format
 msgid "       %s -k\n"
-msgstr "       %s -l [ tín_hiệu ]\n"
+msgstr "       %s -k\n"
 
 #: misc-utils/uuidd.c:152
-#, fuzzy
 msgid "bad arguments"
-msgstr "col: tham số -l xấu %s.\n"
+msgstr "đối số sai"
 
 #: misc-utils/uuidd.c:159
-#, fuzzy
 msgid "socket"
-msgstr "ổ cắm: %s.\n"
+msgstr "ổ cắm"
 
 #: misc-utils/uuidd.c:170
-#, fuzzy
 msgid "connect"
-msgstr "kết nối: %s.\n"
+msgstr "kết nối"
 
 #: misc-utils/uuidd.c:189
-#, fuzzy
 msgid "write"
-msgstr "Ghi"
+msgstr "ghi"
 
 #: misc-utils/uuidd.c:197
-#, fuzzy
 msgid "read count"
-msgstr "đếm số không tập tin"
+msgstr "đếm số lần đọc"
 
 #: misc-utils/uuidd.c:203
-#, fuzzy
 msgid "bad response length"
-msgstr "tập tin có tên dài sai"
+msgstr "chiều dài đáp ứng sai"
 
 #: misc-utils/uuidd.c:268
 #, c-format
 msgid "uuidd daemon already running at pid %s\n"
-msgstr ""
+msgstr "Trình nền uuidd đã chạy với PID %s\n"
 
 #: misc-utils/uuidd.c:276
 #, c-format
 msgid "Couldn't create unix stream socket: %s"
-msgstr ""
+msgstr "Không thể tạo ổ cắm luồng UNIX: %s"
 
 #: misc-utils/uuidd.c:305
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't bind unix socket %s: %s\n"
-msgstr "Không mở được %s: %s\n"
+msgstr "Không thể đóng kết ổ cắm UNIX %s: %s\n"
 
 #: misc-utils/uuidd.c:313
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't listen on unix socket %s: %s\n"
-msgstr "Không mở được %s: %s\n"
+msgstr "Không thể lắng nghe trên ổ cắm UNIX %s: %s\n"
 
 #: misc-utils/uuidd.c:351
 #, c-format
 msgid "Error reading from client, len = %d\n"
-msgstr ""
+msgstr "Gặp lỗi khi đọc từ ứng dụng khách, dài = %d\n"
 
 #: misc-utils/uuidd.c:359
 #, c-format
 msgid "operation %d, incoming num = %d\n"
-msgstr ""
+msgstr "thao tác %d, số gửi đến = %d\n"
 
 #: misc-utils/uuidd.c:378
 #, c-format
 msgid "Generated time UUID: %s\n"
-msgstr ""
+msgstr "UUID thời gian đã tạo ra: %s\n"
 
 #: misc-utils/uuidd.c:388
 #, c-format
 msgid "Generated random UUID: %s\n"
-msgstr ""
+msgstr "UUID ngẫu nhiên đã tạo ra: %s\n"
 
 #: misc-utils/uuidd.c:397
 #, c-format
 msgid "Generated time UUID %s and %d following\n"
-msgstr ""
+msgstr "UUID thời gian đã tạo ra %s và %d theo sau\n"
 
 #: misc-utils/uuidd.c:415
 #, c-format
 msgid "Generated %d UUID's:\n"
-msgstr ""
+msgstr "%d UUID đã tạo ra:\n"
 
 #: misc-utils/uuidd.c:427
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid operation %d\n"
-msgstr "tùy chọn sai"
+msgstr "Thao tác không hợp lệ %d\n"
 
 #: misc-utils/uuidd.c:468 misc-utils/uuidd.c:489
-#, fuzzy, c-format
+#, c-format
 msgid "Bad number: %s\n"
-msgstr "%s: số sai: %s\n"
+msgstr "Số sai: %s\n"
 
 #: misc-utils/uuidd.c:524 misc-utils/uuidd.c:551
-#, fuzzy, c-format
+#, c-format
 msgid "Error calling uuidd daemon (%s): %s\n"
-msgstr "lỗi thay đổi chế độ của %s: %s\n"
+msgstr "Gặp lỗi khi gọi trình nền uuidd (%s): %s\n"
 
 #: misc-utils/uuidd.c:534
 #, c-format
 msgid "%s and subsequent %d UUID's\n"
-msgstr ""
+msgstr "%s và %d UUID xảy ra sau\n"
 
 #: misc-utils/uuidd.c:536
 #, c-format
 msgid "List of UUID's:\n"
-msgstr ""
+msgstr "Danh sách các UUID:\n"
 
 #: misc-utils/uuidd.c:557
 #, c-format
 msgid "Unexpected reply length from server %d\n"
-msgstr ""
+msgstr "Máy phục vụ đáp ứng với chiều dài bất thường %d\n"
 
 #: misc-utils/uuidd.c:574
 #, c-format
 msgid "Couldn't kill uuidd running at pid %d: %s\n"
-msgstr ""
+msgstr "Không thể buộc kết thúc uuidd đang chạy với PID %d: %s\n"
 
 #: misc-utils/uuidd.c:580
 #, c-format
 msgid "Killed uuidd running at pid %d\n"
-msgstr ""
+msgstr "Đã buộc kết thúc uuidd chạy với PID %d\n"
 
 #: misc-utils/uuidgen.c:32
-#, fuzzy, c-format
+#, c-format
 msgid "Usage: %s [-r] [-t]\n"
-msgstr "Sử dụng: %s [tùy_chọn]\n"
+msgstr "Sử dụng: %s [-r] [-t]\n"
 
 #: misc-utils/whereis.c:159
 #, c-format
@@ -8622,9 +8581,9 @@ msgid "can't rename %s to %s: %s\n"
 msgstr "không đổi tên được %s thành %s: %s\n"
 
 #: mount/lomount.c:364
-#, fuzzy, c-format
+#, c-format
 msgid "loop: can't set capacity on device %s: %s\n"
-msgstr "loop: không lấy được thông tin trên thiết bị %s: %s\n"
+msgstr "loop: không thể đặt khả năng trên thiết bị %s: %s\n"
 
 #: mount/lomount.c:388
 #, c-format
@@ -8734,7 +8693,7 @@ msgstr ""
 "lại.\n"
 
 #: mount/lomount.c:888
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Usage:\n"
@@ -8749,15 +8708,14 @@ msgid ""
 msgstr ""
 "\n"
 "Sử dụng:\n"
-" %1$s TBVL                             cung cấp thông tin\n"
+" %1$s thiết_bị_vòng_lặp                             cung cấp thông tin\n"
 " %1$s -a | --all                              liệt kê tất cả được dùng\n"
-" %1$s -d | --detach <TBVL> [<TBVL> ...]     xoá\n"
-" %1$s -f | --find                             tìm các cái không dùng\n"
-" %1$s -j | --associated <tập_tin> [-o <số>]\n"
-"\t\t\t\t\tliệt kê tất cả liên quan đến tập tin này\n"
-" %1$s [ các_tùy_chọn ] {-f|--find|TBVL} <tập_tin>  thiết lập\n"
-"\n"
-"TBVL: thiết bị vòng lặp\n"
+" %1$s -d | --detach <TB_vòng_lặp> [<TB_vòng_lặp> ...]        xoá\n"
+" %1$s -f | --find                             tìm cái chưa dùng\n"
+" %1$s -c | --set-capacity <TB_vòng_lặp>           thay đổi kích cỡ\n"
+" %1$s -j | --associated <tập_tin> [-o <số>]     liệt kê tất cả tương ứng với "
+"tập tin này\n"
+" %1$s [ tuỳ_chọn ... ] {-f|--find|TB_vòng_lặp} <tập_tin>        thiết lập\n"
 
 #: mount/lomount.c:898
 #, c-format
@@ -9331,7 +9289,7 @@ msgstr "; bỏ qua phần còn lại của tập tin"
 msgid "bug in xstrndup call"
 msgstr "lỗi (bug) trong lời gọi xstrndup"
 
-#: mount/sundries.c:224 mount/sundries.c:276 mount/sundries.c:285
+#: mount/sundries.c:224 mount/sundries.c:280 mount/sundries.c:289
 #: mount/xmalloc.c:11
 msgid "not enough memory"
 msgstr "không đủ bộ nhớ"
@@ -9394,86 +9352,86 @@ msgstr ""
 " %1$s -V                           \thiển thị phiên bản\n"
 "\n"
 
-#: mount/swapon.c:138
+#: mount/swapon.c:140
 #, c-format
 msgid "%s: unexpected file format"
 msgstr "%s: gặp định dạng tập tin bất thường"
 
-#: mount/swapon.c:177 mount/swapon.c:245 mount/swapon.c:390 mount/swapon.c:549
-#: mount/swapon.c:751
+#: mount/swapon.c:184 mount/swapon.c:252 mount/swapon.c:397 mount/swapon.c:556
+#: mount/swapon.c:758
 #, c-format
 msgid "%s: open failed"
 msgstr "%s: lỗi mở"
 
-#: mount/swapon.c:198
+#: mount/swapon.c:205
 #, c-format
 msgid "%s: reinitializing the swap."
 msgstr "%s: đang sơ khởi lại vùng trao đổi."
 
-#: mount/swapon.c:202
+#: mount/swapon.c:209
 msgid "fork failed"
 msgstr "lỗi phân nhánh"
 
-#: mount/swapon.c:218
+#: mount/swapon.c:225
 msgid "execv failed"
 msgstr "execv bị lỗi"
 
-#: mount/swapon.c:226
+#: mount/swapon.c:233
 msgid "waitpid failed"
 msgstr "waitpid bị lỗi"
 
-#: mount/swapon.c:250
+#: mount/swapon.c:257
 #, c-format
 msgid "%s: lseek failed"
 msgstr "%s: lseek bị lỗi"
 
-#: mount/swapon.c:256
+#: mount/swapon.c:263
 #, c-format
 msgid "%s: write signature failed"
 msgstr "%s: lỗi ghi chữ ký"
 
-#: mount/swapon.c:343
+#: mount/swapon.c:350
 #, c-format
 msgid "%s: found %sswap v%d signature string for %d KiB PAGE_SIZE\n"
 msgstr ""
 "%s: tìm thấy chuỗi chữ ký vùng trao đổi %s v%d cho %d KiB KÍCH_CỠ_TRANG\n"
 
-#: mount/swapon.c:363
+#: mount/swapon.c:370
 #, c-format
 msgid "%s: stat failed"
 msgstr "%s: lỗi lấy trạng thái"
 
-#: mount/swapon.c:373
+#: mount/swapon.c:380
 #, c-format
 msgid "%s: insecure permissions %04o, %04o suggested."
 msgstr "%s: có quyền không bảo mật %04o, đề nghị dùng %04o."
 
-#: mount/swapon.c:381
+#: mount/swapon.c:388
 #, c-format
 msgid "%s: skipping - it appears to have holes."
 msgstr "%s: đang bỏ qua — có vẻ là nó bị lỗ."
 
-#: mount/swapon.c:395
+#: mount/swapon.c:402
 #, c-format
 msgid "%s: get size failed"
 msgstr "%s: lỗi lấy kích cỡ"
 
-#: mount/swapon.c:401
+#: mount/swapon.c:408
 #, c-format
 msgid "%s: read swap header failed"
 msgstr "%s: lỗi đọc phần đầu vùng trao đổi"
 
-#: mount/swapon.c:414
+#: mount/swapon.c:421
 #, c-format
 msgid "%s: last_page 0x%08llx is larger than actual size of swapspace"
 msgstr "%s: last_page 0x%08llx lớn hơn kích cỡ thật của vùng trao đổi"
 
-#: mount/swapon.c:419
+#: mount/swapon.c:426
 #, c-format
 msgid "%s: swap format pagesize does not match."
 msgstr "%s: kích cỡ trang định dạng trao đổi không tương ứng."
 
-#: mount/swapon.c:424
+#: mount/swapon.c:431
 #, c-format
 msgid ""
 "%s: swap format pagesize does not match. (Use --fixpgsz to reinitialize it.)"
@@ -9481,31 +9439,31 @@ msgstr ""
 "%s: kích cỡ trang định dạng trao đổi không tương ứng. (Dùng --fixpgsz để sơ "
 "khởi lại nó.)"
 
-#: mount/swapon.c:433
+#: mount/swapon.c:440
 #, c-format
 msgid "%s: software suspend data detected. Rewriting the swap signature."
 msgstr "%s: phát hiện dữ liệu ngưng phần mềm. Đang ghi lại chữ ký trao đổi."
 
-#: mount/swapon.c:457 mount/swapon.c:507
+#: mount/swapon.c:464 mount/swapon.c:514
 #, c-format
 msgid "%s on %s\n"
 msgstr "%s trên %s\n"
 
-#: mount/swapon.c:479
+#: mount/swapon.c:486
 #, c-format
 msgid "%s: swapon failed"
 msgstr "%s swapon bị lỗi"
 
-#: mount/swapon.c:486
+#: mount/swapon.c:493
 #, c-format
 msgid "cannot find the device for %s"
 msgstr "không tìm thấy thiết bị cho %s"
 
-#: mount/swapon.c:519
+#: mount/swapon.c:526
 msgid "Not superuser."
 msgstr "Không phải siêu người dùng.s"
 
-#: mount/swapon.c:522
+#: mount/swapon.c:529
 #, c-format
 msgid "%s: swapoff failed"
 msgstr "%s swapoff bị lỗi"
@@ -9602,25 +9560,29 @@ msgid "umount: cannot find list of filesystems to unmount"
 msgstr "umount: không tìm thấy danh sách hệ thống tập tin để bỏ gắn"
 
 #: mount/umount.c:397
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Usage: umount -h | -V\n"
 "       umount -a [-d] [-f] [-r] [-n] [-v] [-t vfstypes] [-O opts]\n"
 "       umount [-d] [-f] [-r] [-n] [-v] special | node...\n"
 msgstr ""
-"Sử dụng: umount [-hV]\n"
-"       umount -a [-f] [-r] [-n] [-v] [-t vfstypes] [-O tùy_chọn]\n"
-"       umount [-f] [-r] [-n] [-v] special | node...\n"
+"Sử dụng: umount -h | -V\n"
+"       umount -a [-d] [-f] [-r] [-n] [-v] [-t loại_VFS ...] [-O "
+"tuỳ_chọn ...]\n"
+"       umount [-d] [-f] [-r] [-n] [-v] special | node...\n"
+"\n"
+"special\tđặc biệt\n"
+"node\tnút\n"
 
 #: mount/umount.c:466
-#, fuzzy, c-format
+#, c-format
 msgid "device %s is associated with %s\n"
-msgstr "cảnh báo : %s đã liên quan đến %s\n"
+msgstr "thiết bị %s tương ứng với %s\n"
 
 #: mount/umount.c:472
-#, fuzzy, c-format
+#, c-format
 msgid "device %s is not associated with %s\n"
-msgstr "cảnh báo : %s đã liên quan đến %s\n"
+msgstr "thiết bị %s không tương ứng với %s\n"
 
 #: mount/umount.c:485
 msgid "Cannot umount \"\"\n"
@@ -9796,7 +9758,7 @@ msgid "ioprio_set failed"
 msgstr "ioprio_set bị lỗi"
 
 #: schedutils/ionice.c:81
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "ionice - sets or gets process io scheduling class and priority.\n"
@@ -9824,9 +9786,10 @@ msgstr ""
 "  -n <dữ_liệu_hạng>      dữ liệu hạng (0-7, nhỏ hơn thì mức ưu tiên cao "
 "hơn)\n"
 "  -c <hạng>          hạng định thời\n"
-"                      \t\t1\tthời gian thật\n"
-"\t\t\t\t2\tsự cố gắng tốt nhất\n"
-"\t\t\t\t3\tnghỉ\n"
+"\t• 0\tkhông có\n"
+"\t• 1\tthời gian thật\n"
+"\t• 2\tcố gắng tốt nhất\n"
+"\t• 3\tnghỉ\n"
 "  -t                  bỏ qua lỗi\n"
 "  -h                  trợ giúp này\n"
 "\n"
@@ -9837,9 +9800,8 @@ msgid "cannot parse number '%s'"
 msgstr "không thể phân tích số « %s »"
 
 #: schedutils/ionice.c:151
-#, fuzzy
 msgid "ignoring given class data for none class"
-msgstr "đang lờ đi dữ liệu hạng đưa ra cho hạng nghỉ"
+msgstr "đang lờ đi dữ liệu hạng đưa ra cho hạng « không có »"
 
 #: schedutils/ionice.c:159
 msgid "ignoring given class data for idle class"
@@ -11881,8 +11843,8 @@ msgid "cannot stat \"%s\""
 msgstr "không thể lấy trạng thái về « %s »"
 
 #: text-utils/tailf.c:108
-#, c-format
-msgid "incomplete write to \"%s\" (written %ld, expected %ld)\n"
+#, fuzzy, c-format
+msgid "incomplete write to \"%s\" (written %zd, expected %zd)\n"
 msgstr "ghi không hoàn toàn vào « %s » (đã ghi %ld, mong đợi %ld)\n"
 
 #: text-utils/tailf.c:146
@@ -11937,3 +11899,25 @@ msgstr "Dòng nhập vào quá dài.\n"
 #, c-format
 msgid "Out of memory when growing buffer.\n"
 msgstr "Không đủ bộ nhớ khi tăng vùng đệm.\n"
+
+#~ msgid "# partition table of %s\n"
+#~ msgstr "# bảng phân vùng của %s\n"
+
+#~ msgid ""
+#~ "unit: sectors\n"
+#~ "\n"
+#~ msgstr ""
+#~ "đơn vị: rãnh ghi\n"
+#~ "\n"
+
+#~ msgid " start=%9lu"
+#~ msgstr " đầu=%9lu"
+
+#~ msgid ", size=%9lu"
+#~ msgstr ", cỡ=%9lu"
+
+#~ msgid ", bootable"
+#~ msgstr ", khởi động được"
+
+#~ msgid "Clock in UTC, not changed.\n"
+#~ msgstr "Đồng hồ theo UTC nên không thay đổi gì.\n"

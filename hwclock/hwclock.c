@@ -754,10 +754,10 @@ set_system_clock(const bool hclock_valid, const time_t newtime,
 
 
 static int
-set_system_clock_timezone(const bool testing) {
+set_system_clock_timezone(const bool universal, const bool testing) {
 /*----------------------------------------------------------------------------
    Reset the System Clock from local time to UTC, based on its current
-   value and the timezone.
+   value and the timezone unless universal is TRUE.
 
    Also set the kernel time zone value to the value indicated by the
    TZ environment variable and/or /usr/lib/zoneinfo/, interpreted as
@@ -792,7 +792,8 @@ set_system_clock_timezone(const bool testing) {
 #endif
 
   gettimeofday(&tv, NULL);
-  tv.tv_sec += minuteswest * 60;
+  if (!universal)
+    tv.tv_sec += minuteswest * 60;
 
   if (debug) {
     struct tm broken_time;
@@ -1147,9 +1148,11 @@ manipulate_clock(const bool show, const bool adjust, const bool noadjfile,
     int rc;  /* local return code */
     bool no_auth;  /* User lacks necessary authorization to access the clock */
 
-    no_auth = ur->get_permissions();
-    if (no_auth)
-	  return EX_NOPERM;
+    if (!systz) {
+      no_auth = ur->get_permissions();
+      if (no_auth)
+              return EX_NOPERM;
+    }
 
     if (!noadjfile && (adjust || set || systohc || (!utc && !local_opt))) {
       rc = read_adjtime(&adjtime);
@@ -1230,14 +1233,10 @@ manipulate_clock(const bool show, const bool adjust, const bool noadjfile,
 	    return rc;
           }
 	} else if (systz) {
-	  if (!universal) {
-	    rc = set_system_clock_timezone(testing);
-	    if (rc) {
-	      printf(_("Unable to set system clock.\n"));
-	      return rc;
-	    }
-	  } else if (debug) {
-	    printf(_("Clock in UTC, not changed.\n"));
+	  rc = set_system_clock_timezone(universal, testing);
+	  if (rc) {
+	    printf(_("Unable to set system clock.\n"));
+	    return rc;
 	  }
         }
         if (!noadjfile)
@@ -1655,16 +1654,19 @@ main(int argc, char **argv) {
 
 	if (debug)
 		out_version();
-	determine_clock_access_method(directisa);
-	if (!ur) {
-		fprintf(stderr,
-			_("Cannot access the Hardware Clock via "
-			  "any known method.\n"));
-		if (!debug)
+	if (!systz) {
+		determine_clock_access_method(directisa);
+		if (!ur) {
 			fprintf(stderr,
-				_("Use the --debug option to see the details "
-				  "of our search for an access method.\n"));
-		hwclock_exit(1);
+				_("Cannot access the Hardware Clock via "
+				  "any known method.\n"));
+			if (!debug)
+				fprintf(stderr,
+					_("Use the --debug option to see the "
+					  "details of our search for an access "
+					  "method.\n"));
+			hwclock_exit(1);
+		}
 	}
 
 	rc = manipulate_clock(show, adjust, noadjfile, set, set_time,
