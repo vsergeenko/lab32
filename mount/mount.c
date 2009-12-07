@@ -1940,6 +1940,7 @@ static struct option longopts[] = {
 	{ "make-rslave", 0, 0, 141 },
 	{ "make-rprivate", 0, 0, 142 },
 	{ "make-runbindable", 0, 0, 143 },
+	{ "no-canonicalize", 0, 0, 144 },
 	{ "internal-only", 0, 0, 'i' },
 	{ NULL, 0, 0, 0 }
 };
@@ -2236,7 +2237,9 @@ main(int argc, char *argv[]) {
 		case 143:
 			mounttype = (MS_UNBINDABLE | MS_REC);
 			break;
-
+		case 144:
+			nocanonicalize = 1;
+			break;
 		case '?':
 		default:
 			usage (stderr, EX_USAGE);

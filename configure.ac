@@ -14,9 +14,6 @@ AC_CONFIG_SRCDIR(mount/mount.c)
 
 AC_PREFIX_DEFAULT([/usr])
 
-GTK_DOC_CHECK([1.10])
-AC_PATH_PROG([XSLTPROC], [xsltproc])
-
 dnl version details from <major>.<minor>[-<suffix>]
 PACKAGE_VERSION_MAJOR=$(echo $PACKAGE_VERSION | awk -F. '{print $1}')
 PACKAGE_VERSION_MINOR=$(echo $PACKAGE_VERSION | awk -F. '{print $2}' \
@@ -82,6 +79,9 @@ LT_INIT
 
 PKG_PROG_PKG_CONFIG
 
+GTK_DOC_CHECK([1.10])
+AC_PATH_PROG([XSLTPROC], [xsltproc])
+
 linux_os=no
 case ${host_os} in
   *linux*)
@@ -91,8 +91,6 @@ esac
 AM_CONDITIONAL([LINUX], test "x$linux_os" = xyes)
 
 AC_PATH_PROG(PERL, perl)
-AC_PATH_PROG(BLKID, blkid, [], [$PATH:/sbin])
-AC_PATH_PROG(VOLID, vol_id, [], [$PATH:/lib/udev])
 
 AC_SYS_LARGEFILE
 
@@ -242,14 +240,7 @@ AC_DEFUN([UTIL_RESTORE_FLAGS], [
 ])
 
 
-AC_ARG_ENABLE([tls],
-  AS_HELP_STRING([--disable-tls], [disable use of thread local support]),
-  [], enable_tls=yes
-)
-if test "x$enable_tls" = xyes; then
-  AX_TLS
-fi
-
+AX_CHECK_TLS
 
 AC_ARG_ENABLE([mount],
   AS_HELP_STRING([--disable-mount], [do not build mount utilities]),

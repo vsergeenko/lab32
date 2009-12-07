@@ -118,116 +118,6 @@ The option \-l adds the labels in this listing.
 See below.
 .RE
 
-.B The bind mounts.
-.RS
-.\" In fact since 2.3.99. At first the syntax was mount -t bind.
-Since Linux 2.4.0 it is possible to remount part of the
-file hierarchy somewhere else. The call is
-.RS
-.br
-.B mount --bind
-.I olddir newdir
-.RE
-or shortoption
-.RS
-.br
-.B mount -B
-.I olddir newdir
-.RE
-or fstab entry is:
-.RS
-.br
-.I /olddir
-.I /newdir
-.B  none  bind
-.RE
-
-After this call the same contents is accessible in two places.
-One can also remount a single file (on a single file).
-
-This call attaches only (part of) a single filesystem, not possible
-submounts. The entire file hierarchy including submounts is attached
-a second place using
-.RS
-.br
-.B mount --rbind
-.I olddir newdir
-.RE
-or shortoption
-.RS
-.br
-.B mount -R
-.I olddir newdir
-.RE
-.\" available since Linux 2.4.11.
-
-Note that the filesystem mount options will remain the same as those
-on the original mount point, and cannot be changed by passing the -o
-option along with --bind/--rbind. The mount options can be
-changed by a separate remount command, for example:
-
-.RS
-.br
-.B mount --bind
-.I olddir newdir
-.br
-.B mount -o remount,ro
-.I newdir
-.RE
-
-.RE
-
-.B The move operation.
-.RS
-Since Linux 2.5.1 it is possible to atomically move a mounted tree
-to another place. The call is
-.RS
-.br
-.B mount --move
-.I olddir newdir
-.RE
-or shortoption
-.RS
-.br
-.B mount -M
-.I olddir newdir
-.RE
-.RE
-
-.B The shared subtrees operations.
-.RS
-Since Linux 2.6.15 it is possible to mark a mount and its submounts as shared,
-private, slave or unbindable. A shared mount provides ability to create mirrors
-of that mount such that mounts and umounts within any of the mirrors propagate
-to the other mirror. A slave mount receives propagation from its master, but
-any not vice-versa.  A private mount carries no propagation abilities.  A
-unbindable mount is a private mount which cannot cloned through a bind
-operation. Detailed semantics is documented in Documentation/sharedsubtree.txt
-file in the kernel source tree.
-
-.RS
-.nf
-.BI "mount --make-shared " mountpoint
-.BI "mount --make-slave " mountpoint
-.BI "mount --make-private " mountpoint
-.BI "mount --make-unbindable " mountpoint
-.fi
-.RE
-
-The following commands allows one to recursively change the type of all the
-mounts under a given mountpoint.
-
-.RS
-.nf
-.BI "mount --make-rshared " mountpoint
-.BI "mount --make-rslave " mountpoint
-.BI "mount --make-rprivate " mountpoint
-.BI "mount --make-runbindable " mountpoint
-.fi
-.RE
-.RE
-.RE
-
 .B The device indication.
 .RS
 Most devices are indicated by a file name (of a block special device), like
@@ -243,20 +133,12 @@ or
 .B UUID
 (see the \-L and \-U options below).
 
-.B The device indication.
-.RS
-Most devices are indicated by a file name (of a block special device), like
-.IR /dev/sda1 ,
-but there are other possibilities. For example, in the case of an NFS mount,
-.I device
-may look like
-.IR knuth.cwi.nl:/dir .
-It is possible to indicate a block special device using its
-volume
-.B LABEL
-or
-.B UUID
-(see the \-L and \-U options below).
+The recommended setup is to use LABEL=<label> or UUID=<uuid> tags rather than
+.B /dev/disk/by-{label,uuid}
+udev symlinks in the /etc/fstab file. The tags are
+more readable, robust and portable. The mount(8) command internally uses udev
+symlinks, so use the symlinks in /etc/fstab is not advantage over LABEL=/UUID=.
+For more details see libblkid(3).
 
 The
 .I proc
@@ -336,8 +218,7 @@ by a symbolic link to
 and especially when you have very large numbers of mounts
 things will be much faster with that symlink,
 but some information is lost that way, and in particular
-working with the loop device will be less convenient,
-and using the "user" option will fail.
+using the "user" option will fail.
 .RE
 
 .B The non-superuser mounts.
@@ -390,6 +271,118 @@ The
 .B group
 option is similar, with the restriction that the user must be
 member of the group of the special file.
+.RE
+
+
+.B The bind mounts.
+.RS
+.\" In fact since 2.3.99. At first the syntax was mount -t bind.
+Since Linux 2.4.0 it is possible to remount part of the
+file hierarchy somewhere else. The call is
+.RS
+.br
+.B mount --bind
+.I olddir newdir
+.RE
+or shortoption
+.RS
+.br
+.B mount -B
+.I olddir newdir
+.RE
+or fstab entry is:
+.RS
+.br
+.I /olddir
+.I /newdir
+.B  none  bind
+.RE
+
+After this call the same contents is accessible in two places.
+One can also remount a single file (on a single file).
+
+This call attaches only (part of) a single filesystem, not possible
+submounts. The entire file hierarchy including submounts is attached
+a second place using
+.RS
+.br
+.B mount --rbind
+.I olddir newdir
+.RE
+or shortoption
+.RS
+.br
+.B mount -R
+.I olddir newdir
+.RE
+.\" available since Linux 2.4.11.
+
+Note that the filesystem mount options will remain the same as those
+on the original mount point, and cannot be changed by passing the -o
+option along with --bind/--rbind. The mount options can be
+changed by a separate remount command, for example:
+
+.RS
+.br
+.B mount --bind
+.I olddir newdir
+.br
+.B mount -o remount,ro
+.I newdir
+.RE
+
+.RE
+
+.B The move operation.
+.RS
+Since Linux 2.5.1 it is possible to atomically move a mounted tree
+to another place. The call is
+.RS
+.br
+.B mount --move
+.I olddir newdir
+.RE
+or shortoption
+.RS
+.br
+.B mount -M
+.I olddir newdir
+.RE
+This will cause the contents which previously appeared under olddir to be
+accessed under newdir.  The physical location of the files is not changed.
+.RE
+
+.B The shared subtrees operations.
+.RS
+Since Linux 2.6.15 it is possible to mark a mount and its submounts as shared,
+private, slave or unbindable. A shared mount provides ability to create mirrors
+of that mount such that mounts and umounts within any of the mirrors propagate
+to the other mirror. A slave mount receives propagation from its master, but
+any not vice-versa.  A private mount carries no propagation abilities.  A
+unbindable mount is a private mount which cannot cloned through a bind
+operation. Detailed semantics is documented in Documentation/sharedsubtree.txt
+file in the kernel source tree.
+
+.RS
+.nf
+.BI "mount --make-shared " mountpoint
+.BI "mount --make-slave " mountpoint
+.BI "mount --make-private " mountpoint
+.BI "mount --make-unbindable " mountpoint
+.fi
+.RE
+
+The following commands allows one to recursively change the type of all the
+mounts under a given mountpoint.
+
+.RS
+.nf
+.BI "mount --make-rshared " mountpoint
+.BI "mount --make-rslave " mountpoint
+.BI "mount --make-rprivate " mountpoint
+.BI "mount --make-runbindable " mountpoint
+.fi
+.RE
 .RE
 
 .SH COMMAND LINE OPTIONS
@@ -456,6 +449,13 @@ Mount without writing in
 This is necessary for example when
 .I /etc
 is on a read-only filesystem.
+.IP "\fB\-\-no\-canonicalize\fP"
+Don't canonicalize paths. The mount command canonicalizes all paths 
+(from command line or fstab) and stores canonicalized paths to the 
+.IR /etc/mtab
+file. This option can be used together with the
+.B \-f
+flag for already canonicalized absolut paths.
 .IP "\fB\-p, \-\-pass\-fd \fInum\fP"
 In case of a loop mount with encryption, read the passphrase from
 file descriptor
@@ -523,9 +523,11 @@ currently supported include:
 .IR ramfs ,
 .IR reiserfs ,
 .IR romfs ,
+.IR squashfs ,
 .IR smbfs ,
 .IR sysv ,
 .IR tmpfs ,
+.IR ubifs ,
 .IR udf ,
 .IR ufs ,
 .IR umsdos ,
@@ -1944,6 +1946,9 @@ manual page.
 .SH "Mount options for romfs"
 None.
 
+.SH "Mount options for squashfs"
+None.
+
 .SH "Mount options for smbfs"
 Just like
 .IR nfs ", the " smbfs
@@ -2032,6 +2037,69 @@ online, then it is advisable to omit the mpol option from automatic
 mount options.  It can be added later, when the tmpfs is already mounted
 on MountPoint, by 'mount -o remount,mpol=Policy:NodeList MountPoint'.
 .PE
+
+.SH "Mount options for ubifs"
+UBIFS is a flash file system which works on top of UBI volumes. Note that
+.B
+atime
+is not supported and is always turned off.
+.TP
+The device name may be specified as
+.RS
+.B ubiX_Y
+UBI device number
+.BR X ,
+volume number
+.B Y
+.TP
+.B ubiY
+UBI device number
+.BR 0 ,
+volume number
+.B Y
+.TP
+.B ubiX:NAME
+UBI device number
+.BR X ,
+volume with name
+.B NAME
+.TP
+.B ubi:NAME
+UBI device number
+.BR 0 ,
+volume with name
+.B NAME
+.RE
+Alternative
+.B !
+separator may be used instead of
+.BR : .
+.TP
+The following mount options are available:
+.TP
+.BR bulk_read
+Enable bulk-read. VFS read-ahead is disabled because it slows down the file
+system. Bulk-Read is an internal optimization. Some flashes may read faster if
+the data are read at one go, rather than at several read requests. For
+example, OneNAND can do "read-while-load" if it reads more than one NAND page.
+.TP
+.BR no_bulk_read
+Do not bulk-read. This is the default.
+.TP
+.BR chk_data_crc
+Check data CRC-32 checksums. This is the default.
+.TP
+.BR no_chk_data_crc.
+Do not check data CRC-32 checksums. With this option, the filesystem does not
+check CRC-32 checksum for data, but it does check it for the internal indexing
+information. This option only affects reading, not writing. CRC-32 is always
+calculated when writing the data.
+.TP
+.BR compr= { none | lzo | zlib }
+Select the default compressor which is used when new files are written. It is
+still possible to read compressed files if mounted with the
+.B none
+option.
 
 .SH "Mount options for udf"
 udf is the "Universal Disk Format" filesystem defined by the Optical
