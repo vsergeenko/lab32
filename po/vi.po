@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: util-linux-ng 2.16-rc2\n"
 "Report-Msgid-Bugs-To: Karel Zak <kzak@redhat.com>\n"
-"POT-Creation-Date: 2009-11-20 15:37+0100\n"
+"POT-Creation-Date: 2009-12-10 21:51+0100\n"
 "PO-Revision-Date: 2009-09-19 18:16+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
@@ -3195,7 +3195,7 @@ msgstr "Chú ý: kích cỡ rãnh ghi là %d (không %d)\n"
 #, c-format
 msgid ""
 "\n"
-"WARNING: the device provides alignment_offset, but the offset does not \n"
+"WARNING: the device provides alignment_offset, but the offset does not\n"
 "match with device geometry.\n"
 "\n"
 msgstr ""
@@ -3600,8 +3600,8 @@ msgid "Total allocated sectors %llu greater than the maximum %llu\n"
 msgstr "Tổng số rãnh ghi phân phối %llu lớn hơn tối đa %llu\n"
 
 #: fdisk/fdisk.c:2209
-#, c-format
-msgid "%lld unallocated %d-byte sectors\n"
+#, fuzzy, c-format
+msgid "Remaining %lld unallocated %d-byte sectors\n"
 msgstr "%lld rãnh ghi %d-byte không được phân phối\n"
 
 #: fdisk/fdisk.c:2245 fdisk/fdisksgilabel.c:620 fdisk/fdisksunlabel.c:416
@@ -5862,7 +5862,7 @@ msgstr ""
 msgid "Couldn't allocate memory for filesystem types\n"
 msgstr "Không thể phân cấp bộ nhớ cho kiểu hệ thống tập tin\n"
 
-#: fsck/fsck.c:867
+#: fsck/fsck.c:883
 #, c-format
 msgid ""
 "%s: skipping bad line in /etc/fstab: bind mount with nonzero fsck pass "
@@ -5871,21 +5871,26 @@ msgstr ""
 "%s: đang bỏ qua dòng sai trong tập tin « /etc/fstab »:\n"
 "điểm lắp đóng kết có số thứ tự lần chạy fsck khác số không\n"
 
-#: fsck/fsck.c:894
+#: fsck/fsck.c:893
+#, fuzzy, c-format
+msgid "%s: skipping nonexistent device\n"
+msgstr "%s: %s không phải là thiết bị lp.\n"
+
+#: fsck/fsck.c:919
 #, c-format
 msgid "fsck: cannot check %s: fsck.%s not found\n"
 msgstr "fsck: không thể kiểm tra %s: fsck.%s không tìm thấy\n"
 
-#: fsck/fsck.c:950
+#: fsck/fsck.c:975
 msgid "Checking all file systems.\n"
 msgstr "Đang kiểm tra tất cả các hệ thống tập tin.\n"
 
-#: fsck/fsck.c:1041
+#: fsck/fsck.c:1066
 #, c-format
 msgid "--waiting-- (pass %d)\n"
 msgstr "--đang đợi-- (lần chạy %d)\n"
 
-#: fsck/fsck.c:1061
+#: fsck/fsck.c:1086
 msgid ""
 "Usage: fsck [-AMNPRTV] [ -C [ fd ] ] [-t fstype] [fs-options] [filesys ...]\n"
 msgstr ""
@@ -5894,42 +5899,42 @@ msgstr ""
 "\n"
 "HTTT: hệ thống tập tin\n"
 
-#: fsck/fsck.c:1099
+#: fsck/fsck.c:1124
 #, c-format
 msgid "%s: too many devices\n"
 msgstr "%s: quá nhiều thiết bị\n"
 
-#: fsck/fsck.c:1110
+#: fsck/fsck.c:1135
 #, c-format
 msgid "Couldn't open %s: %s\n"
 msgstr "Không mở được %s: %s\n"
 
-#: fsck/fsck.c:1112
+#: fsck/fsck.c:1137
 #, c-format
 msgid "Is /proc mounted?\n"
 msgstr "/proc được gắn kết không?\n"
 
-#: fsck/fsck.c:1121
+#: fsck/fsck.c:1146
 #, c-format
 msgid "Must be root to scan for matching filesystems: %s\n"
 msgstr "Phải là người chủ (root) để quét tìm hệ thống tập tin tương ứng: %s\n"
 
-#: fsck/fsck.c:1124
+#: fsck/fsck.c:1149
 #, c-format
 msgid "Couldn't find matching filesystem: %s\n"
 msgstr "Không tìm thấy hệ thống tập tin tương ứng: %s\n"
 
-#: fsck/fsck.c:1132 fsck/fsck.c:1218
+#: fsck/fsck.c:1157 fsck/fsck.c:1243
 #, c-format
 msgid "%s: too many arguments\n"
 msgstr "%s: quá nhiều đối số\n"
 
-#: fsck/fsck.c:1252
+#: fsck/fsck.c:1277
 #, c-format
 msgid "fsck from %s\n"
 msgstr "fsck từ %s\n"
 
-#: fsck/fsck.c:1264
+#: fsck/fsck.c:1289
 #, c-format
 msgid "%s: Unable to allocate memory for fsck_path\n"
 msgstr "%s: Không thể phân phối bộ nhớ cho fsck_path\n"
@@ -8622,7 +8627,7 @@ msgstr ""
 #, fuzzy, c-format
 msgid ""
 "\n"
-"For more information see wipefs(1).\n"
+"For more information see wipefs(8).\n"
 msgstr ""
 "\n"
 "Để tìm thêm thông tin, xem ipcmk(1).\n"
@@ -9360,7 +9365,7 @@ msgstr ""
 msgid "mount: %s already mounted on %s\n"
 msgstr "mount: đã gắn %s trên %s\n"
 
-#: mount/mount.c:1936
+#: mount/mount.c:1937
 #, c-format
 msgid ""
 "Usage: mount -V                 : print version\n"
@@ -9438,24 +9443,24 @@ msgstr ""
 "Tùy chọn khác: [-nfFrsvw] [-o tùy_chọn] [-p thư_mục_chứa_tập_tin_mật_khẩu].\n"
 "Để xem rất nhiều chi tiết, dùng lệnh « man 8 mount ».\n"
 
-#: mount/mount.c:2261
+#: mount/mount.c:2264
 #, fuzzy, c-format
 msgid "mount: only root can do that (effective UID is %d)"
 msgstr "mount: chỉ người chủ (root) có quyền thực hiện"
 
-#: mount/mount.c:2264
+#: mount/mount.c:2267
 msgid "mount: only root can do that"
 msgstr "mount: chỉ người chủ (root) có quyền thực hiện"
 
-#: mount/mount.c:2275
+#: mount/mount.c:2278
 msgid "nothing was mounted"
 msgstr "không gắn gì cả"
 
-#: mount/mount.c:2293 mount/mount.c:2319
+#: mount/mount.c:2296 mount/mount.c:2322
 msgid "mount: no such partition found"
 msgstr "mount: không tìm thấy phân vùng như vậy"
 
-#: mount/mount.c:2296
+#: mount/mount.c:2299
 #, c-format
 msgid "mount: can't find %s in %s or %s"
 msgstr "mount: không tìm thấy %s trong %s hoặc %s"
@@ -9474,11 +9479,11 @@ msgstr "[mntent]: dòng %d trong %s xấu %s\n"
 msgid "; rest of file ignored"
 msgstr "; bỏ qua phần còn lại của tập tin"
 
-#: mount/sundries.c:31
+#: mount/sundries.c:32
 msgid "bug in xstrndup call"
 msgstr "lỗi (bug) trong lời gọi xstrndup"
 
-#: mount/sundries.c:224 mount/sundries.c:280 mount/sundries.c:289
+#: mount/sundries.c:225 mount/sundries.c:281 mount/sundries.c:296
 #: mount/xmalloc.c:11
 msgid "not enough memory"
 msgstr "không đủ bộ nhớ"
@@ -9575,9 +9580,17 @@ msgstr "%s: lỗi ghi chữ ký"
 
 #: mount/swapon.c:350
 #, c-format
-msgid "%s: found %sswap v%d signature string for %d KiB PAGE_SIZE\n"
+msgid "%s: found swap signature: version %d, page-size %d, %s byte order"
 msgstr ""
-"%s: tìm thấy chuỗi chữ ký vùng trao đổi %s v%d cho %d KiB KÍCH_CỠ_TRANG\n"
+
+#: mount/swapon.c:355
+msgid "different"
+msgstr ""
+
+#: mount/swapon.c:355
+#, fuzzy
+msgid "same"
+msgstr "Tên"
 
 #: mount/swapon.c:370
 #, c-format
@@ -9932,6 +9945,11 @@ msgstr "lỗi phân tích mức ưu tiên"
 msgid "failed to set pid %d's policy"
 msgstr "lỗi đặt chính sách của PID %d"
 
+#: schedutils/chrt.c:242
+#, fuzzy
+msgid "new"
+msgstr "Mới"
+
 #: schedutils/chrt.c:248
 #, c-format
 msgid "failed to execute %s"
@@ -10245,7 +10263,7 @@ msgstr "%s: số sai: %s\n"
 msgid "%s: requires file descriptor, file or directory\n"
 msgstr "%s: yêu cầu bộ mô tả tập tin, tập tin hay thư mục\n"
 
-#: sys-utils/flock.c:294
+#: sys-utils/flock.c:296
 #, c-format
 msgid "%s: fork failed: %s\n"
 msgstr "%s: lỗi phân nhánh: %s\n"
@@ -11200,7 +11218,7 @@ msgstr "      hãy dùng « -R 1 » để gắn gốc chỉ đọc, « -R 0 » �
 msgid "missing comma"
 msgstr "thiếu dấu phẩy"
 
-#: sys-utils/readprofile.c:72
+#: sys-utils/readprofile.c:72 text-utils/more.c:798
 #, c-format
 msgid "out of memory"
 msgstr "không đủ bộ nhớ"
@@ -11758,11 +11776,6 @@ msgstr "(Tập tin tiếp theo: %s)"
 msgid "[Press space to continue, 'q' to quit.]"
 msgstr "[Nhấn phím trắng để tiếp tục, 'q' để thoát]"
 
-#: text-utils/more.c:798
-#, fuzzy
-msgid "out if memory"
-msgstr "không đủ bộ nhớ"
-
 #: text-utils/more.c:1206
 #, c-format
 msgid "...back %d pages"
@@ -12128,8 +12141,8 @@ msgid "cannot stat \"%s\""
 msgstr "không thể lấy trạng thái về « %s »"
 
 #: text-utils/tailf.c:109
-#, c-format
-msgid "incomplete write to \"%s\" (written %ld, expected %ld)\n"
+#, fuzzy, c-format
+msgid "incomplete write to \"%s\" (written %zd, expected %zd)\n"
 msgstr "ghi không hoàn toàn vào « %s » (đã ghi %ld, mong đợi %ld)\n"
 
 #: text-utils/tailf.c:147
@@ -12184,6 +12197,14 @@ msgstr "Dòng nhập vào quá dài.\n"
 #, c-format
 msgid "Out of memory when growing buffer.\n"
 msgstr "Không đủ bộ nhớ khi tăng vùng đệm.\n"
+
+#~ msgid "%s: found %sswap v%d signature string for %d KiB PAGE_SIZE\n"
+#~ msgstr ""
+#~ "%s: tìm thấy chuỗi chữ ký vùng trao đổi %s v%d cho %d KiB KÍCH_CỠ_TRANG\n"
+
+#, fuzzy
+#~ msgid "out if memory"
+#~ msgstr "không đủ bộ nhớ"
 
 #~ msgid "# partition table of %s\n"
 #~ msgstr "# bảng phân vùng của %s\n"

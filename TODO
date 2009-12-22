@@ -29,12 +29,30 @@ fdisk(s)
 
  * use off_t instead "long long"
 
+ * catch SIGINT (Ctrl-C) and return to main menu.
+   From Red Hat bugzilla #545488:
+
+   While using fdisk normally, if you accidentally pressed the wrong button (to
+   start a sequence of questions for some operation, e.g. 'c' to create
+   partition).  The tool tries too hard to keep asking you for valid input.  You
+   can't provide a blank or invalid input to get it to break out of the current
+   dialog sequence and get back to the main menu.
+
  * fdisk/* refactoring
 
  * add GPT support
 
 misc
 ----
+
+ * use ngettext() for strings with plurals, for example
+
+    /* include/nls.h */
+    #define P_(id, id_plural, n)	ngettext(id, id_plural, n)
+
+    printf(P_("%d used sector",
+              "%d used sectors", sectors),
+              sectors);
 
  * check for program_invocation_short_name in ./configure.ac and add 
    lib/progname.c fallback for libc without this feature (for example

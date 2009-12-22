@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: util-linux 2.11b\n"
 "Report-Msgid-Bugs-To: Karel Zak <kzak@redhat.com>\n"
-"POT-Creation-Date: 2009-11-20 15:37+0100\n"
+"POT-Creation-Date: 2009-12-10 21:51+0100\n"
 "PO-Revision-Date: 2001-05-24 16:03-03:00\n"
 "Last-Translator: Rodrigo Stulzer Lopes <rodrigo@conectiva.com.br>\n"
 "Language-Team: Brazilian Portuguese <ldp-br@bazar.conectiva.com.br>\n"
@@ -3201,7 +3201,7 @@ msgstr "Nota: o tamanho do setor é %d (não %d)\n"
 #, c-format
 msgid ""
 "\n"
-"WARNING: the device provides alignment_offset, but the offset does not \n"
+"WARNING: the device provides alignment_offset, but the offset does not\n"
 "match with device geometry.\n"
 "\n"
 msgstr ""
@@ -3601,7 +3601,7 @@ msgstr "O total de setores alocados, %d, é maior do que o máximo: %d\n"
 
 #: fdisk/fdisk.c:2209
 #, fuzzy, c-format
-msgid "%lld unallocated %d-byte sectors\n"
+msgid "Remaining %lld unallocated %d-byte sectors\n"
 msgstr "%d setores não alocados\n"
 
 #: fdisk/fdisk.c:2245 fdisk/fdisksgilabel.c:620 fdisk/fdisksunlabel.c:416
@@ -5882,71 +5882,76 @@ msgstr ""
 msgid "Couldn't allocate memory for filesystem types\n"
 msgstr "mount: você precisa especificar o tipo do sistema de arquivos"
 
-#: fsck/fsck.c:867
+#: fsck/fsck.c:883
 #, c-format
 msgid ""
 "%s: skipping bad line in /etc/fstab: bind mount with nonzero fsck pass "
 "number\n"
 msgstr ""
 
-#: fsck/fsck.c:894
+#: fsck/fsck.c:893
+#, fuzzy, c-format
+msgid "%s: skipping nonexistent device\n"
+msgstr "%s: %s não é um dispositivo lp.\n"
+
+#: fsck/fsck.c:919
 #, c-format
 msgid "fsck: cannot check %s: fsck.%s not found\n"
 msgstr ""
 
-#: fsck/fsck.c:950
+#: fsck/fsck.c:975
 #, fuzzy
 msgid "Checking all file systems.\n"
 msgstr "Forçando verificação do sistema de arquivos em %s.\n"
 
-#: fsck/fsck.c:1041
+#: fsck/fsck.c:1066
 #, c-format
 msgid "--waiting-- (pass %d)\n"
 msgstr ""
 
-#: fsck/fsck.c:1061
+#: fsck/fsck.c:1086
 #, fuzzy
 msgid ""
 "Usage: fsck [-AMNPRTV] [ -C [ fd ] ] [-t fstype] [fs-options] [filesys ...]\n"
 msgstr ""
 "Uso: mkfs [-V] [-t tipoSistArq] [opções-sistArq] dispositivo [tamanho]\n"
 
-#: fsck/fsck.c:1099
+#: fsck/fsck.c:1124
 #, fuzzy, c-format
 msgid "%s: too many devices\n"
 msgstr "%s: %s não é um dispositivo lp.\n"
 
-#: fsck/fsck.c:1110
+#: fsck/fsck.c:1135
 #, fuzzy, c-format
 msgid "Couldn't open %s: %s\n"
 msgstr "Não foi possível abrir %s: %s\n"
 
-#: fsck/fsck.c:1112
+#: fsck/fsck.c:1137
 #, fuzzy, c-format
 msgid "Is /proc mounted?\n"
 msgstr "%s desmontado\n"
 
-#: fsck/fsck.c:1121
+#: fsck/fsck.c:1146
 #, c-format
 msgid "Must be root to scan for matching filesystems: %s\n"
 msgstr ""
 
-#: fsck/fsck.c:1124
+#: fsck/fsck.c:1149
 #, fuzzy, c-format
 msgid "Couldn't find matching filesystem: %s\n"
 msgstr "Desmontando quaisquer sistemas de arquivos remanescentes..."
 
-#: fsck/fsck.c:1132 fsck/fsck.c:1218
+#: fsck/fsck.c:1157 fsck/fsck.c:1243
 #, fuzzy, c-format
 msgid "%s: too many arguments\n"
 msgstr "%s: sinal desconhecido %s\n"
 
-#: fsck/fsck.c:1252
+#: fsck/fsck.c:1277
 #, fuzzy, c-format
 msgid "fsck from %s\n"
 msgstr "%s de %s\n"
 
-#: fsck/fsck.c:1264
+#: fsck/fsck.c:1289
 #, fuzzy, c-format
 msgid "%s: Unable to allocate memory for fsck_path\n"
 msgstr "Não foi possível alocar buffer para inodes"
@@ -8607,11 +8612,11 @@ msgid ""
 msgstr ""
 
 #: misc-utils/wipefs.c:322
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "\n"
-"For more information see wipefs(1).\n"
-msgstr ""
+"For more information see wipefs(8).\n"
+msgstr "As informações de finger foram alteradas.\n"
 
 #: misc-utils/wipefs.c:373
 msgid "--offset and --all are mutually exclusive"
@@ -9323,7 +9328,7 @@ msgstr ""
 msgid "mount: %s already mounted on %s\n"
 msgstr "mount: %s já montado em %s\n"
 
-#: mount/mount.c:1936
+#: mount/mount.c:1937
 #, fuzzy, c-format
 msgid ""
 "Usage: mount -V                 : print version\n"
@@ -9381,24 +9386,24 @@ msgstr ""
 "Outras opções: [-nfFrsvw] [-o opções].\n"
 "Para mais detalhes, consulte `man 8 mount'.\n"
 
-#: mount/mount.c:2261
+#: mount/mount.c:2264
 #, fuzzy, c-format
 msgid "mount: only root can do that (effective UID is %d)"
 msgstr "mount: operação exclusiva de root"
 
-#: mount/mount.c:2264
+#: mount/mount.c:2267
 msgid "mount: only root can do that"
 msgstr "mount: operação exclusiva de root"
 
-#: mount/mount.c:2275
+#: mount/mount.c:2278
 msgid "nothing was mounted"
 msgstr ""
 
-#: mount/mount.c:2293 mount/mount.c:2319
+#: mount/mount.c:2296 mount/mount.c:2322
 msgid "mount: no such partition found"
 msgstr "mount: tal partição não foi encontrada"
 
-#: mount/mount.c:2296
+#: mount/mount.c:2299
 #, c-format
 msgid "mount: can't find %s in %s or %s"
 msgstr "mount: não foi possível localizar %s em %s ou %s"
@@ -9417,11 +9422,11 @@ msgstr "[mntent]: linha %d em %s tem %s inválido(a)\n"
 msgid "; rest of file ignored"
 msgstr "; resto do arquivo ignorado"
 
-#: mount/sundries.c:31
+#: mount/sundries.c:32
 msgid "bug in xstrndup call"
 msgstr "erro na chamada a xstrndup"
 
-#: mount/sundries.c:224 mount/sundries.c:280 mount/sundries.c:289
+#: mount/sundries.c:225 mount/sundries.c:281 mount/sundries.c:296
 #: mount/xmalloc.c:11
 msgid "not enough memory"
 msgstr "não há memória suficiente"
@@ -9499,8 +9504,17 @@ msgstr "A abertura de %s falhou"
 
 #: mount/swapon.c:350
 #, c-format
-msgid "%s: found %sswap v%d signature string for %d KiB PAGE_SIZE\n"
+msgid "%s: found swap signature: version %d, page-size %d, %s byte order"
 msgstr ""
+
+#: mount/swapon.c:355
+msgid "different"
+msgstr ""
+
+#: mount/swapon.c:355
+#, fuzzy
+msgid "same"
+msgstr "Nome"
 
 #: mount/swapon.c:370
 #, fuzzy, c-format
@@ -9825,6 +9839,11 @@ msgstr "Não foi possível gravar a partição em %s\n"
 msgid "failed to set pid %d's policy"
 msgstr "Não foi possível gravar a partição em %s\n"
 
+#: schedutils/chrt.c:242
+#, fuzzy
+msgid "new"
+msgstr "novas "
+
 #: schedutils/chrt.c:248
 #, fuzzy, c-format
 msgid "failed to execute %s"
@@ -10110,7 +10129,7 @@ msgstr "Número inválido: %s\n"
 msgid "%s: requires file descriptor, file or directory\n"
 msgstr ""
 
-#: sys-utils/flock.c:294
+#: sys-utils/flock.c:296
 #, fuzzy, c-format
 msgid "%s: fork failed: %s\n"
 msgstr "o fork falhou\n"
@@ -11063,7 +11082,7 @@ msgstr ""
 msgid "missing comma"
 msgstr ""
 
-#: sys-utils/readprofile.c:72
+#: sys-utils/readprofile.c:72 text-utils/more.c:798
 #, fuzzy, c-format
 msgid "out of memory"
 msgstr "memória insuficiente?\n"
@@ -11574,11 +11593,6 @@ msgstr "(Próximo arquivo: %s)"
 msgid "[Press space to continue, 'q' to quit.]"
 msgstr "[Pressione espaço para continuar, 'q' para sair.]"
 
-#: text-utils/more.c:798
-#, fuzzy
-msgid "out if memory"
-msgstr "memória insuficiente?\n"
-
 #: text-utils/more.c:1206
 #, fuzzy, c-format
 msgid "...back %d pages"
@@ -11906,7 +11920,7 @@ msgstr "não foi possível verificar status de dispositivo %s"
 
 #: text-utils/tailf.c:109
 #, c-format
-msgid "incomplete write to \"%s\" (written %ld, expected %ld)\n"
+msgid "incomplete write to \"%s\" (written %zd, expected %zd)\n"
 msgstr ""
 
 #: text-utils/tailf.c:147
@@ -11963,6 +11977,10 @@ msgstr "Linha de entrada longa demais.\n"
 #, c-format
 msgid "Out of memory when growing buffer.\n"
 msgstr "Falta memória quando o buffer cresce.\n"
+
+#, fuzzy
+#~ msgid "out if memory"
+#~ msgstr "memória insuficiente?\n"
 
 #~ msgid "# partition table of %s\n"
 #~ msgstr "# tabela de partição de %s\n"
@@ -12492,9 +12510,6 @@ msgstr "Falta memória quando o buffer cresce.\n"
 
 #~ msgid "You have too many processes running.\n"
 #~ msgstr "Número excessivo de processos em execução.\n"
-
-#~ msgid "new "
-#~ msgstr "novas "
 
 #~ msgid "The password must have at least 6 characters, try again.\n"
 #~ msgstr "A senha deve ter pelo menos 6 caracteres; tente novamente.\n"
