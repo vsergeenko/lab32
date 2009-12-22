@@ -1,3 +1,46 @@
+util-linux (2.17~rc3-1) experimental; urgency=low
+
+  [Mike Frysinger]
+
+  * flock: fix hang when parent ignores SIGCHLD
+
+  [Karel Zak]
+
+  * docs: update TODO list
+  * docs: update AUTHORS file
+  * docs: update v2.17 ReleaseNotes
+  * build-sys: release++ (v2.17-rc2)
+  * lib: bug (typo) in function MD5Final()
+  * docs: add ngettext() into TODO file
+  * docs: update v2.17 ReleaseNotes
+  * build-sys: release++ (v2.17-rc3)
+  * docs: add LGPLv2+ to list of licenses
+  * libblkid: fix Adaptec RAID detection
+  * libblkid: fix highpoint37x detection
+  * libblkid: rename highpoint RAIDs to hpt{37,45}x_raid_member
+  * tests: add adaptec RAID test
+  * tests: add hpt37x RAID test
+  * tests: add hpt45x RAID test
+  * tests: add isw RAID test
+  * tests: add jmicron RAID test
+  * tests: add lsi RAID test
+  * tests: add nvidia RAID test
+  * tests: add promise RAID test
+  * tests: add silicon RAID test
+  * mount: disable --no-canonicalize for non-root users
+  * umount: add --no-canonicalize
+  * po: merge changes
+  * po: fix msgid bugs
+  * po: merge changes
+
+  [localization folks]
+
+  * po: update pl.po (from translationproject.org) (Jakub Bogusz)
+  * po: update cs.po (from translationproject.org) (Petr Pisar)
+  * po: update eu.po (from translationproject.org) (Mikel Olasagasti Uranga)
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 22 Dec 2009 10:11:47 -0700
+
 util-linux (2.17~rc1-1) experimental; urgency=low
 
   * New upstream version

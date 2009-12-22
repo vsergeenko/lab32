@@ -49,3 +49,6 @@ libtool
 
 # GTK_DOC_CHECK depends on gtk-doc.m4
 !m4/gtk-doc.m4
+
+# cannot deal with bz2 files
+tests/ts/blkid/images-fs/*.bz2
