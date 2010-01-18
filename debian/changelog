@@ -1,3 +1,37 @@
+util-linux (2.17-0) experimental; urgency=low
+
+  [Bastian Friedrich]
+
+  * libblkid: DRBD support for blkid
+
+  [Karel Zak]
+
+  * sfdisk: confused about disk size
+  * mount: fix typo in mount.8
+  * fdisk: sleep-after-sync and fsync usage
+  * lscpu: add {32,64}-bit CPU modes detection
+  * tests: refresh lscpu tests
+  * docs: update AUTHORS file
+  * docs: update v2.17 ReleaseNotes
+  * build-sys: release++ (v2.17)
+  * update TODO file
+  * fdisk: don't include scsi.h
+  * po: merge changes
+
+  [Mike Frysinger]
+
+  * pg: command enters infinite loop
+
+  [localization folks]
+
+  * po: update zh_CN.po (from translationproject.org) (Ray Wang)
+  * po: update pl.po (from translationproject.org) (Jakub Bogusz)
+  * po: update cs.po (from translationproject.org) (Petr Pisar)
+  * po: update fi.po (from translationproject.org) (Lauri Nurmi)
+  * po: update eu.po (from translationproject.org) (Mikel Olasagasti)
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 18 Jan 2010 08:01:43 -0700
+
 util-linux (2.17~rc3-1) experimental; urgency=low
 
   [Mike Frysinger]
@@ -46,6 +80,190 @@ util-linux (2.17~rc1-1) experimental; urgency=low
   * New upstream version
 
  -- LaMont Jones <lamont@debian.org>  Sun, 06 Dec 2009 18:56:21 -0700
+
+util-linux (2.16.2-0) unstable; urgency=low
+
+  [Milan Broz]
+
+  * libuuid: remove .UE macro from libuuid man pages.
+
+  [Ken Kopin]
+
+  * Fix typo in dmesg manpage.
+
+  [Mike Frysinger]
+
+  * tailf: fix printf format
+  * swapon: handle <=linux-2.6.19 bug in /proc/swaps
+
+  [Cristian Rodríguez]
+
+  * fdformat: fix memory leak in verify_disk()
+
+  [Lawrence Rust]
+
+  * libblkid: fix FAT super block definition
+
+  [Scott James Remnant]
+
+  * hwclock: do not access hardware clock when using --systz
+  * hwclock: set kernel timezone with --systz --utc
+
+  [Peter Breitenlohner]
+
+  * mkswap: restore device argument in mkswap.8 synopsis
+
+  [kevin.granade@gmail.com]
+
+  * mount: document changed semantics of tmpfs size option in mount.8
+
+  [Theodore Ts'o]
+
+  * lib: fix file descriptor leak in is_mounted()
+
+  [Karel Zak]
+
+  * libblkid: fix typo (swsupend -> swsuspend)
+  * switch_root: remove TIOCSCTTY and setsid().  red: #519237
+  * libblkid: add missing packed attributes, add new UFS magic strings
+  * mount: update list of pseudo filesystems
+  * sfdisk: dump has to be $LANG insensitive
+  * mount: more explicitly explain 'strictatime' in mount.8
+  * libblkid: fix the default cache file path
+  * fsck.minix: fix broken zone checking
+  * docs: update AUTHORS file
+  * docs: add v2.16.2 ReleaseNotes
+  * build-sys: release++ (v2.16.2)
+  * po: merge changes
+
+  [localization folks]
+
+  * po: update vi.po (from translationproject.org) (Clytie Siddall)
+  * po: update pl.po (from translationproject.org) (Jakub Bogusz)
+  * po: update id.po (from translationproject.org) (Arif E. Nugroho)
+
+ -- LaMont Jones <lamont@debian.org>  Sun, 06 Dec 2009 17:38:15 -0700
+
+util-linux (2.16.1-4) unstable; urgency=low
+
+  [Petter Reinholdtsen]
+
+  * 85-hwclock.rules only ran hwclock if BADYEAR defined.  Closes: #543375
+
+  [Hiroyuki Yamamoto]
+
+  * drop rdev on hurd.  Closes: #547808
+
+  [Karel Zak]
+
+  * libblkid: fix blkid_probe_set_utf8label() call for Joliet
+  * libblkid: trim tailing whitespace from unicode LABELs.  LP: #432215
+  * libblkid: prefer ISO9660 PVD Label to Joliet Label
+
+  [LaMont Jones]
+
+  * initramfs doesn't like hyphens in hook names.  Closes: #544669
+  * Merge remote branch 'origin/stable/v2.16' into stable/v2.16
+
+  [Florentin Duneau]
+
+  * Fix typo on swapon.8 manpage.  Closes: #487497
+
+ -- LaMont Jones <lamont@debian.org>  Sat, 10 Oct 2009 19:29:39 -0600
+
+util-linux (2.16.1-3) unstable; urgency=low
+
+  [Jonas Meurer]
+
+  * provide initramfs-tools hook to copy /sbin/blkid into initramfs. 
+    Closes: #544669
+
+  [LaMont Jones]
+
+  * meta: drop Depends: install-info, install-info calls in preinst/postrm. 
+    Based on the patch in the bug.  Closes: #547430, #547320
+  * rules: remove usr/share/info/dir.gz.  Closes: #547488
+
+ -- LaMont Jones <lamont@debian.org>  Sun, 20 Sep 2009 15:58:15 -0600
+
+util-linux (2.16.1-2) unstable; urgency=low
+
+  [Zdenek Behan]
+
+  * tests: fdisk doslabel test also checks changing partition type
+  * tests: fdisk doslabel test also checks setting partition active
+  * tests: test for basic functionality of sun labels
+
+  [Peter De Wachter]
+
+  * mkswap: unbreak -c ("check") option.
+
+  [Florian Zumbiehl]
+
+  * libblkid: fix buffer overflow in blkid_encode_string()
+
+  [Peter Volkov]
+
+  * mount: mention mtab for single mount point mount in mount.8
+
+  [Petter Reinholdtsen]
+
+  * meta: util-linux Depends: initscripts.  Closes: #546834
+
+  [Scott James Remnant]
+
+  * versionsort() prototype changed
+
+  [Peter Breitenlohner]
+
+  * mkfs.8: incomplete sentence and formatting
+  * vipw.8: remove erroneous empty line, formatting
+  * umount.8: command line for umount helpers, formatting
+  * cytune.8: missing description of `-S', formatting
+  * hexdump.1: erroneous .Nm ""
+  * ul.1: erroneous .SH instead of .Sh
+  * ctrlaltdel.8: formatting
+  * various other manpage formatting
+
+  [Daniel Mierswa]
+
+  * replace bcopy,bzero,index and rindex
+  * libblkid: allow linking with uClibc
+  * replace usleep() for systems that don't have them
+
+  [Karel Zak]
+
+  * libblkid: fix FALSE definition
+  * tailf: report inotify_add_watch() problems
+  * libblkid: fix ext2 detection on systems with ext4 only
+  * libblkid: fix cache->probe memory leak
+  * dmesg: add -r to help output
+  * mount: add info about ext{3,4} barriers to mount.8
+  * mount: clean up mount.8
+  * Revert "mount: clean up mount.8"
+  * mount: clean up mount.8
+  * hwclocks: use time limit for KDGHWCLK busy wait
+  * mount: add info about ext{3,4} barriers to mount.8
+  * mount: clean up mount.8
+  * Revert "mount: clean up mount.8"
+  * mount: clean up mount.8
+  * libblkid: add *.ko.gz support to modules.dep parser
+  * mkswap: fix memory leaks, cleanup check_blocks()
+  * docs: update AUTHORS file
+  * docs: add v2.16.1 ReleaseNotes
+  * build-sys: release++ (v2.16.1)
+  * po: merge changes
+
+  [LaMont Jones]
+  * meta: fix misc:Depends
+  * Depends: install-info, set -e in postrm
+
+  [localization folks]
+
+  * po: fix grammar glitch in german translation (Hendrik Lönngren)
+  * po: update ja.po (from translationproject.org) (Makoto Kato)
+
+ -- LaMont Jones <lamont@debian.org>  Thu, 17 Sep 2009 05:16:55 -0600
 
 util-linux (2.16-3) unstable; urgency=low
 

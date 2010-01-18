@@ -32,7 +32,10 @@ export arch = $(DEB_HOST_ARCH)
 version := $(shell sed -e '1{;s|^util-linux (\(.*\))\ .*|\1|;q;}' debian/changelog)
 Upstream := $(shell sed 's/^.*(\(.*\)-.*).*/\1/; q' debian/changelog)
 
-CONFOPTS= --enable-raw --enable-rdev --enable-partx --with-slang
+CONFOPTS= --enable-raw --enable-partx --with-slang
+ifneq ($(DEB_HOST_ARCH_OS),hurd)
+CONFOPTS += --enable-rdev
+endif
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 CONFOPTS += --with-selinux
 endif
@@ -67,6 +70,7 @@ install: build
 	$(MAKE) install DESTDIR=`pwd`/debian/util-linux INSTALL_STRIP_FLAG=""
 	dh_installdocs -i -s
 	install -m 644 login-utils/README.modems-with-agetty debian/util-linux/usr/share/doc/util-linux/README.modems-with-getty
+	install -m 755 debian/util-linux.initramfs debian/util-linux/usr/share/initramfs-tools/hooks/utillinux
 	dh_installexamples -i -s
 	dh_installmenu -i -s
 	dh_installcron -i -s
@@ -97,6 +101,7 @@ endif
 	# perl gets to do rename, not us.
 	mv debian/util-linux/usr/bin/rename debian/util-linux/usr/bin/rename.ul
 	mv debian/util-linux/usr/share/man/man1/rename.1 debian/util-linux/usr/share/man/man1/rename.ul.1
+	rm -f debian/util-linux/usr/share/info/dir
 	#
 	#
 	mv debian/util-linux/usr/share/getopt/* debian/util-linux/usr/share/doc/util-linux/examples

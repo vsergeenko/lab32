@@ -14,6 +14,14 @@ util-linux-ng 2.17-rc1: Nov 20 2009
 * see docs/v2.17-ReleaseNotes or complete changelog at
   ftp://ftp.kernel.org/pub/linux/utils/util-linux-ng/v2.17/v2.17-rc1-ChangeLog
 
+util-linux-ng 2.16.2: Nov 30 2009
+* see docs/v2.16.2-ReleaseNotes or complete changelog at
+  ftp://ftp.kernel.org/pub/linux/utils/util-linux-ng/v2.16/v2.16.2-ChangeLog
+
+util-linux-ng 2.16.1: Sep 7 2009
+* see docs/v2.16.1-ReleaseNotes or complete changelog at
+  ftp://ftp.kernel.org/pub/linux/utils/util-linux-ng/v2.16/v2.16.1-ChangeLog
+
 util-linux-ng 2.16: Jul  2009
 * see docs/v2.16-ReleaseNotes or complete changelog at
   ftp://ftp.kernel.org/pub/linux/utils/util-linux-ng/v2.16/v2.16-ChangeLog

@@ -107,6 +107,10 @@
 #include "pathnames.h"
 #include "bitops.h"
 
+#ifndef __linux__
+#define volatile
+#endif
+
 #define ROOT_INO 1
 
 #define UPPER(size,n) ((size+((n)-1))/(n))

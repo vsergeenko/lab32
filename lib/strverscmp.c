@@ -113,7 +113,7 @@ strverscmp (s1, s2)
 
 
 int
-versionsort (const void *a, const void *b)
+version_sort (const void *a, const void *b)
 {
   return strverscmp ((*(const struct dirent **) a)->d_name,
 		     (*(const struct dirent **) b)->d_name);
