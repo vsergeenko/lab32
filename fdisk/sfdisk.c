@@ -806,14 +806,13 @@ reread_disk_partition(char *dev, int fd) {
     printf(_("Re-reading the partition table ...\n"));
     fflush(stdout);
     sync();
-    sleep(3);			/* superfluous since 1.3.20 */
 
     if (reread_ioctl(fd) && is_blockdev(fd))
       do_warn(_("The command to re-read the partition table failed.\n"
 	        "Run partprobe(8), kpartx(8) or reboot your system now,\n"
 	        "before using mkfs\n"));
 
-    if (close(fd)) {
+    if (fsync(fd) || close(fd)) {
 	perror(dev);
 	do_warn(_("Error closing %s\n"), dev);
     }
@@ -906,10 +905,11 @@ unitsize(int format) {
 
 static unsigned long
 get_disksize(int format) {
-    unsigned long cs = B.cylinders;
-    if (cs && leave_last)
-      cs--;
-    return (cs * B.cylindersize) / unitsize(format);
+    if (B.total_size && leave_last)
+	    /* don't use last cylinder (--leave-last option) */
+	    return (B.total_size - B.cylindersize) / unitsize(format);
+
+    return B.total_size / unitsize(format);
 }
 
 static void
@@ -3102,6 +3102,5 @@ do_fdisk(char *dev){
 	 "(See fdisk(8).)\n"));
 
     sync();			/* superstition */
-    sleep(3);
     exit(exit_status);
 }
