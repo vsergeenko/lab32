@@ -138,7 +138,8 @@ static const struct blkid_idinfo *idinfos[] =
 	&btrfs_idinfo,
 	&ubifs_idinfo,
 	&bfs_idinfo,
-	&vmfs_fs_idinfo
+	&vmfs_fs_idinfo,
+	&befs_idinfo
 };
 
 /*
@@ -310,6 +311,12 @@ static int superblocks_probe(blkid_probe pr, struct blkid_chain *chn)
 		printf("--> starting probing loop [SUBLKS idx=%d]\n",
 		chn->idx));
 
+	if (pr->size <= 1024 && !S_ISCHR(pr->mode))
+		/* Ignore very very small block devices or regular files (e.g.
+		 * extended partitions). Note that size of the UBI char devices
+		 * is 1 byte */
+		return 1;
+
 	i = chn->idx + 1;
 
 	for ( ; i < ARRAY_SIZE(idinfos); i++) {
@@ -325,7 +332,18 @@ static int superblocks_probe(blkid_probe pr, struct blkid_chain *chn)
 			continue;
 
 		id = idinfos[i];
+
+		if (id->minsz && id->minsz > pr->size)
+			continue;	/* the device is too small */
+
 		mag = id->magics ? &id->magics[0] : NULL;
+
+		/* don't probe for RAIDs, swap or journal on floppies */
+		if ((id->usage & (BLKID_USAGE_RAID | BLKID_USAGE_OTHER)) &&
+		    blkid_probe_is_tiny(pr))
+			continue;
+
+		DBG(DEBUG_LOWPROBE, printf("[%d] %s:\n", i, id->name));
 
 		/* try to detect by magic string */
 		while(mag && mag->magic) {
@@ -337,8 +355,8 @@ static int superblocks_probe(blkid_probe pr, struct blkid_chain *chn)
 			if (buf && !memcmp(mag->magic,
 					buf + (mag->sboff & 0x3ff), mag->len)) {
 				DBG(DEBUG_LOWPROBE, printf(
-					"%s: magic sboff=%u, kboff=%ld\n",
-					id->name, mag->sboff, mag->kboff));
+					"\tmagic sboff=%u, kboff=%ld\n",
+					mag->sboff, mag->kboff));
 				hasmag = 1;
 				off += mag->sboff & 0x3ff;
 				break;
@@ -352,8 +370,7 @@ static int superblocks_probe(blkid_probe pr, struct blkid_chain *chn)
 
 		/* final check by probing function */
 		if (id->probefunc) {
-			DBG(DEBUG_LOWPROBE, printf(
-				"%s: call probefunc()\n", id->name));
+			DBG(DEBUG_LOWPROBE, printf("\tcall probefunc()\n"));
 			if (id->probefunc(pr, mag) != 0)
 				continue;
 		}
@@ -393,6 +410,9 @@ static int superblocks_probe(blkid_probe pr, struct blkid_chain *chn)
  * The function does not check for filesystems when a RAID or crypto signature
  * is detected.  The function also does not check for collision between RAIDs
  * and crypto devices. The first detected RAID or crypto device is returned.
+ *
+ * The function does not probe for ambivalent results on very small devices
+ * (e.g. floppies), on small devices the first detected filesystem is returned.
  */
 static int superblocks_safeprobe(blkid_probe pr, struct blkid_chain *chn)
 {
@@ -404,6 +424,11 @@ static int superblocks_safeprobe(blkid_probe pr, struct blkid_chain *chn)
 	int rc;
 
 	while ((rc = superblocks_probe(pr, chn)) == 0) {
+
+		if (blkid_probe_is_tiny(pr) && !count)
+			/* floppy or so -- returns the first result. */
+			return 0;
+
 		if (!count) {
 			/* save the first result */
 			nvals = blkid_probe_chain_copy_vals(pr, chn, vals, nvals);

@@ -52,3 +52,4 @@ libtool
 
 # cannot deal with bz2 files
 tests/ts/blkid/images-fs/*.bz2
+tests/ts/blkid/images-fs/*.bz2

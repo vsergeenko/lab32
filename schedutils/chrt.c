@@ -47,6 +47,11 @@
 # define SCHED_IDLE 5
 #endif
 
+#if defined(__linux__) && !defined(SCHED_RESET_ON_FORK)
+#define SCHED_RESET_ON_FORK 0x40000000
+#endif
+
+
 static void show_usage(int rc)
 {
 	fprintf(stdout, _(
@@ -61,6 +66,8 @@ static void show_usage(int rc)
 	"  -i | --idle          set policy to SCHED_IDLE\n"
 	"  -o | --other         set policy to SCHED_OTHER\n"
 	"  -r | --rr            set policy to SCHED_RR (default)\n"
+	"\nScheduling flags:\n"
+	"  -R | --reset-on-fork set SCHED_RESET_ON_FORK for FIFO or RR\n"
 	"\nOptions:\n"
 	"  -h | --help          display this help\n"
 	"  -p | --pid           operate on existing given pid\n"
@@ -92,6 +99,9 @@ static void show_rt_info(const char *what, pid_t pid)
 	case SCHED_FIFO:
 		printf("SCHED_FIFO\n");
 		break;
+	case SCHED_FIFO|SCHED_RESET_ON_FORK:
+		printf("SCHED_FIFO|SCHED_RESET_ON_FORK\n");
+		break;
 #ifdef SCHED_IDLE
 	case SCHED_IDLE:
 		printf("SCHED_IDLE\n");
@@ -99,6 +109,9 @@ static void show_rt_info(const char *what, pid_t pid)
 #endif
 	case SCHED_RR:
 		printf("SCHED_RR\n");
+		break;
+	case SCHED_RR|SCHED_RESET_ON_FORK:
+		printf("SCHED_RR|SCHED_RESET_ON_FORK\n");
 		break;
 #ifdef SCHED_BATCH
 	case SCHED_BATCH:
@@ -150,7 +163,7 @@ static void show_min_max(void)
 
 int main(int argc, char *argv[])
 {
-	int i, policy = SCHED_RR, priority = 0, verbose = 0;
+	int i, policy = SCHED_RR, priority = 0, verbose = 0, policy_flag = 0;
 	struct sched_param sp;
 	pid_t pid = -1;
 
@@ -163,6 +176,7 @@ int main(int argc, char *argv[])
 		{ "max",        0, NULL, 'm' },
 		{ "other",	0, NULL, 'o' },
 		{ "rr",		0, NULL, 'r' },
+		{ "reset-on-fork", 0, NULL, 'R' },
 		{ "verbose",	0, NULL, 'v' },
 		{ "version",	0, NULL, 'V' },
 		{ NULL,		0, NULL, 0 }
@@ -172,7 +186,7 @@ int main(int argc, char *argv[])
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	while((i = getopt_long(argc, argv, "+bfiphmorvV", longopts, NULL)) != -1)
+	while((i = getopt_long(argc, argv, "+bfiphmoRrvV", longopts, NULL)) != -1)
 	{
 		int ret = EXIT_FAILURE;
 
@@ -184,6 +198,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'f':
 			policy = SCHED_FIFO;
+			break;
+		case 'R':
+			policy_flag |= SCHED_RESET_ON_FORK;
 			break;
 		case 'i':
 #ifdef SCHED_IDLE
@@ -231,6 +248,14 @@ int main(int argc, char *argv[])
 	priority = strtol(argv[optind], NULL, 10);
 	if (errno)
 		err(EXIT_FAILURE, _("failed to parse priority"));
+
+	/* sanity check */
+	if ((policy_flag & SCHED_RESET_ON_FORK) &&
+	    !(policy == SCHED_FIFO || policy == SCHED_RR))
+		errx(EXIT_FAILURE, _("SCHED_RESET_ON_FORK flag is suppoted for "
+				"SCHED_FIFO and SCHED_RR policies only"));
+
+	policy |= policy_flag;
 
 	if (pid == -1)
 		pid = 0;

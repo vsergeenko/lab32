@@ -51,6 +51,7 @@ struct blkid_struct_dev
 
 #define BLKID_BID_FL_VERIFIED	0x0001	/* Device data validated from disk */
 #define BLKID_BID_FL_INVALID	0x0004	/* Device is invalid */
+#define BLKID_BID_FL_REMOVABLE	0x0008	/* Device added by blkid_probe_all_removable() */
 
 /*
  * Each tag defines a NAME=value pair for a particular device.  The tags
@@ -133,8 +134,6 @@ struct blkid_prval
 	struct blkid_chain	*chain;		/* owner */
 };
 
-#define BLKID_SB_BUFSIZ		0x11000
-
 /*
  * Filesystem / Raid magic strings
  */
@@ -155,6 +154,7 @@ struct blkid_idinfo
 	const char	*name;		/* fs, raid or partition table name */
 	int		usage;		/* BLKID_USAGE_* flag */
 	int		flags;		/* BLKID_IDINFO_* flags */
+	int		minsz;		/* minimal device size */
 
 					/* probe function */
 	int		(*probefunc)(blkid_probe pr, const struct blkid_idmag *mag);
@@ -171,6 +171,13 @@ struct blkid_idinfo
  */
 #define BLKID_IDINFO_TOLERANT	(1 << 1)
 
+struct blkid_bufinfo {
+	unsigned char		*data;
+	blkid_loff_t		off;
+	blkid_loff_t		len;
+	struct list_head	bufs;	/* list of buffers */
+};
+
 /*
  * Low-level probing control struct
  */
@@ -186,13 +193,7 @@ struct blkid_struct_probe
 
 	int			flags;		/* private libray flags */
 
-	unsigned char		*sbbuf;		/* superblok buffer */
-	size_t			sbbuf_len;	/* size of data in superblock buffer */
-
-	unsigned char		*buf;		/* seek buffer */
-	blkid_loff_t		buf_off;	/* offset of seek buffer */
-	size_t			buf_len;	/* size of data in seek buffer */
-	size_t			buf_max;	/* allocated size of seek buffer */
+	struct list_head	buffers;	/* list of buffers */
 
 	struct blkid_chain	chains[BLKID_NCHAINS];	/* array of chains */
 	struct blkid_chain	*cur_chain;		/* current chain */
@@ -203,6 +204,7 @@ struct blkid_struct_probe
 
 /* flags */
 #define BLKID_PRIVATE_FD	(1 << 1)	/* see blkid_new_probe_from_filename() */
+#define BLKID_TINY_DEV		(1 << 2)	/* <= 1.47MiB (floppy or so) */
 
 /*
  * Evaluation methods (for blkid_eval_* API)
@@ -266,6 +268,8 @@ extern char *blkid_strndup(const char *s, const int length);
 extern char *blkid_strconcat(const char *a, const char *b, const char *c);
 extern int blkid_fstatat(DIR *dir, const char *dirname, const char *filename,
 			struct stat *st, int nofollow);
+extern int blkid_openat(DIR *dir, const char *dirname, const char *filename,
+			int flags);
 
 #define BLKID_CACHE_FILE	"/etc/blkid.tab"
 #define BLKID_CONFIG_FILE	"/etc/blkid.conf"
@@ -357,7 +361,8 @@ extern blkid_dev blkid_new_dev(void);
 extern void blkid_free_dev(blkid_dev dev);
 
 /* probe.c */
-unsigned char *blkid_probe_get_buffer(blkid_probe pr,
+extern int blkid_probe_is_tiny(blkid_probe pr);
+extern unsigned char *blkid_probe_get_buffer(blkid_probe pr,
                                 blkid_loff_t off, blkid_loff_t len);
 
 extern unsigned char *blkid_probe_get_sector(blkid_probe pr, unsigned int sector);
