@@ -197,8 +197,14 @@ extern int blkid_probe_set_device(blkid_probe pr, int fd,
 	                blkid_loff_t off, blkid_loff_t size);
 
 extern dev_t blkid_probe_get_devno(blkid_probe pr);
+extern dev_t blkid_probe_get_wholedisk_devno(blkid_probe pr);
+extern int blkid_probe_is_wholedisk(blkid_probe pr);
+
 extern blkid_loff_t blkid_probe_get_size(blkid_probe pr);
+extern blkid_loff_t blkid_probe_get_offset(blkid_probe pr);
 extern unsigned int blkid_probe_get_sectorsize(blkid_probe pr);
+
+extern int blkid_probe_get_fd(blkid_probe pr);
 
 /*
  * superblocks probing
@@ -260,14 +266,17 @@ extern int blkid_probe_filter_partitions_type(blkid_probe pr, int flag, char *na
 
 
 /* partitions probing flags */
-#define BLKID_PARTS_FORCE_GPT	(1 << 1)
+#define BLKID_PARTS_FORCE_GPT		(1 << 1)
+#define BLKID_PARTS_ENTRY_DETAILS	(1 << 2)
 extern int blkid_probe_set_partitions_flags(blkid_probe pr, int flags);
 
 /* binary interface */
 extern blkid_partlist blkid_probe_get_partitions(blkid_probe pr);
 
 extern int blkid_partlist_numof_partitions(blkid_partlist ls);
+extern blkid_parttable blkid_partlist_get_table(blkid_partlist ls);
 extern blkid_partition blkid_partlist_get_partition(blkid_partlist ls, int n);
+extern blkid_partition blkid_partlist_devno_to_partition(blkid_partlist ls, dev_t devno);
 
 extern blkid_parttable blkid_partition_get_table(blkid_partition par);
 extern const char *blkid_partition_get_name(blkid_partition par);
@@ -277,6 +286,7 @@ extern blkid_loff_t blkid_partition_get_start(blkid_partition par);
 extern blkid_loff_t blkid_partition_get_size(blkid_partition par);
 extern int blkid_partition_get_type(blkid_partition par);
 extern const char *blkid_partition_get_type_string(blkid_partition par);
+extern unsigned long long blkid_partition_get_flags(blkid_partition par);
 extern int blkid_partition_is_logical(blkid_partition par);
 extern int blkid_partition_is_extended(blkid_partition par);
 extern int blkid_partition_is_primary(blkid_partition par);

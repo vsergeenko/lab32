@@ -107,6 +107,9 @@ AC_CHECK_HEADERS(
 	linux/fd.h \
 	linux/tiocl.h \
 	linux/version.h \
+	linux/falloc.h \
+	linux/cdrom.h \
+	fcntl.h \
 	locale.h \
 	stdint.h \
 	inttypes.h \
@@ -126,6 +129,8 @@ AC_CHECK_HEADERS(
 	sys/prctl.h \
 	sys/queue.h \
 	sys/sockio.h \
+	sys/socket.h \
+	sys/syscall.h \
 	sys/file.h \
 	sys/ioctl.h \
 	sys/stat.h \
@@ -140,9 +145,24 @@ AC_CHECK_HEADERS([linux/raw.h],
 
 AC_CHECK_DECLS([_NL_TIME_WEEK_1STDAY],[],[],[[#include <langinfo.h>]])
 
+AC_CHECK_DECL([llseek],
+	[AC_DEFINE(HAVE_LLSEEK_PROTOTYPE, 1,
+			[Define to 1 if have llseek prototype])],
+	[],
+	[#include <unistd.h>])
+
+AC_CHECK_DECL([lseek64],
+	[AC_DEFINE(HAVE_LSEEK64_PROTOTYPE, 1,
+			[Define to 1 if have lseek64 prototype])],
+	[],
+	[#define _LARGEFILE_SOURCE
+	 #define _LARGEFILE64_SOURCE
+	 #include <unistd.h>])
+
 AC_CHECK_FUNCS(
 	[inet_aton \
 	futimens \
+	fstat64 \
 	fsync \
 	getdomainname \
 	get_current_dir_name \
@@ -431,6 +451,21 @@ fi
 AM_CONDITIONAL(USE_SLANG, test "x$use_slang" = xyes)
 
 
+AC_ARG_WITH([utempter],
+  AS_HELP_STRING([--with-utempter], [compile script(1) with libutempter]),
+  [], with_utempter=no
+)
+
+if test "x$with_utempter" = xyes; then
+  UTIL_CHECK_LIB(utempter, utempter_add_record)
+  if test "x$have_utempter" = xno; then
+    AC_MSG_ERROR([utempter selected but libutempter not found])
+  fi
+else
+  AM_CONDITIONAL(HAVE_UTEMPTER, false)
+fi
+
+
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #define _XOPEN_SOURCE
 #include <unistd.h>
@@ -563,7 +598,40 @@ UTIL_CHECK_SYSCALL([ioprio_get],
 
 dnl fallocate could be available as libc function or as syscall only
 UTIL_CHECK_SYSCALL([fallocate])
-AC_CHECK_FUNCS([fallocate])
+
+dnl check for valid fallocate() function
+dnl with 32 bits glibc 2.10, fallocate() exists but not fallocate64()
+dnl when _FILE_OFFSET_BITS==64, fallocate() is redirect to fallocate64()
+dnl and program can't be linked.
+dnl AC_CHECK_FUNC can't catch such errors since it's redefining
+dnl function prototype.
+AC_MSG_CHECKING([for valid fallocate() function])
+AC_LINK_IFELSE([
+AC_LANG_PROGRAM([[
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#ifdef HAVE_LINUX_FALLOC_H
+# include <linux/falloc.h>
+#endif
+#ifdef HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+]],[[
+   long ret;
+
+   ret = fallocate(0, FALLOC_FL_KEEP_SIZE, 0xfffffffful, 0xfffffffful);
+
+   if (ret != 0) {
+      return 1;
+   }
+   ]])],[
+AC_MSG_RESULT([yes])
+AC_DEFINE(HAVE_FALLOCATE,1,[Have valid fallocate() function])],[
+AC_MSG_RESULT([no])])
 
 dnl unshare could be available as libc function or as syscall only
 UTIL_CHECK_SYSCALL([unshare])
@@ -583,6 +651,9 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 
 AC_CHECK_MEMBERS([struct termios.c_line],,,
     [[#include <termios.h>]])
+
+AC_CHECK_MEMBERS([struct stat.st_mtim.tv_nsec],,,
+	[#include <sys/stat.h>])
 
 AC_CHECK_DECLS([
  ADDR_NO_RANDOMIZE,

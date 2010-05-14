@@ -16,7 +16,6 @@
 #include <unistd.h>
 #endif
 #include <stdlib.h>
-#include <string.h>
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -31,6 +30,7 @@
 #include <sys/mkdev.h>
 #endif
 #include <fcntl.h>
+#include <inttypes.h>
 
 #include "blkidP.h"
 #include "pathnames.h"
@@ -364,7 +364,7 @@ int blkid_devno_to_wholedisk(dev_t dev, char *diskname,
 	 *	- dirname  ../../block/sda/sda1 = ../../block/sda
 	 *	- basename ../../block/sda      = sda
 	 */
-	linklen = readlink(path, linkpath, sizeof(linkpath));
+	linklen = readlink(path, linkpath, sizeof(linkpath) - 1);
 	if (linklen < 0)
 		goto err;
 	linkpath[linklen] = '\0';
@@ -450,6 +450,68 @@ int blkid_driver_has_major(const char *drvname, int major)
 	DBG(DEBUG_DEVNO, printf("major %d %s associated with '%s' driver\n",
 			major, match ? "is" : "is NOT", drvname));
 	return match;
+}
+
+static char *mk_devno_attribute_path(char *buf, size_t buflen,
+				dev_t devno, const char *attr)
+{
+	int len = snprintf(buf, buflen, "/sys/dev/block/%d:%d/%s",
+			major(devno), minor(devno), attr);
+
+	if (len < 0 || len + 1 > buflen)
+		return NULL;
+
+	return buf;
+}
+
+int blkid_devno_has_attribute(dev_t devno, const char *attribute)
+{
+	char path[PATH_MAX];
+	struct stat info;
+
+	if (!mk_devno_attribute_path(path, sizeof(path), devno, attribute))
+		return 0;
+
+	if (stat(path, &info) == 0)
+		return 1;
+
+	return 0;
+}
+
+int blkid_devno_get_u64_attribute(dev_t devno, const char *attribute, uint64_t *result)
+{
+	FILE *f;
+	char path[PATH_MAX];
+	int rc = 0;
+
+	if (!mk_devno_attribute_path(path, sizeof(path), devno, attribute))
+		return -1;
+
+	f = fopen(path, "r");
+	if (f) {
+		rc = fscanf(f, "%" SCNu64, result);
+		fclose(f);
+	}
+
+	return rc == 1 ? 0 : -1;
+}
+
+int blkid_devno_get_s64_attribute(dev_t devno, const char *attribute, int64_t *result)
+{
+	FILE *f;
+	char path[PATH_MAX];
+	int rc = 0;
+
+	if (!mk_devno_attribute_path(path, sizeof(path), devno, attribute))
+		return -1;
+
+	f = fopen(path, "r");
+	if (f) {
+		rc = fscanf(f, "%" SCNd64, result);
+		fclose(f);
+	}
+
+	return rc == 1 ? 0 : -1;
 }
 
 #ifdef TEST_PROGRAM

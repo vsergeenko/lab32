@@ -16,7 +16,7 @@
  * the selected (see blkid_probe_set_device()) device.
  *
  * The probing routines are grouped together into separate chains. Currently,
- * the librray provides superblocks, partitions and topology chains.
+ * the library provides superblocks, partitions and topology chains.
  *
  * The probing routines is possible to filter (enable/disable) by type (e.g.
  * fstype "vfat" or partype "gpt") or by usage flags (e.g. BLKID_USAGE_RAID).
@@ -35,6 +35,20 @@
  *   2. The binary interfaces. These interfaces return data in the native formats.
  *      The interface is always specific to the probing chain.
  *
+ *  Note that the previous probing result (binary or NAME=value) is always
+ *  zeroized when a chain probing function is called. For example
+ *
+ * <informalexample>
+ *   <programlisting>
+ *     blkid_probe_enable_partitions(pr, TRUE);
+ *     blkid_probe_enable_superblocks(pr, FALSE);
+ *
+ *     blkid_do_safeprobe(pr);
+ *   </programlisting>
+ * </informalexample>
+ *
+ * overwrites the previous probing result for the partitions chain, the superblocks
+ * result is not modified.
  */
 
 /**
@@ -77,6 +91,9 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <sys/types.h>
+#ifdef HAVE_LINUX_CDROM_H
+#include <linux/cdrom.h>
+#endif
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -287,20 +304,32 @@ struct blkid_chain *blkid_probe_get_chain(blkid_probe pr)
 
 void *blkid_probe_get_binary_data(blkid_probe pr, struct blkid_chain *chn)
 {
-	int rc;
+	int rc, org_prob_flags;
+	struct blkid_chain *org_chn;
 
 	if (!pr || !chn)
 		return NULL;
 
+	/* save the current setting -- the binary API has to be completely
+	 * independent on the current probing status
+	 */
+	org_chn = pr->cur_chain;
+	org_prob_flags = pr->prob_flags;
+
 	pr->cur_chain = chn;
+	pr->prob_flags = 0;
 	chn->binary = TRUE;
 	blkid_probe_chain_reset_position(chn);
 
 	rc = chn->driver->probe(pr, chn);
 
 	chn->binary = FALSE;
-	pr->cur_chain = NULL;
 	blkid_probe_chain_reset_position(chn);
+
+	/* restore the original setting
+	 */
+	pr->cur_chain = org_chn;
+	pr->prob_flags = org_prob_flags;
 
 	if (rc != 0)
 		return NULL;
@@ -545,6 +574,14 @@ int blkid_probe_is_tiny(blkid_probe pr)
 	return pr && (pr->flags & BLKID_TINY_DEV);
 }
 
+/*
+ * CDROMs may fail when probed for RAID (last sector problem)
+ */
+int blkid_probe_is_cdrom(blkid_probe pr)
+{
+	return pr && (pr->flags & BLKID_CDROM_DEV);
+}
+
 /**
  * blkid_probe_set_device:
  * @pr: probe
@@ -560,6 +597,8 @@ int blkid_probe_is_tiny(blkid_probe pr)
 int blkid_probe_set_device(blkid_probe pr, int fd,
 		blkid_loff_t off, blkid_loff_t size)
 {
+	struct stat sb;
+
 	if (!pr)
 		return -1;
 
@@ -569,6 +608,8 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 		close(pr->fd);
 
 	pr->flags &= ~BLKID_PRIVATE_FD;
+	pr->flags &= ~BLKID_TINY_DEV;
+	pr->flags &= ~BLKID_CDROM_DEV;
 	pr->fd = fd;
 	pr->off = off;
 	pr->size = 0;
@@ -580,25 +621,26 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 	/* Disable read-ahead */
 	posix_fadvise(fd, 0, 0, POSIX_FADV_RANDOM);
 #endif
+	if (fstat(fd, &sb))
+		goto err;
+
+	pr->mode = sb.st_mode;
+	if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode))
+		pr->devno = sb.st_rdev;
+
 	if (size)
 		pr->size = size;
 	else {
-		struct stat sb;
-
-		if (fstat(fd, &sb))
-			goto err;
-
-		pr->mode = sb.st_mode;
-
-		if (S_ISBLK(sb.st_mode))
-			blkdev_get_size(fd, (unsigned long long *) &pr->size);
-		else if (S_ISCHR(sb.st_mode))
+		if (S_ISBLK(sb.st_mode)) {
+			if (blkdev_get_size(fd, (unsigned long long *) &pr->size)) {
+				DBG(DEBUG_LOWPROBE, printf(
+					"failed to get device size\n"));
+				goto err;
+			}
+		} else if (S_ISCHR(sb.st_mode))
 			pr->size = 1;		/* UBI devices are char... */
 		else if (S_ISREG(sb.st_mode))
 			pr->size = sb.st_size;	/* regular file */
-
-		if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode))
-			pr->devno = sb.st_rdev;
 
 		if (pr->off > pr->size)
 			goto err;
@@ -608,12 +650,16 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 		pr->size -= pr->off;
 	}
 
-	DBG(DEBUG_LOWPROBE, printf("ready for low-probing, offset=%zd, size=%zd\n",
+	DBG(DEBUG_LOWPROBE, printf("ready for low-probing, offset=%jd, size=%jd\n",
 				pr->off, pr->size));
 
-	if (pr->size <= 1440 * 1024 && !S_ISCHR(pr->mode))
+	if (pr->size <= 1440 * 1024 && !S_ISCHR(sb.st_mode))
 		pr->flags |= BLKID_TINY_DEV;
 
+#ifdef CDROM_GET_CAPABILITY
+	if (S_ISBLK(sb.st_mode) && ioctl(fd, CDROM_GET_CAPABILITY, NULL) >= 0)
+		pr->flags |= BLKID_CDROM_DEV;
+#endif
 	return 0;
 err:
 	DBG(DEBUG_LOWPROBE,
@@ -657,6 +703,22 @@ int blkid_probe_set_dimension(blkid_probe pr,
 	blkid_probe_reset_buffer(pr);
 
 	return 0;
+}
+
+static inline void blkid_probe_start(blkid_probe pr)
+{
+	if (pr) {
+		pr->cur_chain = NULL;
+		pr->prob_flags = 0;
+	}
+}
+
+static inline void blkid_probe_end(blkid_probe pr)
+{
+	if (pr) {
+		pr->cur_chain = NULL;
+		pr->prob_flags = 0;
+	}
 }
 
 /**
@@ -710,23 +772,28 @@ int blkid_do_probe(blkid_probe pr)
 	do {
 		struct blkid_chain *chn = pr->cur_chain;
 
-		if (!chn)
+		if (!chn) {
+			blkid_probe_start(pr);
 			chn = pr->cur_chain = &pr->chains[0];
-
+		}
 		/* we go to the next chain only when the previous probing
 		 * result was nothing (rc == 1) and when the current chain is
 		 * disabled or we are at end of the current chain (chain->idx +
-		 * 1 == sizeof chain)
+		 * 1 == sizeof chain) or the current chain bailed out right at
+		 * the start (chain->idx == -1)
 		 */
 		else if (rc == 1 && (chn->enabled == FALSE ||
-				     chn->idx + 1 == chn->driver->nidinfos)) {
+				     chn->idx + 1 == chn->driver->nidinfos ||
+				     chn->idx == -1)) {
 
 			int idx = chn->driver->id + 1;
 
 			if (idx < BLKID_NCHAINS)
 				chn = pr->cur_chain = &pr->chains[idx];
-			else
+			else {
+				blkid_probe_end(pr);
 				return 1;	/* all chains already probed */
+			}
 		}
 
 		chn->binary = FALSE;		/* for sure... */
@@ -758,7 +825,9 @@ int blkid_do_probe(blkid_probe pr)
  *
  * Note about suberblocks chain -- the function does not check for filesystems
  * when a RAID signature is detected.  The function also does not check for
- * collision between RAIDs. The first detected RAID is returned.
+ * collision between RAIDs. The first detected RAID is returned. The function
+ * checks for collision between partition table and RAID signature -- it's
+ * recommended to enable partitions chain together with superblocks chain.
  *
  * Returns: 0 on success, 1 if nothing is detected, -2 if ambivalen result is
  * detected and -1 on case of error.
@@ -769,6 +838,8 @@ int blkid_do_safeprobe(blkid_probe pr)
 
 	if (!pr)
 		return -1;
+
+	blkid_probe_start(pr);
 
 	for (i = 0; i < BLKID_NCHAINS; i++) {
 		struct blkid_chain *chn;
@@ -797,7 +868,7 @@ int blkid_do_safeprobe(blkid_probe pr)
 	}
 
 done:
-	pr->cur_chain = NULL;
+	blkid_probe_end(pr);
 	if (rc < 0)
 		return rc;
 	return count ? 0 : 1;
@@ -821,6 +892,8 @@ int blkid_do_fullprobe(blkid_probe pr)
 
 	if (!pr)
 		return -1;
+
+	blkid_probe_start(pr);
 
 	for (i = 0; i < BLKID_NCHAINS; i++) {
 		int rc;
@@ -850,7 +923,7 @@ int blkid_do_fullprobe(blkid_probe pr)
 	}
 
 done:
-	pr->cur_chain = NULL;
+	blkid_probe_end(pr);
 	if (rc < 0)
 		return rc;
 	return count ? 0 : 1;
@@ -960,21 +1033,60 @@ int blkid_probe_sprintf_value(blkid_probe pr, const char *name,
  */
 dev_t blkid_probe_get_devno(blkid_probe pr)
 {
-	if (!pr->devno) {
-		struct stat sb;
-
-		if (fstat(pr->fd, &sb) == 0 &&
-		    (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)))
-			pr->devno = sb.st_rdev;
-	}
 	return pr->devno;
+}
+
+/**
+ * blkid_probe_get_wholedisk_devno:
+ * @pr: probe
+ *
+ * Returns: device number of the wholedisk, or 0 for regilar files.
+ */
+dev_t blkid_probe_get_wholedisk_devno(blkid_probe pr)
+{
+	if (!pr->disk_devno) {
+		dev_t devno, disk_devno = 0;
+
+		devno = blkid_probe_get_devno(pr);
+		if (!devno)
+			return 0;
+
+		 if (blkid_devno_to_wholedisk(devno, NULL, 0, &disk_devno) == 0)
+			pr->disk_devno = disk_devno;
+	}
+	return pr->disk_devno;
+}
+
+/**
+ * blkid_probe_is_wholedisk:
+ * @pr: probe
+ *
+ * Returns: 1 if the device is whole-disk or 0.
+ */
+int blkid_probe_is_wholedisk(blkid_probe pr)
+{
+	dev_t devno, disk_devno;
+
+	devno = blkid_probe_get_devno(pr);
+	if (!devno)
+		return 0;
+
+	disk_devno = blkid_probe_get_wholedisk_devno(pr);
+	if (!disk_devno)
+		return 0;
+
+	return devno == disk_devno;
 }
 
 /**
  * blkid_probe_get_size:
  * @pr: probe
  *
- * Returns: block device (or file) size in bytes or -1 in case of error.
+ * This function returns size of probing area as defined by blkid_probe_set_device().
+ * If the size of the probing area is unrestricted then this function returns
+ * the real size of device. See also blkid_get_dev_size().
+ *
+ * Returns: size in bytes or -1 in case of error.
  */
 blkid_loff_t blkid_probe_get_size(blkid_probe pr)
 {
@@ -982,8 +1094,32 @@ blkid_loff_t blkid_probe_get_size(blkid_probe pr)
 }
 
 /**
- * blkid_probe_get_sectorsize:
+ * blkid_probe_get_offset:
  * @pr: probe
+ *
+ * This function returns offset of probing area as defined by blkid_probe_set_device().
+ *
+ * Returns: offset in bytes or -1 in case of error.
+ */
+blkid_loff_t blkid_probe_get_offset(blkid_probe pr)
+{
+	return pr ? pr->off : -1;
+}
+
+/**
+ * blkid_probe_get_fd:
+ * @pr: probe
+ *
+ * Returns: file descriptor for assigned device/file.
+ */
+int blkid_probe_get_fd(blkid_probe pr)
+{
+	return pr ? pr->fd : -1;
+}
+
+/**
+ * blkid_probe_get_sectorsize:
+ * @pr: probe or NULL (for NULL returns 512)
  *
  * Returns: block device logical sector size (BLKSSZGET ioctl, default 512).
  */
@@ -991,23 +1127,14 @@ unsigned int blkid_probe_get_sectorsize(blkid_probe pr)
 {
 	if (!pr)
 		return DEFAULT_SECTOR_SIZE;  /*... and good luck! */
+
 	if (pr->blkssz)
 		return pr->blkssz;
-	if (!pr->mode) {
-		struct stat st;
 
-		if (fstat(pr->fd, &st))
-			goto fallback;
-		pr->mode = st.st_mode;
-	}
-	if (S_ISBLK(pr->mode)) {
-	    if (blkdev_get_sector_size(pr->fd, (int *) &pr->blkssz))
-		goto fallback;
+	if (S_ISBLK(pr->mode) &&
+	    blkdev_get_sector_size(pr->fd, (int *) &pr->blkssz) == 0)
+		return pr->blkssz;
 
-	    return pr->blkssz;
-	}
-
-fallback:
 	pr->blkssz = DEFAULT_SECTOR_SIZE;
 	return pr->blkssz;
 }

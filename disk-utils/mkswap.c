@@ -53,6 +53,7 @@
 #include "blkdev.h"
 #include "pathnames.h"
 #include "wholedisk.h"
+#include "writeall.h"
 
 #ifdef HAVE_LIBUUID
 # ifdef HAVE_UUID_UUID_H
@@ -337,8 +338,6 @@ get_size(const char  *file) {
 	}
 	if (blkdev_get_size(fd, &size) == 0)
 		size /= pagesize;
-	else
-		size = blkdev_find_size(fd) / pagesize;
 
 	close(fd);
 	return size;
@@ -372,26 +371,8 @@ check_mount(void) {
 	return 1;
 }
 
-
-static int
-write_all(int fd, const void *buf, size_t count) {
-	while(count) {
-		ssize_t tmp;
-
-		errno = 0;
-		tmp = write(fd, buf, count);
-		if (tmp > 0) {
-			count -= tmp;
-			if (count)
-				buf += tmp;
-		} else if (errno != EINTR && errno != EAGAIN)
-			return -1;
-	}
-	return 0;
-}
-
 static void
-zap_bootbits(int fd, const char *devname, int force)
+zap_bootbits(int fd, const char *devname, int force, int is_blkdev)
 {
 	char *type = NULL;
 	int whole = 0;
@@ -401,7 +382,7 @@ zap_bootbits(int fd, const char *devname, int force)
 		if (lseek(fd, 0, SEEK_SET) != 0)
 	                die(_("unable to rewind swap-device"));
 
-		if (is_whole_disk_fd(fd, devname)) {
+		if (is_blkdev && is_whole_disk_fd(fd, devname)) {
 			/* don't zap bootbits on whole disk -- we know nothing
 			 * about bootloaders on the device */
 			whole = 1;
@@ -561,13 +542,19 @@ main(int argc, char ** argv) {
 		usage();
 	}
 	if (block_count) {
-		/* this silly user specified the number of blocks
-		   explicitly */
-		char *tmp;
-		int blocks_per_page = pagesize/1024;
-		PAGES = strtoull(block_count,&tmp,0)/blocks_per_page;
-		if (*tmp)
+		/* this silly user specified the number of blocks explicitly */
+		char *tmp = NULL;
+		long long blks;
+
+		errno = 0;
+		blks = strtoll(block_count, &tmp, 0);
+		if ((tmp == block_count) ||
+		    (tmp && *tmp) ||
+		    (errno != 0 && (blks == LLONG_MAX || blks == LLONG_MIN)) ||
+		    blks < 0)
 			usage();
+
+		PAGES = blks / (pagesize / 1024);
 	}
 	sz = get_size(device_name);
 	if (!PAGES) {
@@ -638,7 +625,7 @@ main(int argc, char ** argv) {
 	if (check)
 		check_blocks();
 
-	zap_bootbits(DEV, device_name, force);
+	zap_bootbits(DEV, device_name, force, S_ISBLK(statbuf.st_mode));
 
 	p->version = 1;
 	p->last_page = PAGES-1;

@@ -3,7 +3,7 @@ include $(top_srcdir)/config/include-Makefile.am
 EXTRA_DIST = README.fdisk README.cfdisk sfdisk.examples partitiontype.c
 
 fdisk_common = i386_sys_types.c common.h gpt.c gpt.h \
-	../lib/blkdev.c ../lib/wholedisk.c
+	../lib/blkdev.c ../lib/wholedisk.c ../lib/mbsalign.c
 
 if LINUX
 fdisk_common += ../lib/linux_version.c
@@ -53,7 +53,7 @@ endif
 if USE_SLANG
 sbin_PROGRAMS += cfdisk
 dist_man_MANS += cfdisk.8
-cfdisk_SOURCES = cfdisk.c $(fdisk_common)
+cfdisk_SOURCES = cfdisk.c $(fdisk_common) ../lib/mbsalign.c
 cfdisk_CFLAGS = $(cflags_blkid)
 cfdisk_LDADD = -lslang $(ldadd_blkid)
 else

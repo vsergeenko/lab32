@@ -20,34 +20,6 @@
 
 static blkid_cache blcache;
 
-#ifdef HAVE_LIBBLKID_INTERNAL
-/* ask kernel developers why we need such ugly open() method... */
-static int
-open_device(const char *devname)
-{
-	int retries = 0;
-
-	do {
-		int fd = open(devname, O_RDONLY);
-		if (fd >= 0)
-			return fd;
-#ifdef ENOMEDIUM
-		/* ENOMEDIUM is Linux-only */
-		if (errno != ENOMEDIUM)
-			break;
-#else
-		break;
-#endif
-		if (retries >= CRDOM_NOMEDIUM_RETRIES)
-			break;
-		++retries;
-		sleep(3);
-	} while(1);
-
-	return -1;
-}
-#endif
-
 /*
  * Parses NAME=value, returns -1 on parse error, 0 success. The success is also
  * when the 'spec' doesn't contain name=value pair (because the spec could be
@@ -122,14 +94,14 @@ fsprobe_exit(void)
  * probing interface
  */
 static char *
-fsprobe_get_value(const char *name, const char *devname)
+fsprobe_get_value(const char *name, const char *devname, int *ambi)
 {
-	int fd;
+	int fd, rc;
 	const char *data = NULL;
 
 	if (!devname || !name)
 		return NULL;
-	fd = open_device(devname);
+	fd = open(devname, O_RDONLY);
 	if (fd < 0)
 		return NULL;
 	if (!blprobe)
@@ -144,10 +116,11 @@ fsprobe_get_value(const char *name, const char *devname)
 	blkid_probe_set_superblocks_flags(blprobe,
 		BLKID_SUBLKS_LABEL | BLKID_SUBLKS_UUID | BLKID_SUBLKS_TYPE);
 
-	if (blkid_do_safeprobe(blprobe))
-		goto done;
-	if (blkid_probe_lookup_value(blprobe, name, &data, NULL))
-		goto done;
+	rc = blkid_do_safeprobe(blprobe);
+	if (ambi)
+		*ambi = rc == -2 ? 1 : 0;	/* ambivalent probing result */
+	if (!rc)
+		blkid_probe_lookup_value(blprobe, name, &data, NULL);
 done:
 	close(fd);
 	return data ? strdup((char *) data) : NULL;
@@ -156,19 +129,25 @@ done:
 char *
 fsprobe_get_label_by_devname(const char *devname)
 {
-	return fsprobe_get_value("LABEL", devname);
+	return fsprobe_get_value("LABEL", devname, NULL);
 }
 
 char *
 fsprobe_get_uuid_by_devname(const char *devname)
 {
-	return fsprobe_get_value("UUID", devname);
+	return fsprobe_get_value("UUID", devname, NULL);
 }
 
 char *
 fsprobe_get_fstype_by_devname(const char *devname)
 {
-	return fsprobe_get_value("TYPE", devname);
+	return fsprobe_get_value("TYPE", devname, NULL);
+}
+
+char *
+fsprobe_get_fstype_by_devname_ambi(const char *devname, int *ambi)
+{
+	return fsprobe_get_value("TYPE", devname, ambi);
 }
 
 char *
@@ -234,6 +213,14 @@ fsprobe_get_fstype_by_devname(const char *devname)
 	blkid_put_cache(c);
 
 	return tp;
+}
+
+char *
+fsprobe_get_fstype_by_devname_ambi(const char *devname, int *ambi)
+{
+	if (ambi)
+		*ambi = 0;
+	return fsprobe_get_fstype_by_devname(devname);
 }
 
 char *

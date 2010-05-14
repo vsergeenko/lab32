@@ -41,6 +41,7 @@
 #include "env.h"
 #include "nls.h"
 #include "blkdev.h"
+#include "strtosize.h"
 
 #define DO_PS_FIDDLING
 
@@ -211,6 +212,7 @@ static const char *opt_loopdev, *opt_vfstype, *opt_offset, *opt_sizelimit,
         *opt_encryption, *opt_speed, *opt_comment, *opt_uhelper;
 static const char *opt_keybits, *opt_nohashpass;
 
+static int is_readonly(const char *node);
 static int mounted (const char *spec0, const char *node0);
 static int check_special_mountprog(const char *spec, const char *node,
 		const char *type, int flags, char *extra_opts, int *status);
@@ -294,6 +296,14 @@ print_all (char *types) {
 	  if (matching_type (mc->m.mnt_type, types))
 	       print_one (&(mc->m));
      }
+
+     if (!mtab_does_not_exist() && !mtab_is_a_symlink() && is_readonly(_PATH_MOUNTED))
+          printf(_("\n"
+	"mount: warning: /etc/mtab is not writable (e.g. read-only filesystem).\n"
+	"       It's possible that information reported by mount(8) is not\n"
+	"       up to date. For actual information about system mount points\n"
+	"       check the /proc/mounts file.\n\n"));
+
      exit (0);
 }
 
@@ -747,8 +757,6 @@ static int
 was_tested(const char *fstype) {
 	struct tried *t;
 
-	if (fsprobe_known_fstype(fstype))
-		return 1;
 	for (t = tried; t; t = t->next) {
 		if (!strcmp(t->type, fstype))
 			return 1;
@@ -785,8 +793,8 @@ procfsnext(FILE *procfs) {
    char fsname[100];
 
    while (fgets(line, sizeof(line), procfs)) {
-      if (sscanf (line, "nodev %[^\n]\n", fsname) == 1) continue;
-      if (sscanf (line, " %[^ \n]\n", fsname) != 1) continue;
+      if (sscanf (line, "nodev %[^#\n]\n", fsname) == 1) continue;
+      if (sscanf (line, " %[^# \n]\n", fsname) != 1) continue;
       return xstrdup(fsname);
    }
    return 0;
@@ -889,9 +897,9 @@ procfsloop_mount(int (*mount_fn)(struct mountargs *, int *, int *),
 }
 
 static const char *
-guess_fstype_by_devname(const char *devname)
+guess_fstype_by_devname(const char *devname, int *ambivalent)
 {
-   const char *type = fsprobe_get_fstype_by_devname(devname);
+   const char *type = fsprobe_get_fstype_by_devname_ambi(devname, ambivalent);
 
    if (verbose) {
       printf (_("mount: you didn't specify a filesystem type for %s\n"), devname);
@@ -918,12 +926,13 @@ static int
 guess_fstype_and_mount(const char *spec, const char *node, const char **types,
 		       int flags, char *mount_opts, int *special, int *status) {
    struct mountargs args = { spec, node, NULL, flags & ~MS_NOSYS, mount_opts };
+   int ambivalent = 0;
 
    if (*types && strcasecmp (*types, "auto") == 0)
       *types = NULL;
 
    if (!*types && !(flags & MS_REMOUNT)) {
-      *types = guess_fstype_by_devname(spec);
+      *types = guess_fstype_by_devname(spec, &ambivalent);
       if (*types) {
 	  if (!strcmp(*types, MNTTYPE_SWAP)) {
 	      error(_("%s looks like swapspace - not mounted"), spec);
@@ -933,6 +942,11 @@ guess_fstype_and_mount(const char *spec, const char *node, const char **types,
 	      args.type = *types;
 	      return do_mount (&args, special, status);
           }
+      } else if (ambivalent) {
+          error(_("mount: %s: more filesystems detected. This should not happen,\n"
+		  "       use -t <type> to explicitly specify the filesystem type or\n"
+		  "       use wipefs(8) to clean up the device.\n"), spec);
+	  return 1;
       }
    }
 
@@ -1070,11 +1084,26 @@ is_mounted_same_loopfile(const char *node0, const char *loopfile, unsigned long 
 }
 
 static int
+parse_offset(const char **opt, uintmax_t *val)
+{
+	char *tmp;
+
+	if (strtosize(*opt, val))
+		return -1;
+
+	tmp = xmalloc(32);
+	snprintf(tmp, 32, "%jd", *val);
+	my_free(*opt);
+	*opt = tmp;
+	return 0;
+}
+
+static int
 loop_check(const char **spec, const char **type, int *flags,
 	   int *loop, const char **loopdev, const char **loopfile,
 	   const char *node) {
   int looptype;
-  unsigned long long offset, sizelimit;
+  uintmax_t offset = 0, sizelimit = 0;
 
   /*
    * In the case of a loop mount, either type is of the form lo@/dev/loop5
@@ -1102,6 +1131,21 @@ loop_check(const char **spec, const char **type, int *flags,
   *loop = ((*flags & MS_LOOP) || *loopdev || opt_offset || opt_sizelimit || opt_encryption || opt_keybits);
   *loopfile = *spec;
 
+  /* Automatically create a loop device from a regular file if a filesystem
+   * is not specified or the filesystem is known for libblkid (these
+   * filesystems work with block devices only).
+   *
+   * Note that there is not a restriction (on kernel side) that prevents regular
+   * file as a mount(2) source argument. A filesystem that is able to mount
+   * regular files could be implemented.
+   */
+  if (!*loop && (!*type || strcmp(*type, "auto") == 0 ||
+			   fsprobe_known_fstype(*type))) {
+    struct stat st;
+    if (stat(*loopfile, &st) == 0)
+      *loop = S_ISREG(st.st_mode);
+  }
+
   if (*loop) {
     *flags |= MS_LOOP;
     if (fake) {
@@ -1114,8 +1158,14 @@ loop_check(const char **spec, const char **type, int *flags,
       if (*flags & MS_RDONLY)
         loop_opts |= SETLOOP_RDONLY;
 
-      offset = opt_offset ? strtoull(opt_offset, NULL, 0) : 0;
-      sizelimit = opt_sizelimit ? strtoull(opt_sizelimit, NULL, 0) : 0;
+      if (opt_offset && parse_offset(&opt_offset, &offset)) {
+        error(_("mount: invalid offset '%s' specified"), opt_offset);
+        return EX_FAIL;
+      }
+      if (opt_sizelimit && parse_offset(&opt_sizelimit, &sizelimit)) {
+        error(_("mount: invalid sizelimit '%s' specified"), opt_sizelimit);
+        return EX_FAIL;
+      }
 
       if (is_mounted_same_loopfile(node, *loopfile, offset)) {
         error(_("mount: according to mtab %s is already mounted on %s as loop"), *loopfile, node);
@@ -1311,7 +1361,6 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
   int loop = 0;
   const char *loopdev = 0, *loopfile = 0;
   struct stat statbuf;
-  int retries = 0;	/* Nr of retries for mount in case of ENOMEDIUM */
 
   /* copies for freeing on exit */
   const char *opts1, *spec1, *node1, *types1, *extra_opts1;
@@ -1377,7 +1426,6 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
       goto out;
   }
 
-mount_retry:
   block_signals (SIG_BLOCK);
 
   if (!fake) {
@@ -1577,7 +1625,7 @@ mount_retry:
 	error (_("mount: %s is not a block device, and stat fails?"), spec);
       else if (S_ISBLK(statbuf.st_mode))
         error (_("mount: the kernel does not recognize %s as a block device\n"
-	       "       (maybe `insmod driver'?)"), spec);
+	       "       (maybe `modprobe driver'?)"), spec);
       else if (S_ISREG(statbuf.st_mode))
 	error (_("mount: %s is not a block device (maybe try `-o loop'?)"),
 		 spec);
@@ -1623,14 +1671,6 @@ mount_retry:
       break;
     }
     case ENOMEDIUM:
-      if (retries < CRDOM_NOMEDIUM_RETRIES) {
-	      if (verbose)
-		      printf(_("mount: no medium found on %s ...trying again\n"),
-				 spec);
-              sleep(3);
-	      ++retries;
-              goto mount_retry;
-      }
       error(_("mount: no medium found on %s"), spec);
       break;
     default:

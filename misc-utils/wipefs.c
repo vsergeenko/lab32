@@ -4,9 +4,10 @@
  * Copyright (C) 2009 Red Hat, Inc. All rights reserved.
  * Written by Karel Zak <kzak@redhat.com>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it would be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -33,6 +34,7 @@
 #include <blkid.h>
 
 #include "nls.h"
+#include "strtosize.h"
 
 struct wipe_desc {
 	loff_t		offset;		/* magic string offset */
@@ -208,7 +210,7 @@ read_offsets(struct wipe_desc *wp, const char *fname, int zap)
 	if (rc == 0) {
 		const char *type = NULL;
 		blkid_probe_lookup_value(pr, "PTTYPE", &type, NULL);
-		errx(EXIT_FAILURE, _("error: %s: appears to contain '%s' "
+		warnx(_("WARNING: %s: appears to contain '%s' "
 				"partition table"), fname, type);
 	}
 
@@ -304,26 +306,18 @@ do_wipe(struct wipe_desc *wp, const char *fname, int noact)
 static loff_t
 strtoll_offset(const char *str)
 {
-	char *end = NULL;
-	loff_t off;
+	uintmax_t sz;
 
-	errno = 0;
-	off = strtoll(str, &end, 0);
-
-	if ((errno == ERANGE && (off == LLONG_MAX || off == LONG_MIN)) ||
-	    (errno != 0 && off == 0))
-		err(EXIT_FAILURE, _("invalid offset '%s' value specified"), str);
-
-	if (*end != '\0')
+	if (strtosize(str, &sz))
 		errx(EXIT_FAILURE, _("invalid offset '%s' value specified"), str);
-
-	return off;
+	return sz;
 }
+
 
 static void __attribute__((__noreturn__))
 usage(FILE *out)
 {
-	fprintf(out, _("Usage: %s [options] <filename>\n\nOptions:\n"),
+	fprintf(out, _("Usage: %s [options] <device>\n\nOptions:\n"),
 			program_invocation_short_name);
 
 	fprintf(out, _(

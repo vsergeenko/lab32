@@ -12,6 +12,7 @@ dist_noinst_HEADERS = \
 	linux_reboot.h \
 	linux_version.h \
 	md5.h \
+	mbsalign.h \
 	nls.h \
 	pathnames.h \
 	setproctitle.h \
@@ -20,4 +21,7 @@ dist_noinst_HEADERS = \
 	wholedisk.h \
 	widechar.h \
 	crc32.h \
-	xstrncpy.h
+	mangle.h \
+	strtosize.h \
+	xstrncpy.h \
+	writeall.h

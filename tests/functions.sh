@@ -78,7 +78,12 @@ function ts_has_option {
 function ts_init_env {
 	local mydir=$(ts_abspath $(dirname $0))
 
-	export LANG="en_US.UTF-8"
+	LANG="POSIX"
+	LANGUAGE="POSIX"
+	LC_ALL="POSIX"
+	CHARSET="UTF-8"
+
+	export LANG LANGUAGE LC_ALL CHARSET
 
 	TS_TOPDIR=$(ts_abspath $mydir/../../)
 	TS_SCRIPT="$mydir/$(basename $0)"
@@ -255,8 +260,8 @@ function ts_image_init {
 }
 
 function ts_device_init {
-	local img=$(ts_image_init)
-	local dev=$($TS_CMD_LOSETUP -s -f "$img")
+	local img=$(ts_image_init $1 $2)
+	local dev=$($TS_CMD_LOSETUP --show -f "$img")
 
 	if [ -z "$dev" ]; then
 		ts_device_deinit $dev

@@ -27,11 +27,21 @@
  * @short_description: partitions tables detection and parsing
  *
  * This chain supports binary and NAME=value interfaces, but complete PT
- * description is provided by binary interface only.
+ * description is provided by binary interface only. The libblkid prober is
+ * compatible with kernel partition tables parser. The parser does not return
+ * empty (size=0) partitions or special hidden partitions.
  *
  * NAME=value interface, supported tags:
  *
  * @PTTYPE: partition table type (dos, gpt, etc.).
+ *
+ * @PART_ENTRY_NAME: partition name (gpt and mac only)
+ *
+ * @PART_ENTRY_UUID: partition UUID (gpt only)
+ *
+ * @PART_ENTRY_TYPE: partition type, 0xNN (e.g 0x82) or type UUID (gpt only) or type string (mac)
+ *
+ * @PART_ENTRY_FLAGS: partition flags (e.g. boot_ind) or  attributes (e.g. gpt attributes)
  *
  * Example:
  *
@@ -104,6 +114,7 @@ static const struct blkid_idinfo *idinfos[] =
 	&dos_pt_idinfo,
 	&gpt_pt_idinfo,
 	&mac_pt_idinfo,
+	&ultrix_pt_idinfo,
 	&bsd_pt_idinfo,
 	&unixware_pt_idinfo,
 	&solaris_x86_pt_idinfo,
@@ -152,6 +163,8 @@ struct blkid_struct_partition {
 	int		type;		/* partition type */
 	char		typestr[37];	/* partition type string (GPT and Mac) */
 
+	unsigned long long flags;	/* partition flags / attributes */
+
 	int		partno;		/* partition number */
 	char		uuid[37];	/* UUID (when supported by PT), e.g GPT */
 	unsigned char	name[128];	/* Partition in UTF8 name (when supporte by PT), e.g. Mac */
@@ -170,6 +183,8 @@ struct blkid_struct_partlist {
 
 	struct list_head l_tabs;	/* list of partition tables */
 };
+
+static int blkid_partitions_probe_partition(blkid_probe pr);
 
 /**
  * blkid_probe_enable_partitions:
@@ -262,9 +277,6 @@ int blkid_probe_filter_partitions_type(blkid_probe pr, int flag, char *names[])
  *          blkid_probe_get_partitions() call for the same @pr. If you want to
  *          use more blkid_partlist objects in the same time you have to create
  *          more blkid_probe handlers (see blkid_new_probe()).
- *
- * TODO:    add blkid_ref() and blkid_unref() to allows to use blkid_partlist
- *          independently on libblkid probing stuff.
  *
  * Returns: list of partitions, or NULL in case of error.
  */
@@ -412,13 +424,13 @@ static blkid_partition new_partition(blkid_partlist ls, blkid_parttable tab)
 
 	ref_parttable(tab);
 	par->tab = tab;
-	par->partno = ls->next_partno++;
+	par->partno = blkid_partlist_increment_partno(ls);
 
 	return par;
 }
 
 blkid_partition blkid_partlist_add_partition(blkid_partlist ls,
-					blkid_parttable tab, int type,
+					blkid_parttable tab,
 					blkid_loff_t start, blkid_loff_t size)
 {
 	blkid_partition par = new_partition(ls, tab);
@@ -426,17 +438,13 @@ blkid_partition blkid_partlist_add_partition(blkid_partlist ls,
 	if (!par)
 		return NULL;
 
-	par->type = type;
 	par->start = start;
 	par->size = size;
 
 	DBG(DEBUG_LOWPROBE,
-		printf("parts: add partition (%p type=0x%x, "
-			"start=%llu, size=%llu, table=%p)\n",
-			par, par->type,
-			(unsigned long long) par->start,
-			(unsigned long long) par->size,
-			tab));
+		printf("parts: add partition (%p start=%llu, size=%llu, table=%p)\n",
+			par, (unsigned long long) par->start,
+			(unsigned long long) par->size,	tab));
 	return par;
 }
 
@@ -447,6 +455,11 @@ int blkid_partlist_set_partno(blkid_partlist ls, int partno)
 		return -1;
 	ls->next_partno = partno;
 	return 0;
+}
+
+int blkid_partlist_increment_partno(blkid_partlist ls)
+{
+	return ls ? ls->next_partno++ : -1;
 }
 
 /* allows to set "parent" for the next nested partition */
@@ -557,7 +570,7 @@ nothing:
  */
 static int partitions_probe(blkid_probe pr, struct blkid_chain *chn)
 {
-	int i = 0;
+	int i = 0, rc = 1;
 
 	if (!pr || chn->idx < -1)
 		return -1;
@@ -565,6 +578,9 @@ static int partitions_probe(blkid_probe pr, struct blkid_chain *chn)
 
 	if (chn->binary)
 		partitions_init_data(pr, chn);
+
+	if (pr->prob_flags & BLKID_PARTS_IGNORE_PT)
+		goto details_only;
 
 	DBG(DEBUG_LOWPROBE,
 		printf("--> starting probing loop [PARTS idx=%d]\n",
@@ -588,18 +604,35 @@ static int partitions_probe(blkid_probe pr, struct blkid_chain *chn)
 		name = idinfos[i]->name;
 
 		/* all checks passed */
-		blkid_probe_set_value(pr, "PTTYPE",
-				(unsigned char *) name,	strlen(name) + 1);
-
+		if (!chn->binary)
+			blkid_probe_set_value(pr, "PTTYPE",
+						(unsigned char *) name,
+						strlen(name) + 1);
 		DBG(DEBUG_LOWPROBE,
 			printf("<-- leaving probing loop (type=%s) [PARTS idx=%d]\n",
 			name, chn->idx));
-		return 0;
+		rc = 0;
+		break;
 	}
-	DBG(DEBUG_LOWPROBE,
-		printf("<-- leaving probing loop (failed) [PARTS idx=%d]\n",
-		chn->idx));
-	return 1;
+
+	if (rc == 1) {
+		DBG(DEBUG_LOWPROBE,
+			printf("<-- leaving probing loop (failed) [PARTS idx=%d]\n",
+			chn->idx));
+	}
+
+details_only:
+	/*
+	 * Gather PART_ENTRY_* values if the current device is a partition.
+	 */
+	if (!chn->binary &&
+	    (blkid_partitions_get_flags(pr) & BLKID_PARTS_ENTRY_DETAILS)) {
+
+		if (!blkid_partitions_probe_partition(pr))
+			rc = 0;
+	}
+
+	return rc;
 }
 
 /* Probe for nested partition table within the parental partition */
@@ -652,6 +685,165 @@ int blkid_partitions_do_subprobe(blkid_probe pr, blkid_partition parent,
 	return rc;
 }
 
+static int blkid_partitions_probe_partition(blkid_probe pr)
+{
+	int rc = 1;
+	blkid_probe disk_pr = NULL;
+	blkid_partlist ls;
+	blkid_partition par;
+	dev_t devno, disk_devno;
+	char *disk_path = NULL;
+
+	devno = blkid_probe_get_devno(pr);
+	if (!devno)
+		goto nothing;
+
+	disk_devno = blkid_probe_get_wholedisk_devno(pr);
+	if (!disk_devno)
+		goto nothing;
+
+	if (devno == disk_devno)
+		goto nothing;		/* this is not a partition */
+
+	disk_path = blkid_devno_to_devname(disk_devno);
+	if (!disk_path)
+		goto nothing;
+
+	DBG(DEBUG_LOWPROBE, printf(
+		"parts: %d:%d: starting whole-disk probing: %s\n",
+		major(devno), minor(devno), disk_path));
+
+	/* create a new prober for the disk */
+	disk_pr = blkid_new_probe_from_filename(disk_path);
+	if (!disk_pr)
+		goto nothing;
+
+	/* parse PT */
+	ls = blkid_probe_get_partitions(disk_pr);
+	if (!ls)
+		goto nothing;
+
+	par = blkid_partlist_devno_to_partition(ls, devno);
+	if (par) {
+		const char *v;
+		blkid_parttable tab = blkid_partition_get_table(par);
+
+		if (tab) {
+			v = blkid_parttable_get_type(tab);
+			if (v)
+				blkid_probe_set_value(pr, "PART_ENTRY_SCHEME",
+					(unsigned char *) v, strlen(v) + 1);
+		}
+
+		v = blkid_partition_get_name(par);
+		if (v)
+			blkid_probe_set_value(pr, "PART_ENTRY_NAME",
+				(unsigned char *) v, strlen(v) + 1);
+
+		v = blkid_partition_get_uuid(par);
+		if (v)
+			blkid_probe_set_value(pr, "PART_ENTRY_UUID",
+				(unsigned char *) v, strlen(v) + 1);
+
+		/* type */
+		v = blkid_partition_get_type_string(par);
+		if (v)
+			blkid_probe_set_value(pr, "PART_ENTRY_TYPE",
+				(unsigned char *) v, strlen(v) + 1);
+		else
+			blkid_probe_sprintf_value(pr, "PART_ENTRY_TYPE",
+				"0x%x", blkid_partition_get_type(par));
+
+		if (blkid_partition_get_flags(par))
+			blkid_probe_sprintf_value(pr, "PART_ENTRY_FLAGS",
+				"0x%llx", blkid_partition_get_flags(par));
+
+		blkid_probe_sprintf_value(pr, "PART_ENTRY_NUMBER",
+				"%d", blkid_partition_get_partno(par));
+	}
+	rc = 0;
+nothing:
+	blkid_free_probe(disk_pr);
+	free(disk_path);
+	return rc;
+}
+
+/*
+ * This function is compatible with blkid_probe_get_partitions(), but the
+ * result is not stored in @pr and all probing is independent on the
+ * status of @pr. It's possible to call this function from arbitrary
+ * place without a care about @pr.
+ */
+static blkid_partlist blkid_probe_get_independent_partlist(blkid_probe pr)
+{
+
+	blkid_partlist ls = NULL, org_ls = NULL;
+	struct blkid_chain *chn = &pr->chains[BLKID_CHAIN_PARTS];
+	struct blkid_prval vals[BLKID_NVALS_PARTS];
+	int nvals = BLKID_NVALS_PARTS;
+	int idx;
+
+	/* save old results */
+	nvals = blkid_probe_chain_copy_vals(pr, chn, vals, nvals);
+	idx = chn->idx;
+	if (chn->data) {
+		org_ls = chn->data;
+		chn->data = NULL;
+	}
+
+	ls = blkid_probe_get_partitions(pr);
+
+	/* restore original results */
+	chn->data = org_ls;
+	chn->idx = idx;
+
+	blkid_probe_chain_reset_vals(pr, chn);
+	blkid_probe_append_vals(pr, vals, nvals);
+
+	return ls;
+}
+
+/*
+ * Returns 1 if the device is whole-disk and the area specified by @offset and
+ * @size is covered by any partition.
+ */
+int blkid_probe_is_covered_by_pt(blkid_probe pr,
+				 blkid_loff_t offset, blkid_loff_t size)
+{
+	blkid_partlist ls = NULL;
+	blkid_loff_t start, end;
+	int nparts, i, rc = 0;
+
+	DBG(DEBUG_LOWPROBE, printf(
+		"=> checking if off=%jd size=%jd covered by PT\n",
+		offset, size));
+
+	ls = blkid_probe_get_independent_partlist(pr);
+	if (!ls)
+		goto done;
+
+	nparts = blkid_partlist_numof_partitions(ls);
+	if (!nparts)
+		goto done;
+
+	end = (offset + size) >> 9;
+	start = offset >> 9;
+
+	for (i = 0; i < nparts; i++) {
+		blkid_partition par = &ls->parts[i];
+
+		if (start >= par->start && end <= par->start + par->size) {
+			rc = 1;
+			break;
+		}
+	}
+done:
+	partitions_free_data(pr, (void *)ls);
+
+	DBG(DEBUG_LOWPROBE, printf("<= %s covered by PT\n", rc ? "IS" : "NOT"));
+	return rc;
+}
+
 /**
  * blkid_known_pttype:
  * @pttype: partiton name
@@ -685,17 +877,31 @@ int blkid_partlist_numof_partitions(blkid_partlist ls)
 }
 
 /**
+ * blkid_partlist_get_table:
+ *
+ * Returns top-level partition table or NULL of there is not a partition table
+ * on the device.
+ */
+blkid_parttable blkid_partlist_get_table(blkid_partlist ls)
+{
+	if (!ls || list_empty(&ls->l_tabs))
+		return NULL;
+
+	return list_entry(ls->l_tabs.next,
+			struct blkid_struct_parttable, t_tabs);
+}
+
+
+/**
  * blkid_partlist_get_partition:
  * @ls: partitions list
  * @n: partition number in range 0..N, where 'N' is blkid_partlist_numof_partitions().
  *
  * It's possible that the list of partitions is *empty*, but there is a valid
  * partition table on the disk. This happen when on-disk details about
- * partitions are unknown, but we are able to detect partition table magic
- * string only. The nice example is AIX. If your question is: "Is there any
- * partition table?", use:
+ * partitions are unknown or the partition table is empty.
  *
- *	blkid_probe_lookup_value(pr, "PTTYPE", &type, NULL);
+ * See also blkid_partlist_get_table().
  *
  * Returns: partition object or NULL in case or error.
  */
@@ -705,6 +911,53 @@ blkid_partition blkid_partlist_get_partition(blkid_partlist ls, int n)
 		return NULL;
 
 	return &ls->parts[n];
+}
+
+/**
+ * blkid_partlist_devno_to_partition:
+ * @ls: partitions list
+ * @devno: requested partition
+ *
+ * This function tries to get start and size for @devno from sysfs and
+ * returns a partition from @ls which matches with the values from sysfs.
+ *
+ * This funtion is necessary when you want to make a relation between an entry
+ * in the partition table (@ls) and block devices in your system.
+ *
+ * Returns: partition object or NULL in case or error.
+ */
+blkid_partition blkid_partlist_devno_to_partition(blkid_partlist ls, dev_t devno)
+{
+	uint64_t start, size;
+	int i;
+
+	if (blkid_devno_get_u64_attribute(devno, "start", &start))
+		return NULL;
+	if (blkid_devno_get_u64_attribute(devno, "size", &size))
+		return NULL;
+
+	for (i = 0; i < ls->nparts; i++) {
+		blkid_partition par = &ls->parts[i];
+
+		if (blkid_partition_get_start(par) == start &&
+		    blkid_partition_get_size(par) == size)
+			return par;
+
+		/* exception for extended dos partitions */
+		if (blkid_partition_get_start(par) == start &&
+		    blkid_partition_is_extended(par) && size <= 1024)
+			return par;
+
+	}
+	return NULL;
+}
+
+int blkid_partition_set_type(blkid_partition par, int type)
+{
+	if (!par)
+		return -1;
+	par->type = type;
+	return 0;
 }
 
 /**
@@ -1029,5 +1282,25 @@ int blkid_partition_set_type_uuid(blkid_partition par, const unsigned char *uuid
 const char *blkid_partition_get_type_string(blkid_partition par)
 {
 	return par && *par->typestr ? par->typestr : NULL;
+}
+
+
+int blkid_partition_set_flags(blkid_partition par, unsigned long long flags)
+{
+	if (!par)
+		return -1;
+	par->flags = flags;
+	return 0;
+}
+
+/**
+ * blkid_partition_get_flags
+ * @par: partition
+ *
+ * Returns: partition flags (or attributes for gpt).
+ */
+unsigned long long blkid_partition_get_flags(blkid_partition par)
+{
+	return par ? par->flags : 0;
 }
 

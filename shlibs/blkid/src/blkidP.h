@@ -19,8 +19,10 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 #include "c.h"
 #include "bitops.h"	/* $(top_srcdir)/include/ */
@@ -44,6 +46,7 @@ struct blkid_struct_dev
 	int			bid_pri;	/* Device priority */
 	dev_t			bid_devno;	/* Device major/minor number */
 	time_t			bid_time;	/* Last update time of device */
+	suseconds_t		bid_utime;	/* Last update time (microseconds) */
 	unsigned int		bid_flags;	/* Device status bitflags */
 	char			*bid_label;	/* Shortcut to device LABEL */
 	char			*bid_uuid;	/* Shortcut to binary UUID */
@@ -118,7 +121,7 @@ struct blkid_chaindrv {
 
 #define BLKID_NVALS_SUBLKS	14
 #define BLKID_NVALS_TOPLGY	5
-#define BLKID_NVALS_PARTS	1
+#define BLKID_NVALS_PARTS	8
 
 /* Max number of all values in probing result */
 #define BLKID_NVALS             (BLKID_NVALS_SUBLKS + \
@@ -188,10 +191,12 @@ struct blkid_struct_probe
 	blkid_loff_t		size;		/* end of data on the device */
 
 	dev_t			devno;		/* device number (st.st_rdev) */
+	dev_t			disk_devno;	/* devno of the whole-disk or 0 */
 	unsigned int		blkssz;		/* sector size (BLKSSZGET ioctl) */
 	mode_t			mode;		/* struct stat.sb_mode */
 
 	int			flags;		/* private libray flags */
+	int			prob_flags;	/* always zeroized by blkid_do_*() */
 
 	struct list_head	buffers;	/* list of buffers */
 
@@ -202,9 +207,12 @@ struct blkid_struct_probe
 	int			nvals;		/* number of assigned vals */
 };
 
-/* flags */
+/* private flags */
 #define BLKID_PRIVATE_FD	(1 << 1)	/* see blkid_new_probe_from_filename() */
 #define BLKID_TINY_DEV		(1 << 2)	/* <= 1.47MiB (floppy or so) */
+#define BLKID_CDROM_DEV		(1 << 3)	/* is a CD/DVD drive */
+/* private probing flags */
+#define BLKID_PARTS_IGNORE_PT	(1 << 1)	/* ignore partition table */
 
 /*
  * Evaluation methods (for blkid_eval_* API)
@@ -312,7 +320,6 @@ extern int blkid_openat(DIR *dir, const char *dirname, const char *filename,
 #define DEBUG_ALL	0xFFFF
 
 #ifdef CONFIG_BLKID_DEBUG
-#include <stdio.h>
 extern int blkid_debug_mask;
 extern void blkid_init_debug(int mask);
 extern void blkid_debug_dump_dev(blkid_dev dev);
@@ -332,6 +339,11 @@ struct dir_list {
 };
 extern void blkid__scan_dir(char *, dev_t, struct dir_list **, char **);
 extern int blkid_driver_has_major(const char *drvname, int major);
+extern int blkid_devno_has_attribute(dev_t devno, const char *attribute);
+extern int blkid_devno_get_u64_attribute(dev_t devno, const char *attribute,
+							uint64_t *result);
+extern int blkid_devno_get_s64_attribute(dev_t devno, const char *attribute,
+							int64_t *result);
 
 /* lseek.c */
 extern blkid_loff_t blkid_llseek(int fd, blkid_loff_t offset, int whence);
@@ -362,6 +374,7 @@ extern void blkid_free_dev(blkid_dev dev);
 
 /* probe.c */
 extern int blkid_probe_is_tiny(blkid_probe pr);
+extern int blkid_probe_is_cdrom(blkid_probe pr);
 extern unsigned char *blkid_probe_get_buffer(blkid_probe pr,
                                 blkid_loff_t off, blkid_loff_t len);
 
@@ -379,6 +392,9 @@ extern int blkid_probe_set_dimension(blkid_probe pr,
 					(_mag)->kboff << 10, sizeof(type)))
 
 extern blkid_partlist blkid_probe_get_partlist(blkid_probe pr);
+
+extern int blkid_probe_is_covered_by_pt(blkid_probe pr,
+					blkid_loff_t offset, blkid_loff_t size);
 
 extern void blkid_probe_chain_reset_vals(blkid_probe pr, struct blkid_chain *chn);
 extern int blkid_probe_chain_copy_vals(blkid_probe pr, struct blkid_chain *chn,

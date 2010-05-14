@@ -1,14 +1,8 @@
 libblkid
 --------
 
- - add command line interface for blkid_probe_filter_types():
-
-       # blkid -p -o udev --filter-type nofat
-
  - add -<BE|LE> suffix to test images for native-endian filesystems (e.g. swap)
    and add support for such functionality to tests/ts/blkid/low-probe
-
- - consolidate "getsize" stuff (see getsize.c and lib/blkdev.c)
 
  - add values:
 
@@ -24,6 +18,11 @@ libblkid
 	...
 	blkid_unref(tp);
 
+blkid(8)
+  
+  - add a new option (-r) that allows to print removable block devices that
+    are missing in /proc/partitions, see blkid_probe_all_removable().
+
 wipefs
 ------
 
@@ -33,6 +32,11 @@ wipefs
 
 fdisk(s)
 --------
+
+ * Sun label support is completely useless for large disks, it uses number of
+   cylinders from on-disk-label where the geometry is stored by int16 values.
+   It seems better to completely ignore this stuff from the label and always
+   use geometry + BLKGETSIZE64 from kernel.
 
  * use off_t instead "long long"
 
@@ -51,6 +55,9 @@ fdisk(s)
 
 misc
 ----
+
+ * partx: add to it an option to make it usable in shell scripts without having
+   to parse its output with sed
 
  * use ngettext() for strings with plurals, for example
 

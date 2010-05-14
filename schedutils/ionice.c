@@ -81,7 +81,7 @@ static void usage(int rc)
 	"\nionice - sets or gets process io scheduling class and priority.\n"
 	"\nUsage:\n"
 	"  ionice [ options ] -p <pid> [<pid> ...]\n"
-	"  ionoce [ options ] <command> [<arg> ...]\n"
+	"  ionice [ options ] <command> [<arg> ...]\n"
 	"\nOptions:\n"
 	"  -n <classdata>      class data (0-7, lower being higher prio)\n"
 	"  -c <class>          scheduling class\n"
@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
 			ioprio_setpid(0, ioprio, ioclass);
 			execvp(argv[optind], &argv[optind]);
 			/* execvp should never return */
-			err(EXIT_FAILURE, _("execvp failed"));
+			err(EXIT_FAILURE, _("executing %s failed"), argv[optind]);
 		}
 	}
 

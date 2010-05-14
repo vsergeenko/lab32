@@ -47,9 +47,14 @@
 static const char *progname;
 static int debug = 0;
 
+struct ld_table {
+	const char	*name;
+	int		value;
+};
+
 /* currently supported line disciplines, plus some aliases */
-static const struct ld_entry { const char *s; int v; }
-ld_table[] = {
+static const struct ld_table ld_discs[] =
+{
 	{ "TTY",	N_TTY },
 	{ "SLIP",	N_SLIP },
 	{ "MOUSE",	N_MOUSE },
@@ -68,29 +73,87 @@ ld_table[] = {
 	{ "GIGASET",	N_GIGASET_M101 },
 	{ "M101",	N_GIGASET_M101 },
 	{ "PPS",	N_PPS },
+	{ NULL, 0 }
 };
 
-/* look up line discipline code */
-static int lookup_ld(const char *s)
+/* known c_iflag names */
+static const struct ld_table ld_iflags[] =
 {
-    size_t i;
+	{ "IGNBRK",	IGNBRK },
+	{ "BRKINT",	BRKINT },
+	{ "IGNPAR",	IGNPAR },
+	{ "PARMRK",	PARMRK },
+	{ "INPCK",	INPCK },
+	{ "ISTRIP",	ISTRIP },
+	{ "INLCR",	INLCR },
+	{ "IGNCR",	IGNCR },
+	{ "ICRNL",	ICRNL },
+	{ "IUCLC",	IUCLC },
+	{ "IXON",	IXON },
+	{ "IXANY",	IXANY },
+	{ "IXOFF",	IXOFF },
+	{ "IMAXBEL",	IMAXBEL },
+	{ "IUTF8",	IUTF8 },
+	{ NULL, 0 }
+};
 
-    for (i = 0; i < ARRAY_SIZE(ld_table); i++)
-	if (!strcasecmp(ld_table[i].s, s))
-	    return ld_table[i].v;
+static int lookup_table(const struct ld_table *tab, const char *str)
+{
+    const struct ld_table *t;
+
+    for (t = tab; t && t->name; t++)
+	if (!strcasecmp(t->name, str))
+	    return t->value;
     return -1;
 }
 
+static void print_table(FILE *out, const struct ld_table *tab)
+{
+    const struct ld_table *t;
+    int i;
+
+    for (t = tab, i = 1; t && t->name; t++, i++) {
+	fprintf(out, "  %-10s", t->name);
+	if (!(i % 3))
+		fputc('\n', out);
+    }
+}
+
+static int parse_iflag(char *str, int *set_iflag, int *clr_iflag)
+{
+    int iflag;
+    char *s, *end;
+
+    for (s = strtok(str, ","); s != NULL; s = strtok(NULL, ",")) {
+	if (*s == '-')
+	    s++;
+        if ((iflag = lookup_table(ld_iflags, s)) < 0) {
+	    iflag = strtol(s, &end, 0);
+	    if (*end || iflag < 0)
+	        errx(EXIT_FAILURE, _("invalid iflag: %s"), s);
+	}
+	if (s > str && *(s - 1) == '-')
+	    *clr_iflag |= iflag;
+	else
+	    *set_iflag |= iflag;
+    }
+
+    dbg("iflag (set/clear): %d/%d", *set_iflag, *clr_iflag);
+    return 0;
+}
+
+
 static void __attribute__((__noreturn__)) usage(int exitcode)
 {
-    size_t i;
+    FILE *out = exitcode == EXIT_SUCCESS ? stdout : stderr;
 
-    fprintf(stderr,
-	    _("\nUsage: %s [ -dhV78neo12 ] [ -s <speed> ] <ldisc> <device>\n"),
+    fprintf(out,
+	    _("\nUsage: %s [ -dhV78neo12 ] [ -s <speed> ] [ -i [-]<iflag> ] <ldisc> <device>\n"),
 	    progname);
-    fputs(_("\nKnown <ldisc> names:\n"), stderr);
-    for (i = 0; i < ARRAY_SIZE(ld_table); i++)
-	fprintf(stderr, "  %s\n", ld_table[i].s);
+    fputs(_("\nKnown <ldisc> names:\n"), out);
+    print_table(out, ld_discs);
+    fputs(_("\nKnown <iflag> names:\n"), out);
+    print_table(out, ld_iflags);
     exit(exitcode);
 }
 
@@ -123,6 +186,7 @@ int main(int argc, char **argv)
     int tty_fd;
     struct termios ts;
     int speed = 0, bits = '-', parity = '-', stop = '-';
+    int set_iflag = 0, clr_iflag = 0;
     int ldisc;
     int optc;
     char *end;
@@ -136,12 +200,12 @@ int main(int argc, char **argv)
 	{"oddparity", 0, 0, 'o'},
 	{"onestopbit", 0, 0, '1'},
 	{"twostopbits", 0, 0, '2'},
+	{"iflag", 1, 0, 'i'},
 	{"help", 0, 0, 'h'},
 	{"version", 0, 0, 'V'},
 	{"debug", 0, 0, 'd'},
 	{0, 0, 0, 0}
     };
-
 
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, LOCALEDIR);
@@ -152,7 +216,7 @@ int main(int argc, char **argv)
 
     if (argc == 0)
 	usage(EXIT_SUCCESS);
-    while ((optc = getopt_long(argc, argv, "dhV78neo12s:", opttbl, NULL)) >= 0) {
+    while ((optc = getopt_long(argc, argv, "dhV78neo12s:i:", opttbl, NULL)) >= 0) {
 	switch (optc) {
 	case 'd':
 	    debug++;
@@ -175,6 +239,9 @@ int main(int argc, char **argv)
 	    if (*end || speed <= 0)
 		errx(EXIT_FAILURE, _("invalid speed: %s"), optarg);
 	    break;
+	case 'i':
+	    parse_iflag(optarg, &set_iflag, &clr_iflag);
+	    break;
 	case 'V':
 	    printf(_("ldattach from %s\n"), PACKAGE_STRING);
 	    break;
@@ -190,7 +257,8 @@ int main(int argc, char **argv)
 	usage(EXIT_FAILURE);
 
     /* parse line discipline specification */
-    if ((ldisc = lookup_ld(argv[optind])) < 0) {
+    ldisc = lookup_table(ld_discs, argv[optind]);
+    if (ldisc < 0) {
 	ldisc = strtol(argv[optind], &end, 0);
 	if (*end || ldisc < 0)
 	    errx(EXIT_FAILURE, _("invalid line discipline: %s"), argv[optind]);
@@ -240,6 +308,10 @@ int main(int argc, char **argv)
 	break;
     }
     ts.c_cflag |= CREAD;	/* just to be on the safe side */
+
+    ts.c_iflag |= set_iflag;
+    ts.c_iflag &= ~clr_iflag;
+
     if (tcsetattr(tty_fd, TCSAFLUSH, &ts) < 0)
 	err(EXIT_FAILURE, _("cannot set terminal attributes for %s"), dev);
 

@@ -16,7 +16,7 @@ hdrs_mount = fstab.h mount_mntent.h mount_constants.h \
 # generic sources for mount and umount
 srcs_mount = fstab.c mount_mntent.c getusername.c lomount.c devname.c devname.h \
 	$(srcs_common) $(hdrs_mount) ../lib/env.c ../lib/linux_version.c \
-	../lib/blkdev.c ../lib/fsprobe.c
+	../lib/blkdev.c ../lib/fsprobe.c ../lib/mangle.c
 
 # generic flags for all programs (except losetup)
 # -- note that pkg-config autoconf macros (pkg.m4) does not differentiate
@@ -26,7 +26,7 @@ ldadd_static =
 cflags_common = $(AM_CFLAGS)
 ldflags_static = -all-static
 
-mount_SOURCES = mount.c $(srcs_mount) ../lib/setproctitle.c
+mount_SOURCES = mount.c $(srcs_mount) ../lib/setproctitle.c ../lib/strtosize.c
 mount_CFLAGS = $(SUID_CFLAGS) $(cflags_common)
 mount_LDFLAGS = $(SUID_LDFLAGS) $(AM_LDFLAGS)
 mount_LDADD = $(ldadd_common)
@@ -37,11 +37,12 @@ umount_LDFLAGS = $(SUID_LDFLAGS) $(AM_LDFLAGS)
 umount_LDADD = $(ldadd_common)
 
 swapon_SOURCES = swapon.c swap_constants.h ../lib/linux_version.c \
-	../lib/blkdev.c ../lib/fsprobe.c ../lib/canonicalize.c
+	../lib/blkdev.c ../lib/fsprobe.c ../lib/canonicalize.c \
+	../lib/mangle.c
 swapon_CFLAGS = $(cflags_common)
 swapon_LDADD = $(ldadd_common)
 
-losetup_SOURCES = lomount.c $(srcs_common) loop.h lomount.h
+losetup_SOURCES = lomount.c $(srcs_common) loop.h lomount.h ../lib/strtosize.c
 losetup_CPPFLAGS = -DMAIN $(AM_CPPFLAGS)
 
 mount_static_LDADD =

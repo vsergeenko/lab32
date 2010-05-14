@@ -22,6 +22,7 @@
 #include "fsprobe.h"
 #include "pathnames.h"
 #include "swapheader.h"
+#include "mangle.h"
 
 #define PATH_MKSWAP	"/sbin/mkswap"
 
@@ -125,6 +126,7 @@ read_proc_swaps(void) {
 	FILE *swaps;
 	char line[1024];
 	char *p, **q;
+	size_t sz;
 
 	numSwaps = 0;
 	swapFiles = NULL;
@@ -152,14 +154,24 @@ read_proc_swaps(void) {
 		 * This will fail with names with embedded spaces.
 		 */
 		for (p = line; *p && *p != ' '; p++);
-		*p = 0;
+		*p = '\0';
+
+		/* the kernel can use " (deleted)" suffix for paths
+		 * in /proc/swaps, we have to remove this junk.
+		 */
+		sz = strlen(line);
+		if (sz > PATH_DELETED_SUFFIX_SZ) {
+		       p = line + (sz - PATH_DELETED_SUFFIX_SZ);
+		       if (strcmp(p, PATH_DELETED_SUFFIX) == 0)
+			       *p = '\0';
+		}
 
 		q = realloc(swapFiles, (numSwaps+1) * sizeof(*swapFiles));
 		if (q == NULL)
 			break;
 		swapFiles = q;
 
-		swapFiles[numSwaps++] = strdup(line);
+		swapFiles[numSwaps++] = unmangle(line);
 	}
 	fclose(swaps);
 }
@@ -354,7 +366,7 @@ swap_get_size(const char *hdr, const char *devname, unsigned int pagesize)
 			pagesize / 1024,
 			flip ? _("different") : _("same"));
 
-	return (last_page + 1) * pagesize;
+	return ((unsigned long long) last_page + 1) * pagesize;
 }
 
 static int

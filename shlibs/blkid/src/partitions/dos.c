@@ -75,6 +75,7 @@ static int parse_dos_extended(blkid_probe pr, blkid_parttable tab,
 		/* Parse data partition */
 		for (p = p0, i = 0; i < 4; i++, p++) {
 			uint32_t abs_start;
+			blkid_partition par;
 
 			/* the start is relative to the parental ext.partition */
 			start = dos_partition_start(p) * ssf;
@@ -93,10 +94,13 @@ static int parse_dos_extended(blkid_probe pr, blkid_parttable tab,
 				if (abs_start + size > ex_start + ex_size)
 					continue;
 			}
-			if (!blkid_partlist_add_partition(ls, tab, p->sys_type,
-						abs_start, size))
+
+			par = blkid_partlist_add_partition(ls, tab, abs_start, size);
+			if (!par)
 				goto err;
 
+			blkid_partition_set_type(par, p->sys_type);
+			blkid_partition_set_flags(par, p->boot_ind);
 			ct_nodata = 0;
 		}
 		/* The first nested ext.partition should be a link to the next
@@ -194,14 +198,23 @@ static int probe_dos_pt(blkid_probe pr, const struct blkid_idmag *mag)
 
 	/* Parse primary partitions */
 	for (p = p0, i = 0; i < 4; i++, p++) {
+		blkid_partition par;
+
 		start = dos_partition_start(p) * ssf;
 		size = dos_partition_size(p) * ssf;
 
-		if (!size)
+		if (!size) {
+			/* Linux kernel ignores empty partitions, but partno for
+			 * the empty primary partitions is not reused */
+			blkid_partlist_increment_partno(ls);
 			continue;
-		if (!blkid_partlist_add_partition(ls, tab, p->sys_type,
-							start, size))
+		}
+		par = blkid_partlist_add_partition(ls, tab, start, size);
+		if (!par)
 			goto err;
+
+		blkid_partition_set_type(par, p->sys_type);
+		blkid_partition_set_flags(par, p->boot_ind);
 	}
 
 	/* Linux uses partition numbers greater than 4
@@ -221,25 +234,26 @@ static int probe_dos_pt(blkid_probe pr, const struct blkid_idmag *mag)
 			goto err;
 	}
 
-	/* Parse subtypes (nested partitions) */
-	for (p = p0, i = 0; i < 4; i++, p++) {
-		int n;
+	/* Parse subtypes (nested partitions) on large disks */
+	if (!blkid_probe_is_tiny(pr)) {
+		for (p = p0, i = 0; i < 4; i++, p++) {
+			int n;
 
-		if (!dos_partition_size(p) || is_extended(p))
-			continue;
-
-		for (n = 0; n < ARRAY_SIZE(dos_nested); n++) {
-			if (dos_nested[n].type != p->sys_type)
+			if (!dos_partition_size(p) || is_extended(p))
 				continue;
 
-			if (blkid_partitions_do_subprobe(pr,
-					blkid_partlist_get_partition(ls, i),
-					dos_nested[n].id) == -1)
-				goto err;
-			break;
+			for (n = 0; n < ARRAY_SIZE(dos_nested); n++) {
+				if (dos_nested[n].type != p->sys_type)
+					continue;
+
+				if (blkid_partitions_do_subprobe(pr,
+						blkid_partlist_get_partition(ls, i),
+						dos_nested[n].id) == -1)
+					goto err;
+				break;
+			}
 		}
 	}
-
 	return 0;
 
 nothing:

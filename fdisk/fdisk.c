@@ -25,6 +25,7 @@
 #include "nls.h"
 #include "blkdev.h"
 #include "common.h"
+#include "mbsalign.h"
 #include "fdisk.h"
 #include "wholedisk.h"
 
@@ -222,7 +223,12 @@ unsigned int	heads,
 	display_in_cyl_units = 1;
 
 unsigned long long total_number_of_sectors;	/* (!) 512-byte sectors */
-unsigned long io_size, alignment_offset;
+unsigned long grain = DEFAULT_SECTOR_SIZE,
+	      io_size = DEFAULT_SECTOR_SIZE,
+	      min_io_size = DEFAULT_SECTOR_SIZE,
+	      phy_sector_size = DEFAULT_SECTOR_SIZE,
+	      alignment_offset;
+int has_topology;
 
 #define dos_label (!sun_label && !sgi_label && !aix_label && !mac_label && !osf_label)
 int	sun_label = 0;			/* looking at sun disklabel */
@@ -237,6 +243,7 @@ jmp_buf listingbuf;
 void fatal(enum failure why) {
 	char	error[LINE_LENGTH],
 		*message = error;
+	int	rc = EXIT_FAILURE;
 
 	if (listing) {
 		close(fd);
@@ -244,25 +251,23 @@ void fatal(enum failure why) {
 	}
 
 	switch (why) {
+		case help:
+			rc = EXIT_SUCCESS;
 		case usage: message = _(
-"Usage: fdisk [-b SSZ] [-u] DISK     Change partition table\n"
-"       fdisk -l [-b SSZ] [-u] DISK  List partition table(s)\n"
-"       fdisk -s PARTITION           Give partition size(s) in blocks\n"
-"       fdisk -v                     Give fdisk version\n"
-"Here DISK is something like /dev/hdb or /dev/sda\n"
-"and PARTITION is something like /dev/hda7\n"
-"-u: give Start and End in sector (instead of cylinder) units\n"
-"-b 2048: (for certain MO disks) use 2048-byte sectors\n");
-			break;
-		case usage2:
-		  /* msg in cases where fdisk used to probe */
-			message = _(
-"Usage: fdisk [-l] [-b SSZ] [-u] device\n"
-"E.g.: fdisk /dev/hda  (for the first IDE disk)\n"
-"  or: fdisk /dev/sdc  (for the third SCSI disk)\n"
-"  or: fdisk /dev/eda  (for the first PS/2 ESDI drive)\n"
-"  or: fdisk /dev/rd/c0d0  or: fdisk /dev/ida/c0d0  (for RAID devices)\n"
-"  ...\n");
+"Usage:\n"
+" fdisk [options] <disk>    change partition table\n"
+" fdisk [options] -l <disk> list partition table(s)\n"
+" fdisk -s <partition>      give partition size(s) in blocks\n"
+"\nOptions:\n"
+" -b <size>                 sector size (512, 1024, 2048 or 4096)\n"
+" -c                        switch off DOS-compatible mode\n"
+" -h                        print help\n"
+" -u <size>                 give sizes in sectors instead of cylinders\n"
+" -v                        print version\n"
+" -C <number>               specify the number of cylinders\n"
+" -H <number>               specify the number of heads\n"
+" -S <number>               specify the number of sectors per track\n"
+"\n");
 			break;
 		case unable_to_open:
 			snprintf(error, sizeof(error),
@@ -294,7 +299,7 @@ void fatal(enum failure why) {
 
 	fputc('\n', stderr);
 	fputs(message, stderr);
-	exit(1);
+	exit(rc);
 }
 
 static void
@@ -564,9 +569,19 @@ void list_types(struct systypes *sys)
 	i = done = 0;
 
 	do {
-		printf("%c%2x  %-15.15s", i ? ' ' : '\n',
-		        sys[next].type, _(sys[next].name));
- 		next = last[i++] + done;
+		#define NAME_WIDTH 15
+		char name[NAME_WIDTH * MB_LEN_MAX];
+		size_t width = NAME_WIDTH;
+
+		printf("%c%2x  ", i ? ' ' : '\n', sys[next].type);
+		size_t ret = mbsalign(_(sys[next].name), name, sizeof(name),
+				      &width, MBS_ALIGN_LEFT, 0);
+		if (ret == (size_t)-1 || ret >= sizeof(name))
+			printf("%-15.15s", _(sys[next].name));
+		else
+			fputs(name, stdout);
+
+		next = last[i++] + done;
 		if (i > 3 || next >= last[i]) {
 			i = 0;
 			next = ++done;
@@ -637,17 +652,15 @@ test_c(char **m, char *mesg) {
 	return val;
 }
 
-#define alignment_required	(io_size != sector_size)
+#define alignment_required	(grain != sector_size)
 
 static int
 lba_is_aligned(unsigned long long lba)
 {
-	unsigned long long bytes, phy_sectors;
+	unsigned int granularity = max(phy_sector_size, min_io_size);
+	unsigned long long offset = (lba << 9) & (granularity - 1);
 
-	bytes = lba * sector_size;
-	phy_sectors = bytes / io_size;
-
-	return (alignment_offset + (phy_sectors * io_size) == bytes);
+	return !((granularity + alignment_offset - offset) & (granularity - 1));
 }
 
 #define ALIGN_UP	1
@@ -657,39 +670,52 @@ lba_is_aligned(unsigned long long lba)
 static unsigned long long
 align_lba(unsigned long long lba, int direction)
 {
-	unsigned long long sects_in_phy, res;
+	unsigned long long res;
 
 	if (lba_is_aligned(lba))
-		return lba;
+		res = lba;
+	else {
+		unsigned long long sects_in_phy = grain / sector_size;
 
-	sects_in_phy = io_size / sector_size;
+		if (lba < sector_offset)
+			res = sector_offset;
 
-	if (lba < sects_in_phy)
-		/* align to the first physical sector */
-		res = sects_in_phy;
+		else if (direction == ALIGN_UP)
+			res = ((lba + sects_in_phy) / sects_in_phy) * sects_in_phy;
 
-	else if (direction == ALIGN_UP)
-		res = ((lba + sects_in_phy) / sects_in_phy) * sects_in_phy;
+		else if (direction == ALIGN_DOWN)
+			res = (lba / sects_in_phy) * sects_in_phy;
 
-	else if (direction == ALIGN_DOWN)
-		res = (lba / sects_in_phy) * sects_in_phy;
+		else /* ALIGN_NEAREST */
+			res = ((lba + sects_in_phy / 2) / sects_in_phy) * sects_in_phy;
 
-	else /* ALIGN_NEAREST */
-		res = ((lba + sects_in_phy/2) / sects_in_phy) * sects_in_phy;
+		if (alignment_offset && !lba_is_aligned(res) &&
+		    res > alignment_offset / sector_size) {
+			/*
+			 * apply alignment_offset
+			 *
+			 * On disk with alignment compensation physical blocks starts
+			 * at LBA < 0 (usually LBA -1). It means we have to move LBA
+			 * according the offset to be on the physical boundary.
+			 */
+			/* fprintf(stderr, "LBA: %llu apply alignment_offset\n", res); */
+			res -= (max(phy_sector_size, min_io_size) -
+					alignment_offset) / sector_size;
 
-	if (alignment_offset)
-		/*
-		 * apply alignment_offset
-		 *
-		 * On disk with alignment compensation physical blocks start
-		 * at LBA < 0 (usually LBA -1). It means we have to move LBA
-		 * according the offset to be on the physical boundary.
-		 */
-		res -= (io_size - alignment_offset) / sector_size;
+			if (direction == ALIGN_UP && res < lba)
+				res += sects_in_phy;
+		}
+	}
 
-	/* fprintf(stderr, "LBA %llu -align-> %llu (%s)\n", lba, res,
-	 *			lba_is_aligned(res) ? "OK" : "FALSE");
-	 */
+	/***
+	 fprintf(stderr, "LBA %llu (%s) --align-(%s)--> %llu (%s)\n",
+				lba,
+				lba_is_aligned(lba) ? "OK" : "FALSE",
+				direction == ALIGN_UP ?   "UP     " :
+				direction == ALIGN_DOWN ? "DOWN   " : "NEAREST",
+				res,
+				lba_is_aligned(res) ? "OK" : "FALSE");
+	***/
 	return res;
 }
 
@@ -742,19 +768,6 @@ void update_units(void)
 }
 
 static void
-warn_cylinders(void) {
-	if (dos_label && cylinders > 1024 && !nowarn)
-		fprintf(stderr, _("\n"
-"The number of cylinders for this disk is set to %d.\n"
-"There is nothing wrong with that, but this is larger than 1024,\n"
-"and could in certain setups cause problems with:\n"
-"1) software that runs at boot time (e.g., old versions of LILO)\n"
-"2) booting and partitioning software from other OSs\n"
-"   (e.g., DOS FDISK, OS/2 FDISK)\n"),
-			cylinders);
-}
-
-static void
 warn_limits(void) {
 	if (total_number_of_sectors > UINT_MAX && !nowarn) {
 		int giga = (total_number_of_sectors << 9) / 1000000000;
@@ -774,28 +787,30 @@ warn_limits(void) {
 
 static void
 warn_alignment(void) {
-	if (nowarn || !alignment_required)
+	if (nowarn)
 		return;
 
-	fprintf(stderr, _("\n"
+	if (sector_size != phy_sector_size)
+		fprintf(stderr, _("\n"
 "The device presents a logical sector size that is smaller than\n"
-"the optimal I/O size (often physical sector size). Aligning to a optimal\n"
-"I/O size boundary is recommended, or performance may be impacted.\n\n"));
+"the physical sector size. Aligning to a physical sector (or optimal\n"
+"I/O) size boundary is recommended, or performance may be impacted.\n"));
 
-	/*
-	 * Print warning when sector_offset is not aligned for DOS mode
-	 */
-	if (alignment_offset == 0 && dos_compatible_flag &&
-	    !lba_is_aligned(sector_offset))
+	if (dos_compatible_flag) {
+		fprintf(stderr, _("\n"
+"WARNING: DOS-compatible mode is deprecated. It's strongly recommended to\n"
+"         switch off the mode (command 'c')"));
 
-		fprintf(stderr, _(
-"WARNING: The device does not provide compensation (alignment_offset)\n"
-"for DOS-compatible partitioning, but DOS-compatible mode is enabled.\n"
-"Use command 'c' to switch-off DOS mode.\n\n"));
+		if (display_in_cyl_units)
+			fprintf(stderr, _(" and change display units to\n"
+"         sectors (command 'u').\n"));
+		else
+			fprintf(stderr, ".\n");
 
-	if (display_in_cyl_units)
-		fprintf(stderr, _(
-"It's recommended to change display units to sectors (command 'u').\n\n"));
+	 } else if (display_in_cyl_units)
+		fprintf(stderr, _("\n"
+"WARNING: cylinders as display units are deprecated. Use command 'u' to\n"
+"         change units to sectors.\n"));
 
 }
 
@@ -961,29 +976,52 @@ get_topology(int fd) {
 #ifdef HAVE_LIBBLKID_INTERNAL
 	blkid_probe pr;
 
-	if (user_set_sector_size)
-		return;
 	pr = blkid_new_probe();
 	if (pr && blkid_probe_set_device(pr, fd, 0, 0) == 0) {
 		blkid_topology tp = blkid_probe_get_topology(pr);
 
 		if (tp) {
+			min_io_size = blkid_topology_get_minimum_io_size(tp);
 			io_size = blkid_topology_get_optimal_io_size(tp);
-			if (!io_size)
-				io_size = blkid_topology_get_minimum_io_size(tp);
+			phy_sector_size = blkid_topology_get_physical_sector_size(tp);
 			alignment_offset = blkid_topology_get_alignment_offset(tp);
+
+			/* We assume that the device provides topology info if
+			 * optimal_io_size is set or alignment_offset is set or
+			 * minimum_io_size is not power of 2.
+			 *
+			 * See also update_sector_offset().
+			 */
+			if (io_size || alignment_offset ||
+			    (min_io_size & (min_io_size - 1)))
+				has_topology = 1;
+			if (!io_size)
+				/* optimal IO is optional, default to minimum IO */
+				io_size = min_io_size;
 		}
 	}
 	blkid_free_probe(pr);
 #endif
 
 	if (user_set_sector_size)
-		;
-	else if (blkdev_get_sector_size(fd, &arg) == 0)
+		/* fdisk since 2.17 differentiate between logical and physical
+		 * sectors size. For backward compatibility the
+		 *    fdisk -b <sectorsize>
+		 * changes both, logical and physical sector size.
+		 */
+		phy_sector_size = sector_size;
+
+	else if (blkdev_get_sector_size(fd, &arg) == 0) {
 		sector_size = arg;
 
+		if (!phy_sector_size)
+			phy_sector_size = sector_size;
+	}
+
+	if (!min_io_size)
+		min_io_size = phy_sector_size;
 	if (!io_size)
-		io_size = sector_size;
+		io_size = min_io_size;
 
 	if (sector_size != DEFAULT_SECTOR_SIZE)
 		printf(_("Note: sector size is %d (not %d)\n"),
@@ -1041,24 +1079,47 @@ get_partition_table_geometry(void) {
 void
 update_sector_offset(void)
 {
-	if (dos_compatible_flag) {
-		/* usually 63 sectors for classic geometry */
-		sector_offset = sectors;
+	grain = io_size;
 
-		/* On the disks with alignment_offset the default geo.sectors
-		 * has to be aligned to physical block boundary. Check it!
-		 */
-		if (sectors && alignment_offset && !lba_is_aligned(sectors))
-			fprintf(stderr, _(
-		"\nWARNING: the device provides alignment_offset, but the offset does not\n"
-		"match with device geometry.\n\n"));
-	} else {
+	if (dos_compatible_flag)
+		sector_offset = sectors;	/* usually 63 sectors */
+	else {
 		/*
-		 * Align the begin of the first partition to the physical block
+		 * Align the begin of partitions to:
+		 *
+		 * a) topology
+		 *  a2) alignment offset
+		 *  a1) or physical sector (minimal_io_size, aka "grain")
+		 *
+		 * b) or default to 1MiB (2048 sectrors, Windows Vista default)
+		 *
+		 * c) or for very small devices use 1 phy.sector
 		 */
-		unsigned long long  x = io_size / sector_size;
+		unsigned long long x = 0;
 
-		sector_offset = align_lba(x, ALIGN_UP);
+		if (has_topology) {
+			if (alignment_offset)
+				x = alignment_offset;
+			else if (io_size > 2048 * 512)
+				x = io_size;
+		}
+		/* default to 1MiB */
+		if (!x)
+			x = 2048 * 512;
+
+		sector_offset = x / sector_size;
+
+		/* don't use huge offset on small devices */
+		if (total_number_of_sectors <= sector_offset * 4)
+			sector_offset = phy_sector_size / sector_size;
+
+		/* use 1MiB grain always when possible */
+		if (grain < 2048 * 512)
+			grain = 2048 * 512;
+
+		/* don't use huge grain on small devices */
+		if (total_number_of_sectors <= (grain * 4 / sector_size))
+			grain = phy_sector_size;
 	}
 }
 
@@ -1249,7 +1310,6 @@ got_dos_table:
 		}
 	}
 
-	warn_cylinders();
 	warn_geometry();
 	warn_limits();
 	warn_alignment();
@@ -1462,11 +1522,11 @@ read_int(unsigned int low, unsigned int dflt, unsigned int high,
 
 
 int
-get_partition(int warn, int max) {
+get_partition_dflt(int warn, int max, int dflt) {
 	struct pte *pe;
 	int i;
 
-	i = read_int(1, 0, max, 0, _("Partition number")) - 1;
+	i = read_int(1, dflt, max, 0, _("Partition number")) - 1;
 	pe = &ptes[i];
 
 	if (warn) {
@@ -1481,6 +1541,11 @@ get_partition(int warn, int max) {
 				i+1);
 	}
 	return i;
+}
+
+int
+get_partition(int warn, int max) {
+	return get_partition_dflt(warn, max, 0);
 }
 
 static int
@@ -1513,14 +1578,17 @@ static int
 get_nonexisting_partition(int warn, int max) {
 	int pno = -1;
 	int i;
+	int dflt = 0;
 
 	for (i = 0; i < max; i++) {
 		struct pte *pe = &ptes[i];
 		struct partition *p = pe->part_table;
 
 		if (p && is_cleared_partition(p)) {
-			if (pno >= 0)
+			if (pno >= 0) {
+				dflt = pno + 1;
 				goto not_unique;
+			}
 			pno = i;
 		}
 	}
@@ -1532,7 +1600,7 @@ get_nonexisting_partition(int warn, int max) {
 	return -1;
 
  not_unique:
-	return get_partition(warn, max);
+	return get_partition_dflt(warn, max, dflt);
 }
 
 const char *
@@ -1751,6 +1819,9 @@ static void check_consistency(struct partition *p, int partition) {
 	unsigned int lbc, lbh, lbs;	/* logical beginning c, h, s */
 	unsigned int lec, leh, les;	/* logical ending c, h, s */
 
+	if (!dos_compatible_flag)
+		return;
+
 	if (!heads || !sectors || (partition >= 4))
 		return;		/* do not check extended partitions */
 
@@ -1809,10 +1880,10 @@ static void check_consistency(struct partition *p, int partition) {
 }
 
 static void
-check_alignment(struct partition *p, int partition)
+check_alignment(unsigned long long lba, int partition)
 {
-	if (!lba_is_aligned(get_start_sect(p)))
-		printf(_("Partition %i does not start on optimal I/O size boundary.\n"),
+	if (!lba_is_aligned(lba))
+		printf(_("Partition %i does not start on physical sector boundary.\n"),
 			partition + 1);
 }
 
@@ -1839,8 +1910,10 @@ list_disk_geometry(void) {
 	       str_units(PLURAL),
 	       units_per_sector, sector_size, units_per_sector * sector_size);
 
-	printf(_("Sector size (logical / optimal IO): %u bytes / %lu bytes\n"),
-				sector_size, io_size);
+	printf(_("Sector size (logical/physical): %u bytes / %lu bytes\n"),
+				sector_size, phy_sector_size);
+	printf(_("I/O size (minimum/optimal): %lu bytes / %lu bytes\n"),
+				min_io_size, io_size);
 	if (alignment_offset)
 		printf(_("Alignment offset: %lu bytes\n"), alignment_offset);
 	if (dos_label)
@@ -2051,7 +2124,7 @@ list_table(int xtra) {
 /* type name */		(type = partition_type(p->sys_ind)) ?
 			type : _("Unknown"));
 			check_consistency(p, i);
-			check_alignment(p, i);
+			check_alignment(get_partition_start(pe), i);
 		}
 	}
 
@@ -2086,7 +2159,7 @@ x_list_table(int extend) {
 				(unsigned long) get_nr_sects(p), p->sys_ind);
 			if (p->sys_ind) {
 				check_consistency(p, i);
-				check_alignment(p, i);
+				check_alignment(get_partition_start(pe), i);
 			}
 		}
 	}
@@ -2164,7 +2237,7 @@ verify(void) {
 		p = pe->part_table;
 		if (p->sys_ind && !IS_EXTENDED (p->sys_ind)) {
 			check_consistency(p, i);
-			check_alignment(p, i);
+			check_alignment(get_partition_start(pe), i);
 			if (get_partition_start(pe) < first[i])
 				printf(_("Warning: bad start-of-data in "
 					"partition %d\n"), i + 1);
@@ -2273,17 +2346,16 @@ add_partition(int n, int sys) {
 
 	snprintf(mesg, sizeof(mesg), _("First %s"), str_units(SINGULAR));
 	do {
-		unsigned long long dflt, dflt_tmp;
+		unsigned long long dflt, aligned;
 
 		temp = start;
-
 		dflt = start = get_unused_start(n, start, first, last);
 
 		/* the default sector should be aligned and unused */
 		do {
-			dflt_tmp = align_lba_in_range(dflt, start, limit);
-			dflt = get_unused_start(n, dflt_tmp, first, last);
-		} while (dflt != dflt_tmp && dflt > dflt_tmp && dflt < limit);
+			aligned = align_lba_in_range(dflt, dflt, limit);
+			dflt = get_unused_start(n, aligned, first, last);
+		} while (dflt != aligned && dflt > aligned && dflt < limit);
 
 		if (dflt >= limit)
 			dflt = start;
@@ -2590,7 +2662,8 @@ static void
 move_begin(int i) {
 	struct pte *pe = &ptes[i];
 	struct partition *p = pe->part_table;
-	unsigned int new, first;
+	unsigned int new, free_start, curr_start, last;
+	int x;
 
 	if (warn_geometry())
 		return;
@@ -2598,13 +2671,37 @@ move_begin(int i) {
 		printf(_("Partition %d has no data area\n"), i + 1);
 		return;
 	}
-	first = get_partition_start(pe);
-	new = read_int(first, first, first + get_nr_sects(p) - 1, first,
+
+	/* the default start is at the second sector of the disk or at the
+	 * second sector of the extended partition
+	 */
+	free_start = pe->offset ? pe->offset + 1 : 1;
+
+	curr_start = get_partition_start(pe);
+
+	/* look for a free space before the current start of the partition */
+	for (x = 0; x < partitions; x++) {
+		unsigned int end;
+		struct pte *prev_pe = &ptes[x];
+		struct partition *prev_p = prev_pe->part_table;
+
+		if (!prev_p)
+			continue;
+		end = get_partition_start(prev_pe) + get_nr_sects(prev_p);
+
+		if (!is_cleared_partition(prev_p) &&
+		    end > free_start && end <= curr_start)
+			free_start = end;
+	}
+
+	last = get_partition_start(pe) + get_nr_sects(p) - 1;
+
+	new = read_int(free_start, curr_start, last, free_start,
 		       _("New beginning of data")) - pe->offset;
 
 	if (new != get_nr_sects(p)) {
-		first = get_nr_sects(p) + get_start_sect(p) - new;
-		set_nr_sects(p, first);
+		unsigned int sects = get_nr_sects(p) + get_start_sect(p) - new;
+		set_nr_sects(p, sects);
 		set_start_sect(p, new);
 		pe->changed = 1;
 	}
@@ -2632,8 +2729,6 @@ xselect(void) {
 					 _("Number of cylinders"));
 			if (sun_label)
 				sun_set_ncyl(cylinders);
-			if (dos_label)
-				warn_cylinders();
 			break;
 		case 'd':
 			print_raw();
@@ -2830,17 +2925,7 @@ main(int argc, char **argv) {
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	/*
-	 * Calls:
-	 *  fdisk -v
-	 *  fdisk -l [-b sectorsize] [-u] device ...
-	 *  fdisk -s [partition] ...
-	 *  fdisk [-b sectorsize] [-u] device
-	 *
-	 * Options -C, -H, -S set the geometry.
-	 *
-	 */
-	while ((c = getopt(argc, argv, "b:C:H:lsS:uvV")) != -1) {
+	while ((c = getopt(argc, argv, "b:cC:hH:lsS:uvV")) != -1) {
 		switch (c) {
 		case 'b':
 			/* Ugly: this sector size is really per device,
@@ -2856,6 +2941,12 @@ main(int argc, char **argv) {
 			break;
 		case 'C':
 			user_cylinders = atoi(optarg);
+			break;
+		case 'c':
+			dos_compatible_flag = 0;
+			break;
+		case 'h':
+			fatal(help);
 			break;
 		case 'H':
 			user_heads = atoi(optarg);
@@ -2942,10 +3033,8 @@ main(int argc, char **argv) {
 
 	if (argc-optind == 1)
 		disk_device = argv[optind];
-	else if (argc-optind != 0)
-		fatal(usage);
 	else
-		fatal(usage2);
+		fatal(usage);
 
 	gpt_warning(disk_device);
 	get_boot(fdisk);

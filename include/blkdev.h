@@ -8,9 +8,6 @@
 
 #define DEFAULT_SECTOR_SIZE       512
 
-/* open() retries when errno is ENOMEDIUM */
-#define CRDOM_NOMEDIUM_RETRIES    5
-
 #if !defined(BLKROSET) && defined(__linux__)
 
 #define BLKROSET   _IO(0x12,93)	/* set device read-only (0 = read-write) */
@@ -34,7 +31,11 @@
 #define BLKBSZSET  _IOW(0x12,113,size_t)
 #define BLKGETSIZE64 _IOR(0x12,114,size_t) /* return device size in bytes (u64 *arg) */
 
-#endif /* BLKROSET */
+#endif /* BLKROSET && __linux__ */
+
+#ifdef APPLE_DARWIN
+#define BLKGETSIZE DKIOCGETBLOCKCOUNT32
+#endif
 
 /* block device topology ioctls, introduced in 2.6.32 */
 #ifndef BLKIOMIN
