@@ -359,6 +359,21 @@ changed by a separate remount command, for example:
 .I newdir
 .RE
 
+Note that behavior of the remount operation depends on the /etc/mtab file. The
+first command stores the 'bind' flag to the /etc/mtab file and the second
+command reads the flag from the file.  If you have a system without the
+/etc/mtab file or if you explicitly define source and target for the remount
+command (then mount(8) does not read /etc/mtab), then you have to use bind flag
+(or option) for the remount command too. For example:
+
+.RS
+.br
+.B mount --bind
+.I olddir newdir
+.br
+.B mount -o remount,ro,bind
+.I olddir newdir
+.RE
 .RE
 
 .B The move operation.
@@ -387,7 +402,7 @@ private, slave or unbindable. A shared mount provides ability to create mirrors
 of that mount such that mounts and umounts within any of the mirrors propagate
 to the other mirror. A slave mount receives propagation from its master, but
 any not vice-versa.  A private mount carries no propagation abilities.  A
-unbindable mount is a private mount which cannot cloned through a bind
+unbindable mount is a private mount which cannot be cloned through a bind
 operation. Detailed semantics is documented in Documentation/sharedsubtree.txt
 file in the kernel source tree.
 
@@ -1391,7 +1406,7 @@ small amount of time to see if any other transactions can piggyback on the
 synchronous write. The algorithm used is designed to automatically tune for
 the speed of the disk, by measuring the amount of time (on average) that it
 takes to finish committing a transaction. Call this time the "commit time".
-If the time that the transactoin has been running is less than the commit time,
+If the time that the transaction has been running is less than the commit time,
 ext4 will try sleeping for the commit time to see if other operations will join
 the transaction. The commit time is capped by the max_batch_time, which
 defaults to 15000us (15ms). This optimization can be turned off entirely by
@@ -1423,7 +1438,7 @@ If auto_da_alloc is enabled, ext4 will detect the replace-via-rename and
 replace-via-truncate patterns and force that any delayed allocation blocks are
 allocated such that at the next journal commit, in the default data=ordered
 mode, the data blocks of the new file are forced to disk before the rename()
-operation is commited.  This provides roughly the same level of guarantees as
+operation is committed.  This provides roughly the same level of guarantees as
 ext3, and avoids the "zero-length" problem that can happen when a system
 crashes before the delayed allocation blocks are forced to disk.
 
@@ -2425,13 +2440,7 @@ was specified.
 .BI logbufs= value
 Set the number of in-memory log buffers.  Valid numbers range
 from 2-8 inclusive.
-The default value is 8 buffers for filesystems with a
-blocksize of 64KiB, 4 buffers for filesystems with a blocksize
-of 32KiB, 3 buffers for filesystems with a blocksize of 16KiB
-and 2 buffers for all other configurations.  Increasing the
-number of buffers may increase performance on some workloads
-at the cost of the memory used for the additional log buffers
-and their associated control structures.
+The default value is 8 buffers for any recent kernel.
 .TP
 .BI logbsize= value
 Set the size of each in-memory log buffer.
@@ -2439,8 +2448,7 @@ Size may be specified in bytes, or in kilobytes with a "k" suffix.
 Valid sizes for version 1 and version 2 logs are 16384 (16k) and
 32768 (32k).  Valid sizes for version 2 logs also include
 65536 (64k), 131072 (128k) and 262144 (256k).
-The default value for machines with more than 32MiB of memory
-is 32768, machines with less memory use 16384 by default.
+The default value for any recent kernel is 32768.
 .TP
 \fBlogdev=\fP\fIdevice\fP and \fBrtdev=\fP\fIdevice\fP
 Use an external log (metadata journal) and/or real-time device.

@@ -1,11 +1,11 @@
-AC_INIT(util-linux-ng, 2.17, kzak@redhat.com)
+AC_INIT(util-linux-ng, 2.18, kzak@redhat.com)
 
 AC_PREREQ(2.60)
 
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE([check-news -Wall foreign 1.9 dist-bzip2])
+AM_INIT_AUTOMAKE([check-news -Wall foreign 1.10 dist-bzip2])
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])],
                             [AC_SUBST([AM_DEFAULT_VERBOSITY], [1])])
@@ -22,7 +22,7 @@ PACKAGE_VERSION_RELEASE=0
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="08-Jan-2010"
+LIBBLKID_DATE="30-Jun-2010"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -34,6 +34,13 @@ LIBUUID_LT_MAJOR=1
 LIBUUID_LT_MINOR=3
 LIBUUID_LT_MICRO=0
 LIBUUID_VERSION_INFO=`expr $LIBUUID_LT_MAJOR + $LIBUUID_LT_MINOR`:$LIBUUID_LT_MICRO:$LIBUUID_LT_MINOR
+
+dnl libmount version
+LIBMOUNT_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
+LIBMOUNT_LT_MAJOR=1
+LIBMOUNT_LT_MINOR=1
+LIBMOUNT_LT_MICRO=0
+LIBMOUNT_VERSION_INFO=`expr $LIBMOUNT_LT_MAJOR + $LIBMOUNT_LT_MINOR`:$LIBMOUNT_LT_MICRO:$LIBMOUNT_LT_MINOR
 
 # Check whether exec_prefix=/usr:
 case $exec_prefix:$prefix in
@@ -181,6 +188,9 @@ AC_CHECK_FUNCS(
 	srandom \
 	setresgid \
 	setresuid \
+	strndup \
+	strnlen \
+	strnchr \
 	inotify_init \
 	prctl \
 	posix_fadvise \
@@ -390,6 +400,23 @@ AM_CONDITIONAL(HAVE_BLKID, test "x$have_blkid" = xyes)
 
 AC_ARG_VAR([BLKID_LIBS_STATIC], [-l options for linking statically with blkid])
 
+
+AC_ARG_ENABLE([libmount],
+  AS_HELP_STRING([--disable-libmount], [do not build libmount]),
+  [], enable_libmount=yes
+)
+
+case "$enable_libblkid:$enable_libmount" in
+no:yes)
+  AC_MSG_ERROR([cannot enable libmount when libblkid is disabled]) ;;
+esac
+
+AC_SUBST([LIBMOUNT_VERSION])
+AC_SUBST([LIBMOUNT_VERSION_INFO])
+AC_DEFINE_UNQUOTED(LIBMOUNT_VERSION, "$LIBMOUNT_VERSION", [libmount version string])
+AM_CONDITIONAL(BUILD_LIBMOUNT, test "x$enable_libmount" = xyes)
+
+
 UTIL_CHECK_LIB(util, openpty)
 UTIL_CHECK_LIB(termcap, tgetnum)
 
@@ -415,6 +442,7 @@ if test "x$with_ncurses" != xno; then
     if test "x$with_ncurses" = xauto; then
       UTIL_CHECK_LIB(ncursesw, initscr, ncurses)
       if test "x$have_ncurses" = xyes; then
+        AC_CHECK_HEADERS([ncursesw/ncurses.h])
         NCURSES_LIBS="-lncursesw"
       fi
     fi
@@ -443,7 +471,15 @@ AM_CONDITIONAL(HAVE_TINFO, test "x$have_tinfo" = xyes)
 
 use_slang=no
 if test "x$with_slang" = xyes; then
-  AC_CHECK_HEADERS([slcurses.h slang/slcurses.h], [use_slang=yes])
+  AC_CHECK_HEADERS([slang.h slang/slang.h])
+  AC_CHECK_HEADERS([slcurses.h slang/slcurses.h],
+                   [use_slang=yes], [], [
+#ifdef HAVE_SLANG_H
+#include <slang.h>
+#elif defined(HAVE_SLANG_SLANG_H)
+#include <slang/slang.h>
+#endif
+])
   if test "x$use_slang" = xno; then
     AC_MSG_ERROR([slang selected but slcurses.h not found])
   fi
@@ -682,6 +718,17 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
 ])
 
 
+AC_CHECK_TYPES([cpu_set_t], [have_cpu_set_t=yes], [], [[
+#include <sched.h>
+]])
+
+AM_CONDITIONAL(HAVE_CPU_SET_T, [test "x$have_cpu_set_t" = xyes])
+
+AC_CHECK_DECLS([CPU_ALLOC], [], [], [[
+#include <sched.h>
+]])
+
+
 dnl UTIL_SET_ARCH(ARCHNAME, PATTERN)
 dnl ---------------------------------
 AC_DEFUN([UTIL_SET_ARCH], [
@@ -876,13 +923,6 @@ AC_ARG_ENABLE([raw],
   [], enable_raw=no
 )
 AM_CONDITIONAL(BUILD_RAW, test "x$enable_raw" = xyes)
-
-
-AC_ARG_ENABLE([rdev],
-  AS_HELP_STRING([--enable-rdev], [build rdev on i386]),
-  [], enable_rdev=no
-)
-AM_CONDITIONAL(BUILD_RDEV, test "x$enable_rdev" = xyes)
 
 
 AC_ARG_ENABLE([rename],
@@ -1118,11 +1158,16 @@ shlibs/blkid/src/superblocks/Makefile
 shlibs/blkid/src/topology/Makefile
 shlibs/blkid/src/partitions/Makefile
 shlibs/blkid/samples/Makefile
+shlibs/mount/mount.pc
+shlibs/mount/Makefile
+shlibs/mount/src/Makefile
+shlibs/mount/src/mount.h
+shlibs/mount/docs/Makefile
+shlibs/mount/docs/version.xml
 shlibs/uuid/uuid.pc
 shlibs/uuid/Makefile
 shlibs/uuid/man/Makefile
 shlibs/uuid/src/Makefile
-shlibs/Makefile
 sys-utils/Makefile
 tests/commands.sh
 tests/helpers/Makefile

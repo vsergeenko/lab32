@@ -326,11 +326,11 @@ append_opt(char *s, const char *opt, const char *val)
 }
 
 static char *
-append_numopt(char *s, const char *opt, long num)
+append_numopt(char *s, const char *opt, unsigned int num)
 {
 	char buf[32];
 
-	snprintf(buf, sizeof(buf), "%ld", num);
+	snprintf(buf, sizeof(buf), "%u", num);
 	return append_opt(s, opt, buf);
 }
 
@@ -1139,8 +1139,9 @@ loop_check(const char **spec, const char **type, int *flags,
    * file as a mount(2) source argument. A filesystem that is able to mount
    * regular files could be implemented.
    */
-  if (!*loop && (!*type || strcmp(*type, "auto") == 0 ||
-			   fsprobe_known_fstype(*type))) {
+  if (!*loop && !(*flags & (MS_BIND | MS_MOVE | MS_PROPAGATION)) &&
+      (!*type || strcmp(*type, "auto") == 0 || fsprobe_known_fstype(*type))) {
+
     struct stat st;
     if (stat(*loopfile, &st) == 0)
       *loop = S_ISREG(st.st_mode);
@@ -1152,7 +1153,8 @@ loop_check(const char **spec, const char **type, int *flags,
       if (verbose)
 	printf(_("mount: skipping the setup of a loop device\n"));
     } else {
-      int loop_opts = SETLOOP_AUTOCLEAR; /* always attempt autoclear */
+      /* use autoclear loopdev on system without regular mtab only */
+      int loop_opts = mtab_is_writable() ? 0 : SETLOOP_AUTOCLEAR;
       int res;
 
       if (*flags & MS_RDONLY)
@@ -1440,7 +1442,7 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
   }
 
   /* Kernel allows to use MS_RDONLY for bind mounts, but the read-only request
-   * could be silently ignored. Check it to avoid 'ro' in ntab and 'rw' in
+   * could be silently ignored. Check it to avoid 'ro' in mtab and 'rw' in
    * /proc/mounts.
    */
   if (!fake && mnt5_res == 0 &&
@@ -1450,17 +1452,31 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
       flags &= ~MS_RDONLY;
   }
 
+  /* Kernel can silently add MS_RDONLY flag when mounting file system that
+   * does not have write support. Check this to avoid 'ro' in /proc/mounts
+   * and 'rw' in mtab.
+   */
+  if (!fake && mnt5_res == 0 &&
+      !(flags & (MS_RDONLY | MS_PROPAGATION | MS_MOVE)) &&
+      is_readonly(node)) {
+
+      printf(_("mount: warning: %s seems to be mounted read-only.\n"), node);
+      flags |= MS_RDONLY;
+  }
+
   if (fake || mnt5_res == 0) {
       /* Mount succeeded, report this (if verbose) and write mtab entry.  */
 
       if (!(mounttype & MS_PROPAGATION)) {
+	      char *mtab_opts = fix_opts_string (flags & ~MS_NOMTAB, extra_opts, user);
 	      update_mtab_entry(loop ? loopfile : spec,
 			node,
 			types ? types : "unknown",
-			fix_opts_string (flags & ~MS_NOMTAB, extra_opts, user),
+			mtab_opts,
 			flags,
 			freq,
 			pass);
+	      free (mtab_opts);
       }
 
       block_signals (SIG_UNBLOCK);
@@ -1731,12 +1747,12 @@ usersubst(const char *opts) {
 
 	s = "uid=useruid";
 	if (opts && (w = strstr(opts, s)) != NULL) {
-		sprintf(id, "uid=%d", getuid());
+		sprintf(id, "uid=%u", getuid());
 		opts = subst_string(opts, w, strlen(s), id);
 	}
 	s = "gid=usergid";
 	if (opts && (w = strstr(opts, s)) != NULL) {
-		sprintf(id, "gid=%d", getgid());
+		sprintf(id, "gid=%u", getgid());
 		opts = subst_string(opts, w, strlen(s), id);
 	}
 	return xstrdup(opts);
@@ -1820,6 +1836,41 @@ mounted (const char *spec0, const char *node0) {
 	return ret;
 }
 
+/* returns 0 if not mounted, 1 if mounted and -1 in case of error */
+static int
+is_fstab_entry_mounted(struct mntentchn *mc, int verbose)
+{
+	struct stat st;
+
+	if (mounted(mc->m.mnt_fsname, mc->m.mnt_dir))
+		goto yes;
+
+	/* extra care for loop devices */
+	if ((strstr(mc->m.mnt_opts, "loop=") ||
+	     (stat(mc->m.mnt_fsname, &st) == 0 && S_ISREG(st.st_mode)))) {
+
+		char *p = strstr(mc->m.mnt_opts, "offset=");
+		uintmax_t offset = 0;
+
+		if (p && strtosize(p + 7, &offset) != 0) {
+			if (verbose)
+				printf(_("mount: ignore %s "
+					"(unparsable offset= option)\n"),
+					mc->m.mnt_fsname);
+			return -1;
+		}
+		if (is_mounted_same_loopfile(mc->m.mnt_dir, mc->m.mnt_fsname, offset))
+			goto yes;
+	}
+
+	return 0;
+yes:
+	if (verbose)
+		printf(_("mount: %s already mounted on %s\n"),
+			       mc->m.mnt_fsname, mc->m.mnt_dir);
+	return 1;
+}
+
 /* avoid using stat() on things we are not going to mount anyway.. */
 static int
 has_noauto (const char *opts) {
@@ -1865,16 +1916,8 @@ do_mount_all (char *types, char *options, char *test_opts) {
 		if (matching_type (mc->m.mnt_type, types)
 		    && matching_opts (mc->m.mnt_opts, test_opts)
 		    && !streq (mc->m.mnt_dir, "/")
-		    && !streq (mc->m.mnt_dir, "root")) {
-
-			if (mounted (mc->m.mnt_fsname, mc->m.mnt_dir)) {
-				if (verbose)
-					printf(_("mount: %s already mounted "
-						 "on %s\n"),
-					       mc->m.mnt_fsname,
-					       mc->m.mnt_dir);
-				continue;
-			}
+		    && !streq (mc->m.mnt_dir, "root")
+		    && !is_fstab_entry_mounted(mc, verbose)) {
 
 			mtmp = (struct mntentchn *) xmalloc(sizeof(*mtmp));
 			*mtmp = *mc;
@@ -2306,8 +2349,8 @@ main(int argc, char *argv[]) {
 		printf("mount: mtab path:  \"%s\"\n", _PATH_MOUNTED);
 		printf("mount: lock path:  \"%s\"\n", _PATH_MOUNTED_LOCK);
 		printf("mount: temp path:  \"%s\"\n", _PATH_MOUNTED_TMP);
-		printf("mount: UID:        %d\n", getuid());
-		printf("mount: eUID:       %d\n", geteuid());
+		printf("mount: UID:        %u\n", getuid());
+		printf("mount: eUID:       %u\n", geteuid());
 	}
 
 	argc -= optind;
@@ -2338,7 +2381,7 @@ main(int argc, char *argv[]) {
 			if (ruid == 0 && euid != 0)
 				/* user is root, but setuid to non-root */
 				die (EX_USAGE, _("mount: only root can do that "
-					"(effective UID is %d)"), euid);
+					"(effective UID is %u)"), euid);
 
 			die (EX_USAGE, _("mount: only root can do that"));
 		}

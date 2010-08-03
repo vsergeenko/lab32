@@ -103,6 +103,7 @@
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdarg.h>
 
@@ -542,7 +543,7 @@ unsigned char *blkid_probe_get_buffer(blkid_probe pr,
 
 static void blkid_probe_reset_buffer(blkid_probe pr)
 {
-	ssize_t	read_ct = 0, len_ct = 0;
+	uint64_t read_ct = 0, len_ct = 0;
 
 	if (!pr || list_empty(&pr->buffers))
 		return;
@@ -560,7 +561,8 @@ static void blkid_probe_reset_buffer(blkid_probe pr)
 	}
 
 	DBG(DEBUG_LOWPROBE,
-		printf("buffers summary: %jd bytes by %jd read() call(s)\n",
+		printf("buffers summary: %"PRIu64" bytes "
+			"by %"PRIu64" read() call(s)\n",
 			len_ct, read_ct));
 
 	INIT_LIST_HEAD(&pr->buffers);
@@ -650,9 +652,6 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 		pr->size -= pr->off;
 	}
 
-	DBG(DEBUG_LOWPROBE, printf("ready for low-probing, offset=%jd, size=%jd\n",
-				pr->off, pr->size));
-
 	if (pr->size <= 1440 * 1024 && !S_ISCHR(sb.st_mode))
 		pr->flags |= BLKID_TINY_DEV;
 
@@ -660,6 +659,13 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 	if (S_ISBLK(sb.st_mode) && ioctl(fd, CDROM_GET_CAPABILITY, NULL) >= 0)
 		pr->flags |= BLKID_CDROM_DEV;
 #endif
+
+	DBG(DEBUG_LOWPROBE, printf("ready for low-probing, offset=%jd, size=%jd\n",
+				pr->off, pr->size));
+	DBG(DEBUG_LOWPROBE, printf("whole-disk: %s, regfile: %s\n",
+		blkid_probe_is_wholedisk(pr) ?"YES" : "NO",
+		S_ISREG(pr->mode) ? "YES" : "NO"));
+
 	return 0;
 err:
 	DBG(DEBUG_LOWPROBE,

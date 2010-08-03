@@ -204,7 +204,7 @@ int	fd,				/* the disk */
 	ext_index,			/* the prime extended partition */
 	listing = 0,			/* no aborts for fdisk -l */
 	nowarn = 0,			/* no warnings for fdisk -l/-s */
-	dos_compatible_flag = ~0,
+	dos_compatible_flag = 0,	/* disabled by default */
 	dos_changed = 0,
 	partitions = 4;			/* maximum partition + 1 */
 
@@ -220,7 +220,7 @@ unsigned int	heads,
 	sector_factor = 1,
 	user_set_sector_size = 0,
 	units_per_sector = 1,
-	display_in_cyl_units = 1;
+	display_in_cyl_units = 0;
 
 unsigned long long total_number_of_sectors;	/* (!) 512-byte sectors */
 unsigned long grain = DEFAULT_SECTOR_SIZE,
@@ -259,14 +259,14 @@ void fatal(enum failure why) {
 " fdisk [options] -l <disk> list partition table(s)\n"
 " fdisk -s <partition>      give partition size(s) in blocks\n"
 "\nOptions:\n"
-" -b <size>                 sector size (512, 1024, 2048 or 4096)\n"
-" -c                        switch off DOS-compatible mode\n"
-" -h                        print help\n"
-" -u <size>                 give sizes in sectors instead of cylinders\n"
-" -v                        print version\n"
-" -C <number>               specify the number of cylinders\n"
-" -H <number>               specify the number of heads\n"
-" -S <number>               specify the number of sectors per track\n"
+" -b <size>             sector size (512, 1024, 2048 or 4096)\n"
+" -c[=<mode>]           compatible mode: 'dos' or 'nondos' (default)\n"
+" -h                    print this help text\n"
+" -u[=<unit>]           display units: 'cylinders' or 'sectors' (default)\n"
+" -v                    print program version\n"
+" -C <number>           specify the number of cylinders\n"
+" -H <number>           specify the number of heads\n"
+" -S <number>           specify the number of sectors per track\n"
 "\n");
 			break;
 		case unable_to_open:
@@ -764,7 +764,7 @@ void update_units(void)
 	if (display_in_cyl_units && cyl_units)
 		units_per_sector = cyl_units;
 	else
-		units_per_sector = 1; 	/* in sectors */
+		units_per_sector = 1;	/* in sectors */
 }
 
 static void
@@ -796,18 +796,12 @@ warn_alignment(void) {
 "the physical sector size. Aligning to a physical sector (or optimal\n"
 "I/O) size boundary is recommended, or performance may be impacted.\n"));
 
-	if (dos_compatible_flag) {
+	if (dos_compatible_flag)
 		fprintf(stderr, _("\n"
 "WARNING: DOS-compatible mode is deprecated. It's strongly recommended to\n"
-"         switch off the mode (command 'c')"));
+"         switch off the mode (with command 'c')."));
 
-		if (display_in_cyl_units)
-			fprintf(stderr, _(" and change display units to\n"
-"         sectors (command 'u').\n"));
-		else
-			fprintf(stderr, ".\n");
-
-	 } else if (display_in_cyl_units)
+	if (display_in_cyl_units)
 		fprintf(stderr, _("\n"
 "WARNING: cylinders as display units are deprecated. Use command 'u' to\n"
 "         change units to sectors.\n"));
@@ -1615,8 +1609,11 @@ void change_units(void)
 {
 	display_in_cyl_units = !display_in_cyl_units;
 	update_units();
-	printf(_("Changing display/entry units to %s\n"),
-		str_units(PLURAL));
+
+	if (display_in_cyl_units)
+		printf(_("Changing display/entry units to cylinders (DEPRECATED!)\n"));
+	else
+		printf(_("Changing display/entry units to sectors\n"));
 }
 
 static void
@@ -1636,7 +1633,7 @@ static void
 toggle_dos_compatibility_flag(void) {
 	dos_compatible_flag = ~dos_compatible_flag;
 	if (dos_compatible_flag)
-		printf(_("DOS Compatibility flag is set\n"));
+		printf(_("DOS Compatibility flag is set (DEPRECATED!)\n"));
 	else
 		printf(_("DOS Compatibility flag is not set\n"));
 
@@ -1804,7 +1801,7 @@ change_sysid(void) {
  * Lubkin Oct.  1991). */
 
 static void
-long2chs(ulong ls, unsigned int *c, unsigned int *h, unsigned int *s) {
+long2chs(unsigned long ls, unsigned int *c, unsigned int *h, unsigned int *s) {
 	int spc = heads * sectors;
 
 	*c = ls / spc;
@@ -2925,7 +2922,7 @@ main(int argc, char **argv) {
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	while ((c = getopt(argc, argv, "b:cC:hH:lsS:uvV")) != -1) {
+	while ((c = getopt(argc, argv, "b:c::C:hH:lsS:u::vV")) != -1) {
 		switch (c) {
 		case 'b':
 			/* Ugly: this sector size is really per device,
@@ -2943,7 +2940,12 @@ main(int argc, char **argv) {
 			user_cylinders = atoi(optarg);
 			break;
 		case 'c':
-			dos_compatible_flag = 0;
+			dos_compatible_flag = 0;	/* default */
+
+			if (optarg && !strcmp(optarg, "=dos"))
+				dos_compatible_flag = ~0;
+			else if (optarg && strcmp(optarg, "=nondos"))
+				fatal(usage);
 			break;
 		case 'h':
 			fatal(help);
@@ -2965,7 +2967,11 @@ main(int argc, char **argv) {
 			opts = 1;
 			break;
 		case 'u':
-			display_in_cyl_units = 0;
+			display_in_cyl_units = 0;		/* default */
+			if (optarg && strcmp(optarg, "=cylinders") == 0)
+				display_in_cyl_units = !display_in_cyl_units;
+			else if (optarg && strcmp(optarg, "=sectors"))
+				fatal(usage);
 			break;
 		case 'V':
 		case 'v':

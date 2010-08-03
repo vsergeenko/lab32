@@ -54,31 +54,40 @@
 
 static void show_usage(int rc)
 {
-	fprintf(stdout, _(
-	"\nchrt - manipulate real-time attributes of a process.\n"
+	FILE *out = rc == EXIT_SUCCESS ? stdout : stderr;
+
+	fprintf(out, _(
+	"\nchrt - manipulate real-time attributes of a process\n"
 	"\nSet policy:\n"
 	"  chrt [options] <policy> <priority> {<pid> | <command> [<arg> ...]}\n"
 	"\nGet policy:\n"
-	"  chrt [options] {<pid> | <command> [<arg> ...]}\n\n"
+	"  chrt [options] {<pid> | <command> [<arg> ...]}\n"));
+
+	fprintf(out, _(
 	"\nScheduling policies:\n"
 	"  -b | --batch         set policy to SCHED_BATCH\n"
 	"  -f | --fifo          set policy to SCHED_FIFO\n"
 	"  -i | --idle          set policy to SCHED_IDLE\n"
 	"  -o | --other         set policy to SCHED_OTHER\n"
-	"  -r | --rr            set policy to SCHED_RR (default)\n"
+	"  -r | --rr            set policy to SCHED_RR (default)\n"));
+
+#ifdef SCHED_RESET_ON_FORK
+	fprintf(out, _(
 	"\nScheduling flags:\n"
-	"  -R | --reset-on-fork set SCHED_RESET_ON_FORK for FIFO or RR\n"
+	"  -R | --reset-on-fork set SCHED_RESET_ON_FORK for FIFO or RR\n"));
+#endif
+	fprintf(out, _(
 	"\nOptions:\n"
 	"  -h | --help          display this help\n"
-	"  -p | --pid           operate on existing given pid\n"
 	"  -m | --max           show min and max valid priorities\n"
+	"  -p | --pid           operate on existing given pid\n"
 	"  -v | --verbose       display status information\n"
 	"  -V | --version       output version information\n\n"));
 
 	exit(rc);
 }
 
-static void show_rt_info(const char *what, pid_t pid)
+static void show_rt_info(pid_t pid, int isnew)
 {
 	struct sched_param sp;
 	int policy;
@@ -91,7 +100,11 @@ static void show_rt_info(const char *what, pid_t pid)
 	if (policy == -1)
 		err(EXIT_FAILURE, _("failed to get pid %d's policy"), pid);
 
-	printf(_("pid %d's %s scheduling policy: "), pid, what);
+	if (isnew)
+		printf(_("pid %d's new scheduling policy: "), pid);
+	else
+		printf(_("pid %d's current scheduling policy: "), pid);
+
 	switch (policy) {
 	case SCHED_OTHER:
 		printf("SCHED_OTHER\n");
@@ -99,9 +112,11 @@ static void show_rt_info(const char *what, pid_t pid)
 	case SCHED_FIFO:
 		printf("SCHED_FIFO\n");
 		break;
+#ifdef SCHED_RESET_ON_FORK
 	case SCHED_FIFO|SCHED_RESET_ON_FORK:
 		printf("SCHED_FIFO|SCHED_RESET_ON_FORK\n");
 		break;
+#endif
 #ifdef SCHED_IDLE
 	case SCHED_IDLE:
 		printf("SCHED_IDLE\n");
@@ -110,9 +125,11 @@ static void show_rt_info(const char *what, pid_t pid)
 	case SCHED_RR:
 		printf("SCHED_RR\n");
 		break;
+#ifdef SCHED_RESET_ON_FORK
 	case SCHED_RR|SCHED_RESET_ON_FORK:
 		printf("SCHED_RR|SCHED_RESET_ON_FORK\n");
 		break;
+#endif
 #ifdef SCHED_BATCH
 	case SCHED_BATCH:
 		printf("SCHED_BATCH\n");
@@ -125,8 +142,12 @@ static void show_rt_info(const char *what, pid_t pid)
 	if (sched_getparam(pid, &sp))
 		err(EXIT_FAILURE, _("failed to get pid %d's attributes"), pid);
 
-	printf(_("pid %d's %s scheduling priority: %d\n"),
-		pid, what, sp.sched_priority);
+	if (isnew)
+		printf(_("pid %d's new scheduling priority: %d\n"),
+		       pid, sp.sched_priority);
+	else
+		printf(_("pid %d's current scheduling priority: %d\n"),
+		       pid, sp.sched_priority);
 }
 
 static void show_min_max(void)
@@ -199,9 +220,11 @@ int main(int argc, char *argv[])
 		case 'f':
 			policy = SCHED_FIFO;
 			break;
+#ifdef SCHED_RESET_ON_FORK
 		case 'R':
 			policy_flag |= SCHED_RESET_ON_FORK;
 			break;
+#endif
 		case 'i':
 #ifdef SCHED_IDLE
 			policy = SCHED_IDLE;
@@ -239,7 +262,7 @@ int main(int argc, char *argv[])
 		show_usage(EXIT_FAILURE);
 
 	if ((pid > -1) && (verbose || argc - optind == 1)) {
-		show_rt_info(_("current"), pid);
+		show_rt_info(pid, FALSE);
 		if (argc - optind == 1)
 			return EXIT_SUCCESS;
 	}
@@ -249,11 +272,13 @@ int main(int argc, char *argv[])
 	if (errno)
 		err(EXIT_FAILURE, _("failed to parse priority"));
 
+#ifdef SCHED_RESET_ON_FORK
 	/* sanity check */
 	if ((policy_flag & SCHED_RESET_ON_FORK) &&
 	    !(policy == SCHED_FIFO || policy == SCHED_RR))
 		errx(EXIT_FAILURE, _("SCHED_RESET_ON_FORK flag is suppoted for "
 				"SCHED_FIFO and SCHED_RR policies only"));
+#endif
 
 	policy |= policy_flag;
 
@@ -264,7 +289,7 @@ int main(int argc, char *argv[])
 		err(EXIT_FAILURE, _("failed to set pid %d's policy"), pid);
 
 	if (verbose)
-		show_rt_info(_("new"), pid);
+		show_rt_info(pid, TRUE);
 
 	if (!pid) {
 		argv += optind + 1;

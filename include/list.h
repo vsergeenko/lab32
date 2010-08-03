@@ -1,10 +1,14 @@
-#if !defined(_BLKID_LIST_H) && !defined(LIST_HEAD)
-#define _BLKID_LIST_H
+/*
+ * Copyright (C) 2008 Karel Zak <kzak@redhat.com>
+ * Copyright (C) 1999-2008 by Theodore Ts'o
+ *
+ * (based on list.h from e2fsprogs)
+ */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#if !defined(_LIBMOUNT_LIST_H) && !defined(LIST_HEAD)
+#define _LIBMOUNT_LIST_H
 
+/* TODO: use AC_C_INLINE */
 #ifdef __GNUC__
 #define _INLINE_ static __inline__
 #else                         /* For Watcom C */
@@ -122,6 +126,16 @@ _INLINE_ int list_empty(struct list_head *head)
 }
 
 /**
+ * list_last_entry - tests whether is entry last in the list
+ * @entry:	the entry to test.
+ * @head:	the list to test.
+ */
+_INLINE_ int list_last_entry(struct list_head *entry, struct list_head *head)
+{
+	return head->prev == entry;
+}
+
+/**
  * list_splice - join two lists
  * @list:	the new list to add.
  * @head:	the place to add it in the first list.
@@ -160,6 +174,14 @@ _INLINE_ void list_splice(struct list_head *list, struct list_head *head)
 	for (pos = (head)->next; pos != (head); pos = pos->next)
 
 /**
+ * list_for_each_backwardly - iterate over elements in a list in reverse
+ * @pos:	the &struct list_head to use as a loop counter.
+ * @head:	the head for your list.
+ */
+#define list_for_each_backwardly(pos, head) \
+	for (pos = (head)->prev; pos != (head); pos = pos->prev)
+
+/**
  * list_for_each_safe - iterate over elements in a list, but don't dereference
  *                      pos after the body is done (in case it is freed)
  * @pos:	the &struct list_head to use as a loop counter.
@@ -172,8 +194,4 @@ _INLINE_ void list_splice(struct list_head *list, struct list_head *head)
 
 #undef _INLINE_
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* _BLKID_LIST_H */
+#endif /* __LIBFSPROBE_LIST_H__ */

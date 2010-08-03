@@ -109,26 +109,41 @@ void print_shm (int id);
 void print_msg (int id);
 void print_sem (int id);
 
-static char *progname;
-
 static void
 usage(int rc) {
-	printf (_("usage : %s -asmq -tclup \n"), progname);
-	printf (_("\t%s [-s -m -q] -i id\n"), progname);
-	printf (_("\t%s -h for help.\n"), progname);
+	printf (_("Usage: %1$s [-asmq] [-t|-c|-l|-u|-p]\n"
+	          "       %1$s [-s|-m|-q] -i id\n"
+	          "       %1$s -h for help\n"),
+		program_invocation_short_name);
 	exit(rc);
 }
 
 static void
 help (int rc) {
-	printf (_("%s provides information on ipc facilities for"
-		  " which you have read access.\n"), progname);
-	printf (_("Resource Specification:\n\t-m : shared_mem\n\t-q : messages\n"));
-	printf (_("\t-s : semaphores\n\t-a : all (default)\n"));
-	printf (_("Output Format:\n\t-t : time\n\t-p : pid\n\t-c : creator\n"));
-	printf (_("\t-l : limits\n\t-u : summary\n"));
-	printf (_("-i id [-s -q -m] : details on resource identified by id\n"));
-	usage(rc);
+	printf (_("Usage: %1$s [resource]... [output-format]\n"
+	          "       %1$s [resource] -i id\n\n"),
+		program_invocation_short_name);
+
+	printf (_("Provide information on IPC facilities for which you "
+		  "have read access.\n\n"));
+
+	printf (_(
+	"    -h      display this help\n"
+	"    -i id   print details on resource identified by id\n\n"));
+
+	printf (_("Resource options:\n"
+	"    -m      shared memory segments\n"
+	"    -q      message queues\n"
+	"    -s      semaphores\n"
+	"    -a      all (default)\n\n"));
+
+	printf (_("Output format:\n"
+	"    -t      time\n"
+	"    -p      pid\n"
+	"    -c      creator\n"
+	"    -l      limits\n"
+	"    -u      summary\n"));
+	exit(rc);
 }
 
 int
@@ -141,7 +156,6 @@ main (int argc, char **argv) {
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	progname = argv[0];
 	while ((opt = getopt (argc, argv, options)) != -1) {
 		switch (opt) {
 		case 'i':
@@ -274,11 +288,25 @@ void do_shm (char format)
 
 	case STATUS:
 		printf (_("------ Shared Memory Status --------\n"));
-		printf (_("segments allocated %d\n"), shm_info.used_ids);
-		printf (_("pages allocated %ld\n"), shm_info.shm_tot);
-		printf (_("pages resident  %ld\n"), shm_info.shm_rss);
-		printf (_("pages swapped   %ld\n"), shm_info.shm_swp);
-		printf (_("Swap performance: %ld attempts\t %ld successes\n"),
+		/* TRANSLATORS: This output format is mantained for backward compatibility
+		   as ipcs is used in scripts. For consistency with the rest, the translated
+		   form can follow this model:
+
+		   "segments allocated = %d\n"
+		   "pages allocated = %ld\n"
+		   "pages resident = %ld\n"
+		   "pages swapped = %ld\n"
+		   "swap performance = %ld attempts, %ld successes\n"
+		*/
+		printf (_("segments allocated %d\n"
+		          "pages allocated %ld\n"
+		          "pages resident  %ld\n"
+		          "pages swapped   %ld\n"
+		          "Swap performance: %ld attempts\t %ld successes\n"),
+			shm_info.used_ids,
+			shm_info.shm_tot,
+			shm_info.shm_rss,
+			shm_info.shm_swp,
 			shm_info.swap_attempts, shm_info.swap_successes);
 		return;
 
@@ -296,7 +324,7 @@ void do_shm (char format)
 		break;
 
 	case PID:
-		printf (_("------ Shared Memory Creator/Last-op --------\n"));
+		printf (_("------ Shared Memory Creator/Last-op PIDs --------\n"));
 		printf ("%-10s %-10s %-10s %-10s\n",
 			_("shmid"),_("owner"),_("cpid"),_("lpid"));
 		break;
@@ -487,14 +515,14 @@ void do_msg (char format)
 	case LIMITS:
 		if ((msgctl (0, IPC_INFO, (struct msqid_ds *) (void *) &msginfo)) < 0 )
 			return;
-		printf (_("------ Messages: Limits --------\n"));
+		printf (_("------ Messages Limits --------\n"));
 		printf (_("max queues system wide = %d\n"), msginfo.msgmni);
 		printf (_("max size of message (bytes) = %d\n"), msginfo.msgmax);
 		printf (_("default max size of queue (bytes) = %d\n"), msginfo.msgmnb);
 		return;
 
 	case STATUS:
-		printf (_("------ Messages: Status --------\n"));
+		printf (_("------ Messages Status --------\n"));
 #ifndef __FreeBSD_kernel__
 		printf (_("allocated queues = %d\n"), msginfo.msgpool);
 		printf (_("used headers = %d\n"), msginfo.msgmap);
@@ -503,7 +531,7 @@ void do_msg (char format)
 		return;
 
 	case CREATOR:
-		printf (_("------ Message Queues: Creators/Owners --------\n"));
+		printf (_("------ Message Queues Creators/Owners --------\n"));
 		printf ("%-10s %-10s %-10s %-10s %-10s %-10s\n",
 			_("msqid"),_("perms"),_("cuid"),_("cgid"),_("uid"),_("gid"));
 		break;

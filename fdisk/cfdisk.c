@@ -64,15 +64,25 @@
 #include <errno.h>
 #include <getopt.h>
 #include <fcntl.h>
+
+#ifdef HAVE_SLANG_H
+#include <slang.h>
+#elif defined(HAVE_SLANG_SLANG_H)
+#include <slang/slang.h>
+#endif
+
 #ifdef HAVE_SLCURSES_H
 #include <slcurses.h>
 #elif defined(HAVE_SLANG_SLCURSES_H)
 #include <slang/slcurses.h>
+#elif defined(HAVE_NCURSESW_NCURSES_H) && defined(HAVE_WIDECHAR)
+#include <ncursesw/ncurses.h>
 #elif defined(HAVE_NCURSES_H)
 #include <ncurses.h>
 #elif defined(HAVE_NCURSES_NCURSES_H)
 #include <ncurses/ncurses.h>
 #endif
+
 #include <signal.h>
 #include <math.h>
 #include <string.h>
@@ -93,6 +103,7 @@
 #include "common.h"
 #include "gpt.h"
 #include "mbsalign.h"
+#include "widechar.h"
 
 #ifdef __GNU__
 #define DEFAULT_DEVICE "/dev/hd0"
@@ -410,6 +421,11 @@ fdexit(int ret) {
     exit(ret);
 }
 
+/*
+ * Note that @len is size of @str buffer.
+ *
+ * Returns number of read bytes (without \0).
+ */
 static int
 get_string(char *str, int len, char *def) {
     size_t cells = 0, i = 0;
@@ -430,7 +446,8 @@ get_string(char *str, int len, char *def) {
 
     refresh();
 
-#if defined(HAVE_LIBNCURSESW) && defined(HAVE_WIDECHAR)
+#if !defined(HAVE_SLCURSES_H) && !defined(HAVE_SLANG_SLCURSES_H) && \
+    defined(HAVE_LIBNCURSESW) && defined(HAVE_WIDECHAR)
     while ((key = get_wch(&c)) != ERR &&
 	   c != '\r' && c != '\n' && c != KEY_ENTER) {
 #else
@@ -460,7 +477,7 @@ get_string(char *str, int len, char *def) {
 	    break;
 	default:
 #if defined(HAVE_LIBNCURSESW) && defined(HAVE_WIDECHAR)
-	    if (i < len && iswprint(c)) {
+	    if (i + 1 < len && iswprint(c)) {
 		wchar_t wc = (wchar_t) c;
 		char s[MB_CUR_MAX + 1];
 		int  sz = wctomb(s, wc);
@@ -480,7 +497,7 @@ get_string(char *str, int len, char *def) {
 			putchar(BELL);
 	    }
 #else
-	    if (i < len && isprint(c)) {
+	    if (i + 1 < len && isprint(c)) {
 	        mvaddch(y, x + cells, c);
 		if (use_def) {
 		    clrtoeol();
@@ -2393,7 +2410,7 @@ change_id(int i) {
 
     sprintf(def, "%02X", new_id);
     mvaddstr(COMMAND_LINE_Y, COMMAND_LINE_X, _("Enter filesystem type: "));
-    if ((len = get_string(id, 2, def)) <= 0 && len != GS_DEFAULT)
+    if ((len = get_string(id, 3, def)) <= 0 && len != GS_DEFAULT)
 	return;
 
     if (len != GS_DEFAULT) {

@@ -11,14 +11,21 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
+#if HAVE_MNTENT_H
 #include <mntent.h>
+#endif
 #include <string.h>
 #include <sys/stat.h>
 #include <ctype.h>
 #include <sys/param.h>
+#ifdef __APPLE__
+#include <sys/ucred.h>
+#include <sys/mount.h>
+#endif
 
 #include "pathnames.h"
 #include "ismounted.h"
+#include "c.h"
 
 #ifdef HAVE_MNTENT_H
 /*

@@ -241,7 +241,7 @@ static void server_loop(const char *socket_path, const char *pidfile_path,
 	fd_pidfile = open(pidfile_path, O_CREAT | O_RDWR, 0664);
 	if (fd_pidfile < 0) {
 		if (!quiet)
-			fprintf(stderr, "Failed to open/create %s: %s\n",
+			fprintf(stderr, _("Failed to open/create %s: %s\n"),
 				pidfile_path, strerror(errno));
 		exit(1);
 	}
@@ -258,7 +258,7 @@ static void server_loop(const char *socket_path, const char *pidfile_path,
 		if ((errno == EAGAIN) || (errno == EINTR))
 			continue;
 		if (!quiet)
-			fprintf(stderr, "Failed to lock %s: %s\n",
+			fprintf(stderr, _("Failed to lock %s: %s\n"),
 				pidfile_path, strerror(errno));
 		exit(1);
 	}
@@ -359,7 +359,7 @@ static void server_loop(const char *socket_path, const char *pidfile_path,
 				printf(_("operation %d, incoming num = %d\n"),
 				       op, num);
 		} else if (debug)
-			printf("operation %d\n", op);
+			printf(_("operation %d\n"), op);
 
 		switch(op) {
 		case UUIDD_OP_GETPID:
@@ -412,7 +412,7 @@ static void server_loop(const char *socket_path, const char *pidfile_path,
 			uuid__generate_random((unsigned char *) reply_buf +
 					      sizeof(num), &num);
 			if (debug) {
-				printf(_("Generated %d UUID's:\n"), num);
+				printf(_("Generated %d UUIDs:\n"), num);
 				for (i=0, cp=reply_buf+sizeof(num);
 				     i < num; i++, cp+=16) {
 					uuid_unparse((unsigned char *)cp, str);
@@ -531,9 +531,9 @@ int main(int argc, char **argv)
 
 			uuid_unparse((unsigned char *) buf, str);
 
-			printf(_("%s and subsequent %d UUID's\n"), str, num);
+			printf(_("%s and subsequent %d UUIDs\n"), str, num);
 		} else {
-			printf(_("List of UUID's:\n"));
+			printf(_("List of UUIDs:\n"));
 			cp = buf + 4;
 			if (ret != (int) (sizeof(num) + num*sizeof(uu)))
 				goto unexpected_size;

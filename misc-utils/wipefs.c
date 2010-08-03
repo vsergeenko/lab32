@@ -174,7 +174,7 @@ get_offset_from_probe(struct wipe_desc *wp, blkid_probe pr, int zap)
 		wp->usage = xstrdup(usage);
 		wp->type = xstrdup(type);
 
-		wp->magic = xmalloc(wp->len);
+		wp->magic = xmalloc(len);
 		memcpy(wp->magic, mag, len);
 		wp->len = len;
 
@@ -256,8 +256,8 @@ do_wipe_offset(int fd, struct wipe_desc *wp, const char *fname, int noact)
 	size_t len;
 
 	if (!wp->type) {
-		warnx(_("can't found a magic string at offset "
-				"0x%jx - ignore."), wp->offset);
+		warnx(_("no magic string found at offset "
+			"0x%jx -- ignored"), wp->offset);
 		return 0;
 	}
 
@@ -303,13 +303,30 @@ do_wipe(struct wipe_desc *wp, const char *fname, int noact)
 	return 0;
 }
 
+static void
+free_wipe(struct wipe_desc *wp)
+{
+	while (wp) {
+		struct wipe_desc *next = wp->next;
+
+		free(wp->usage);
+		free(wp->type);
+		free(wp->magic);
+		free(wp->label);
+		free(wp->uuid);
+		free(wp);
+
+		wp = next;
+	}
+}
+
 static loff_t
 strtoll_offset(const char *str)
 {
 	uintmax_t sz;
 
 	if (strtosize(str, &sz))
-		errx(EXIT_FAILURE, _("invalid offset '%s' value specified"), str);
+		errx(EXIT_FAILURE, _("invalid offset value '%s' specified"), str);
 	return sz;
 }
 
@@ -322,8 +339,8 @@ usage(FILE *out)
 
 	fprintf(out, _(
 	" -a, --all           wipe all magic strings (BE CAREFUL!)\n"
-	" -h, --help          this help\n"
-	" -n, --no-act        everything to be done except for the write() call\n"
+	" -h, --help          show this help text\n"
+	" -n, --no-act        do everything except the actual write() call\n"
 	" -o, --offset <num>  offset to erase, in bytes\n"
 	" -p, --parsable      print out in parsable instead of printable format\n"));
 
@@ -391,6 +408,8 @@ main(int argc, char **argv)
 			do_wipe(wp, fname, noact);
 		else
 			print_all(wp, mode);
+
+		free_wipe(wp);
 	}
 	return EXIT_SUCCESS;
 }
