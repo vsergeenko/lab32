@@ -30,6 +30,7 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <bitops.h>
 
 #include "cpuset.h"
 #include "nls.h"
@@ -97,10 +98,12 @@ struct lscpu_desc {
 	int	virtype;	/* VIRT_PARA|FULL|NONE ? */
 	char	*mhz;
 	char	*stepping;
+	char    *bogomips;
 	char	*flags;
 	int	mode;		/* rm, lm or/and tm */
 
 	int		ncpus;		/* number of CPUs */
+	cpu_set_t	*online;	/* mask with online CPUs */
 
 	int		nnodes;		/* number of NUMA modes */
 	cpu_set_t	**nodemaps;	/* array with NUMA nodes */
@@ -124,6 +127,10 @@ struct lscpu_desc {
 static size_t sysrootlen;
 static char pathbuf[PATH_MAX];
 static int maxcpus;		/* size in bits of kernel cpu mask */
+
+#define is_cpu_online(_d, _cpu) \
+		((_d) && (_d)->online ? \
+			CPU_ISSET_S((_cpu), CPU_ALLOC_SIZE(maxcpus), (_d)->online) : 0)
 
 static FILE *path_fopen(const char *mode, int exit_on_err, const char *path, ...)
 		__attribute__ ((__format__ (__printf__, 3, 4)));
@@ -235,17 +242,14 @@ xstrdup(const char *str)
 }
 
 static cpu_set_t *
-path_cpuset(const char *path, ...)
+path_cpuparse(int islist, const char *path, va_list ap)
 {
 	FILE *fd;
-	va_list ap;
 	cpu_set_t *set;
 	size_t setsize, len = maxcpus * 7;
 	char buf[len];
 
-	va_start(ap, path);
 	fd = path_vfopen("r", 1, path, ap);
-	va_end(ap);
 
 	if (!fgets(buf, len, fd))
 		err(EXIT_FAILURE, _("failed to read: %s"), pathbuf);
@@ -259,8 +263,38 @@ path_cpuset(const char *path, ...)
 	if (!set)
 		err(EXIT_FAILURE, _("failed to callocate cpu set"));
 
-	if (cpumask_parse(buf, set, setsize))
-		errx(EXIT_FAILURE, _("failed to parse CPU mask %s"), buf);
+	if (islist) {
+		if (cpulist_parse(buf, set, setsize))
+			errx(EXIT_FAILURE, _("failed to parse CPU list %s"), buf);
+	} else {
+		if (cpumask_parse(buf, set, setsize))
+			errx(EXIT_FAILURE, _("failed to parse CPU mask %s"), buf);
+	}
+	return set;
+}
+
+static cpu_set_t *
+path_cpuset(const char *path, ...)
+{
+	va_list ap;
+	cpu_set_t *set;
+
+	va_start(ap, path);
+	set = path_cpuparse(0, path, ap);
+	va_end(ap);
+
+	return set;
+}
+
+static cpu_set_t *
+path_cpulist(const char *path, ...)
+{
+	va_list ap;
+	cpu_set_t *set;
+
+	va_start(ap, path);
+	set = path_cpuparse(1, path, ap);
+	va_end(ap);
 
 	return set;
 }
@@ -334,6 +368,7 @@ read_basicinfo(struct lscpu_desc *desc)
 		else if (lookup(buf, "stepping", &desc->stepping)) ;
 		else if (lookup(buf, "cpu MHz", &desc->mhz)) ;
 		else if (lookup(buf, "flags", &desc->flags)) ;
+		else if (lookup(buf, "bogomips", &desc->bogomips)) ;
 		else
 			continue;
 	}
@@ -365,6 +400,10 @@ read_basicinfo(struct lscpu_desc *desc)
 		/* we are reading some /sys snapshot instead of the real /sys,
 		 * let's use any crazy number... */
 		maxcpus = desc->ncpus > 2048 ? desc->ncpus : 2048;
+
+	/* get mask for online CPUs */
+	if (path_exist(_PATH_SYS_SYSTEM "/cpu/online"))
+		desc->online = path_cpulist(_PATH_SYS_SYSTEM "/cpu/online");
 }
 
 static int
@@ -523,7 +562,8 @@ read_topology(struct lscpu_desc *desc, int num)
 					"/cpu%d/topology/thread_siblings", num);
 	core_siblings = path_cpuset(_PATH_SYS_CPU
 					"/cpu%d/topology/core_siblings", num);
-	if (num == 0) {
+
+	if (!desc->coremaps) {
 		int ncores, nsockets, nthreads;
 		size_t setsize = CPU_ALLOC_SIZE(maxcpus);
 
@@ -563,7 +603,7 @@ read_cache(struct lscpu_desc *desc, int num)
 	char buf[256];
 	int i;
 
-	if (num == 0) {
+	if (!desc->ncaches) {
 		while(path_exist(_PATH_SYS_SYSTEM "/cpu/cpu%d/cache/index%d",
 					num, desc->ncaches))
 			desc->ncaches++;
@@ -670,6 +710,9 @@ print_parsable(struct lscpu_desc *desc)
 
 	for (i = 0; i < desc->ncpus; i++) {
 
+		if (desc->online && !is_cpu_online(desc, i))
+			continue;
+
 		/* #CPU */
 		printf("%d", i);
 
@@ -730,10 +773,28 @@ print_parsable(struct lscpu_desc *desc)
 #define print_n(_key, _val)	printf("%-23s%d\n", _key, _val)
 
 static void
-print_readable(struct lscpu_desc *desc)
+print_cpuset(const char *key, cpu_set_t *set, int hex)
+{
+	size_t setsize = CPU_ALLOC_SIZE(maxcpus);
+	size_t setbuflen = 7 * maxcpus;
+	char setbuf[setbuflen], *p;
+
+	if (hex) {
+		p = cpumask_create(setbuf, setbuflen, set, setsize);
+		printf("%-23s0x%s\n", key, p);
+	} else {
+		p = cpulist_create(setbuf, setbuflen, set, setsize);
+		print_s(key, p);
+	}
+
+}
+
+static void
+print_readable(struct lscpu_desc *desc, int hex)
 {
 	char buf[512];
 	int i;
+	size_t setsize = CPU_ALLOC_SIZE(maxcpus);
 
 	print_s(_("Architecture:"), desc->arch);
 
@@ -755,8 +816,40 @@ print_readable(struct lscpu_desc *desc)
 		*(p - 2) = '\0';
 		print_s(_("CPU op-mode(s):"), buf);
 	}
-
+#ifdef __BYTE_ORDER
+#if (__BYTE_ORDER == __LITTLE_ENDIAN)
+	print_s(_("Byte Order:"), "Little Endian");
+#else
+	print_s(_("Byte Order:"), "Big Endian");
+#endif
+#endif
 	print_n(_("CPU(s):"), desc->ncpus);
+
+	if (desc->online)
+		print_cpuset(hex ? _("On-line CPU(s) mask:") :
+				   _("On-line CPU(s) list:"),
+				desc->online, hex);
+
+	if (desc->online && CPU_COUNT_S(setsize, desc->online) != desc->ncpus) {
+		cpu_set_t *set;
+
+		/* Linux kernel provides cpuset of off-line CPUs that contains
+		 * all configured CPUs (see /sys/devices/system/cpu/offline),
+		 * but want to print real (present in system) off-line CPUs only.
+		 */
+		set = cpuset_alloc(maxcpus, NULL, NULL);
+		if (!set)
+			err(EXIT_FAILURE, _("failed to callocate cpu set"));
+		CPU_ZERO_S(setsize, set);
+		for (i = 0; i < desc->ncpus; i++) {
+			if (!is_cpu_online(desc, i))
+				CPU_SET_S(i, setsize, set);
+		}
+		print_cpuset(hex ? _("Off-line CPU(s) mask:") :
+				   _("Off-line CPU(s) list:"),
+			     set, hex);
+		cpuset_free(set);
+	}
 
 	if (desc->nsockets) {
 		print_n(_("Thread(s) per core:"), desc->nthreads / desc->ncores);
@@ -776,6 +869,8 @@ print_readable(struct lscpu_desc *desc)
 		print_s(_("Stepping:"), desc->stepping);
 	if (desc->mhz)
 		print_s(_("CPU MHz:"), desc->mhz);
+	if (desc->bogomips)
+		print_s(_("BogoMIPS:"), desc->bogomips);
 	if (desc->virtflag) {
 		if (!strcmp(desc->virtflag, "svm"))
 			print_s(_("Virtualization:"), "AMD-V");
@@ -797,17 +892,9 @@ print_readable(struct lscpu_desc *desc)
 		}
 	}
 
-	if (desc->nnodes) {
-		size_t setbuflen = 7 * maxcpus;
-		char setbuf[setbuflen];
-
-		for (i = 0; i < desc->nnodes; i++) {
-			snprintf(buf, sizeof(buf), _("NUMA node%d CPU(s):"), i);
-			print_s(buf, cpulist_create(
-						setbuf, setbuflen,
-						desc->nodemaps[i],
-						CPU_ALLOC_SIZE(maxcpus)));
-		}
+	for (i = 0; i < desc->nnodes; i++) {
+		snprintf(buf, sizeof(buf), _("NUMA node%d CPU(s):"), i);
+		print_cpuset(buf, desc->nodemaps[i], hex);
 	}
 }
 
@@ -819,19 +906,22 @@ void usage(int rc)
 	puts(_(	"CPU architecture information helper\n\n"
 		"  -h, --help     usage information\n"
 		"  -p, --parse    print out in parsable instead of printable format.\n"
-		"  -s, --sysroot  use the directory as a new system root.\n"));
+		"  -s, --sysroot  use the directory as a new system root.\n"
+		"  -x, --hex      print haxadecimal masks rather than lists of CPU(s)\n"));
+
 	exit(rc);
 }
 
 int main(int argc, char *argv[])
 {
 	struct lscpu_desc _desc, *desc = &_desc;
-	int parsable = 0, c, i;
+	int parsable = 0, c, i, hex = 0;
 
 	struct option longopts[] = {
 		{ "help",	no_argument,       0, 'h' },
 		{ "parse",	no_argument,       0, 'p' },
 		{ "sysroot",	required_argument, 0, 's' },
+		{ "hex",	no_argument,	   0, 'x' },
 		{ NULL,		0, 0, 0 }
 	};
 
@@ -839,7 +929,7 @@ int main(int argc, char *argv[])
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	while((c = getopt_long(argc, argv, "hps:", longopts, NULL)) != -1) {
+	while((c = getopt_long(argc, argv, "hps:x", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'h':
 			usage(EXIT_SUCCESS);
@@ -851,6 +941,9 @@ int main(int argc, char *argv[])
 			strncpy(pathbuf, optarg, sizeof(pathbuf));
 			pathbuf[sizeof(pathbuf) - 1] = '\0';
 			break;
+		case 'x':
+			hex = 1;
+			break;
 		default:
 			usage(EXIT_FAILURE);
 		}
@@ -861,6 +954,8 @@ int main(int argc, char *argv[])
 	read_basicinfo(desc);
 
 	for (i = 0; i < desc->ncpus; i++) {
+		if (desc->online && !is_cpu_online(desc, i))
+			continue;
 		read_topology(desc, i);
 		read_cache(desc, i);
 	}
@@ -875,7 +970,7 @@ int main(int argc, char *argv[])
 	if (parsable)
 		print_parsable(desc);
 	else
-		print_readable(desc);
+		print_readable(desc, hex);
 
 	return EXIT_SUCCESS;
 }

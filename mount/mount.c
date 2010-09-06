@@ -503,9 +503,11 @@ parse_opts (const char *options, int *flags, char **extra_opts) {
 	if (readwrite)
 		*flags &= ~MS_RDONLY;
 
-	if (mounttype & MS_PROPAGATION)
-		*flags &= ~MS_BIND;
 	*flags |= mounttype;
+
+	/* The propagation flags should not be used together with any other flags */
+	if (*flags & MS_PROPAGATION)
+		*flags &= MS_PROPAGATION;
 }
 
 /* Try to build a canonical options string.  */
@@ -674,13 +676,22 @@ check_special_mountprog(const char *spec, const char *node, const char *type, in
 
 	path = strtok(search_path, ":");
 	while (path) {
+		int type_opt = 0;
+
 		res = snprintf(mountprog, sizeof(mountprog), "%s/mount.%s",
 			       path, type);
 		path = strtok(NULL, ":");
 		if (res >= sizeof(mountprog) || res < 0)
 			continue;
 
-		if (stat(mountprog, &statbuf))
+		res = stat(mountprog, &statbuf);
+		if (res == -1 && errno == ENOENT && strchr(type, '.')) {
+			/* If type ends with ".subtype" try without it */
+			*strrchr(mountprog, '.') = '\0';
+			type_opt = 1;
+			res = stat(mountprog, &statbuf);
+		}
+		if (res)
 			continue;
 
 		if (verbose)
@@ -688,7 +699,7 @@ check_special_mountprog(const char *spec, const char *node, const char *type, in
 
 		switch (fork()) {
 		case 0: { /* child */
-			char *oo, *mountargs[10];
+			char *oo, *mountargs[12];
 			int i = 0;
 
 			if (setgid(getgid()) < 0)
@@ -713,7 +724,11 @@ check_special_mountprog(const char *spec, const char *node, const char *type, in
 				mountargs[i++] = "-o";			/* 8 */
 				mountargs[i++] = oo;			/* 9 */
 			}
-			mountargs[i] = NULL;				/* 10 */
+			if (type_opt) {
+				mountargs[i++] = "-t";			/* 10 */
+				mountargs[i++] = (char *) type;		/* 11 */
+			}
+			mountargs[i] = NULL;				/* 12 */
 
 			if (verbose > 2) {
 				i = 0;
@@ -2156,10 +2171,11 @@ getfs(const char *spec, const char *uuid, const char *label)
 	/*
 	 * D) remount -- try /etc/mtab
 	 *    Earlier mtab was tried first, but this would sometimes try the
-	 *    wrong mount in case mtab had the root device entry wrong.
+	 *    wrong mount in case mtab had the root device entry wrong.  Try
+	 *    the last occurrence first, since that is the visible mount.
 	 */
 	if (!mc && (devname || spec))
-		mc = getmntfile (devname ? devname : spec);
+		mc = getmntfilebackward (devname ? devname : spec, NULL);
 
 	my_free(devname);
 	return mc;

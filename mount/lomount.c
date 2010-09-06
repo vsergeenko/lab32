@@ -259,11 +259,16 @@ loop_scandir(const char *dirname, int **ary, int hasprefix)
 		if (n == -1 || n < NLOOPS_DEFAULT)
 			continue;
 		if (count + 1 > arylen) {
+			int *tmp;
+
 			arylen += 1;
-			*ary = *ary ? realloc(*ary, arylen * sizeof(int)) :
-				      malloc(arylen * sizeof(int));
-			if (!*ary)
+
+			tmp = realloc(*ary, arylen * sizeof(int));
+			if (!tmp) {
+				free(*ary);
 				return -1;
+			}
+			*ary = tmp;
 		}
 		(*ary)[count++] = n;
 	}
@@ -953,8 +958,8 @@ find_unused_loop_device (void) {
 #include "strtosize.h"
 
 static void
-usage(void) {
-	fprintf(stderr, _("\nUsage:\n"
+usage(FILE *f) {
+	fprintf(f, _("\nUsage:\n"
   " %1$s loop_device                             give info\n"
   " %1$s -a | --all                              list all used\n"
   " %1$s -d | --detach <loopdev> [<loopdev> ...] delete\n"
@@ -964,7 +969,7 @@ usage(void) {
   " %1$s [ options ] {-f|--find|loopdev} <file>  setup\n"),
 		progname);
 
-	fprintf(stderr, _("\nOptions:\n"
+	fprintf(f, _("\nOptions:\n"
   " -e | --encryption <type> enable data encryption with specified <name/num>\n"
   " -h | --help              this help\n"
   " -o | --offset <num>      start at offset <num> into file\n"
@@ -979,7 +984,8 @@ usage(void) {
   "                          key size.  Key sizes < 128 are generally not\n"
   "                          recommended\n"
   " -v | --verbose           verbose mode\n\n"));
-	exit(1);
+
+	exit(f == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
  }
 
 int
@@ -1048,6 +1054,9 @@ main(int argc, char **argv) {
 		case 'f':
 			find = 1;
 			break;
+		case 'h':
+			usage(stdout);
+			break;
 		case 'j':
 			assoc = optarg;
 		case 'k':
@@ -1074,42 +1083,42 @@ main(int argc, char **argv) {
                         break;
 
 		default:
-			usage();
+			usage(stderr);
 		}
 	}
 
 	if (argc == 1) {
-		usage();
+		usage(stderr);
 	} else if (delete) {
 		if (argc < optind+1 || encryption || offset || sizelimit ||
 		    capacity || find || all || showdev || assoc || ro)
-			usage();
+			usage(stderr);
 	} else if (find) {
 		if (capacity || all || assoc || argc < optind || argc > optind+1)
-			usage();
+			usage(stderr);
 	} else if (all) {
 		if (argc > 2)
-			usage();
+			usage(stderr);
 	} else if (assoc) {
 		if (capacity || encryption || showdev || passfd || ro)
-			usage();
+			usage(stderr);
 	} else if (capacity) {
 		if (argc != optind + 1 || encryption || offset || sizelimit ||
 		    showdev || ro)
-			usage();
+			usage(stderr);
 	} else {
 		if (argc < optind+1 || argc > optind+2)
-			usage();
+			usage(stderr);
 	}
 
 	if (offset && strtosize(offset, &off)) {
 		error(_("%s: invalid offset '%s' specified"), progname, offset);
-		usage();
+		usage(stderr);
 	}
 	if (sizelimit && strtosize(sizelimit, &slimit)) {
 		error(_("%s: invalid sizelimit '%s' specified"),
 					progname, sizelimit);
-		usage();
+		usage(stderr);
 	}
 
 	if (all)
@@ -1144,9 +1153,9 @@ main(int argc, char **argv) {
 		res = show_loop(device);
 	else {
 		if (passfd && sscanf(passfd, "%d", &pfd) != 1)
-			usage();
+			usage(stderr);
 		if (keysize && sscanf(keysize,"%d",&keysz) != 1)
-			usage();
+			usage(stderr);
 		do {
 			res = set_loop(device, file, off, slimit, encryption, pfd, &ro, keysz, hash_pass);
 			if (res == 2 && find) {

@@ -137,6 +137,8 @@ struct options {
 #define F_CUSTISSUE	(1<<6)		/* give alternative issue file */
 #define F_NOPROMPT	(1<<7)		/* don't ask for login name! */
 #define F_LCUC		(1<<8)		/* Support for *LCUC stty modes */
+#define F_KEEPSPEED	(1<<9)		/* Follow baud rate from kernel */
+#define F_KEEPCFLAGS	(1<<10)		/* Reuse c_cflags setup from kernel */
 
 /* Storage for things detected while the login name was read. */
 
@@ -207,7 +209,7 @@ void parse_args P_((int argc, char **argv, struct options *op));
 void parse_speeds P_((struct options *op, char *arg));
 void update_utmp P_((char *line));
 void open_tty P_((char *tty, struct termios *tp, int local));
-void termio_init P_((struct termios *tp, int speed, struct options *op));
+void termio_init P_((struct termios *tp, struct options *op));
 void auto_baud P_((struct termios *tp));
 void do_prompt P_((struct options *op, struct termios *tp));
 void next_speed P_((struct termios *tp, struct options *op));
@@ -301,7 +303,7 @@ main(argc, argv)
     tcsetpgrp(0, getpid());
     /* Initialize the termios settings (raw mode, eight-bit, blocking i/o). */
     debug("calling termio_init\n");
-    termio_init(&termios, options.speeds[FIRST_SPEED], &options);
+    termio_init(&termios, &options);
 
     /* write the modem init string and DON'T flush the buffers */
     if (options.flags & F_INITSTRING) {
@@ -377,8 +379,11 @@ parse_args(argc, argv, op)
     extern int optind;			/* getopt */
     int     c;
 
-    while (isascii(c = getopt(argc, argv, "8I:LH:f:hil:mt:wUn"))) {
+    while (isascii(c = getopt(argc, argv, "8cI:LH:f:hil:mst:wUn"))) {
 	switch (c) {
+	case 'c':
+	    op->flags |= F_KEEPCFLAGS;
+	    break;
 	case '8':
 	    op->eightbits = 1;
 	    break;
@@ -446,6 +451,9 @@ parse_args(argc, argv, op)
 	    break;
 	case 'n':
 	    op->flags |= F_NOPROMPT;
+	    break;
+	case 's':
+	    op->flags |= F_KEEPSPEED;		/* keep kernel defined speed */
 	    break;
 	case 't':				/* time out */
 	    if ((op->timeout = atoi(optarg)) <= 0)
@@ -702,9 +710,8 @@ char gbuf[1024];
 char area[1024];
 
 void
-termio_init(tp, speed, op)
+termio_init(tp, op)
      struct termios *tp;
-     int     speed;
      struct options *op;
 {
 
@@ -717,9 +724,13 @@ termio_init(tp, speed, op)
     /* flush input and output queues, important for modems! */
     (void) tcflush(0, TCIOFLUSH);
 
-    tp->c_cflag = CS8 | HUPCL | CREAD;
-    cfsetispeed(tp, speed);
-    cfsetospeed(tp, speed);
+    if (!(op->flags & F_KEEPCFLAGS))
+	tp->c_cflag = CS8 | HUPCL | CREAD | (tp->c_cflag & CLOCAL);
+
+    if (!(op->flags & F_KEEPSPEED)) {
+	    cfsetispeed(tp, op->speeds[FIRST_SPEED]);
+	    cfsetospeed(tp, op->speeds[FIRST_SPEED]);
+    }
     if (op->flags & F_LOCAL) {
 	tp->c_cflag |= CLOCAL;
     }
@@ -1214,7 +1225,7 @@ bcode(s)
 void
 usage()
 {
-    fprintf(stderr, _("Usage: %s [-8hiLmUw] [-l login_program] [-t timeout] [-I initstring] [-H login_host] baud_rate,... line [termtype]\nor\t[-hiLmw] [-l login_program] [-t timeout] [-I initstring] [-H login_host] line baud_rate,... [termtype]\n"), progname);
+    fprintf(stderr, _("Usage: %s [-8hiLmsUw] [-l login_program] [-t timeout] [-I initstring] [-H login_host] baud_rate,... line [termtype]\nor\t[-hiLmw] [-l login_program] [-t timeout] [-I initstring] [-H login_host] line baud_rate,... [termtype]\n"), progname);
     exit(1);
 }
 
