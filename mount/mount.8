@@ -136,9 +136,19 @@ or
 The recommended setup is to use LABEL=<label> or UUID=<uuid> tags rather than
 .B /dev/disk/by-{label,uuid}
 udev symlinks in the /etc/fstab file. The tags are
-more readable, robust and portable. The mount(8) command internally uses udev
+more readable, robust and portable. The
+.BR mount (8)
+command internally uses udev
 symlinks, so use the symlinks in /etc/fstab is not advantage over LABEL=/UUID=.
-For more details see libblkid(3).
+For more details see
+.BR libblkid (3).
+
+Note that
+.BR mount (8)
+uses UUIDs as strings. The UUIDs from command line or
+.BR fstab (5)
+are not converted to internal binary representation. The string representation
+of the UUID should be based on lower case characters.
 
 The
 .I proc
@@ -830,6 +840,9 @@ option allows you to explicitly label the root inode of a FS being mounted
 before that FS or inode because visable to userspace. This was found to be
 useful for things like stateless linux.
 
+Note that kernel rejects any remount request that includes the context
+option even if unchanged from the current context.
+
 For more details, see
 .BR selinux (8)
 
@@ -1370,8 +1383,8 @@ compatible change and will be ignored by older kernels.
 .TP
 .BR journal_async_commit
 Commit block can be written to disk without waiting for descriptor blocks. If
-enabled older kernels cannot mount the device. This will enable
-'journal_checksum' internally.
+enabled older kernels cannot mount the device.
+This will enable 'journal_checksum' internally.
 .TP
 .BR journal=update
 Update the ext4 filesystem's journal to the current format.
@@ -2326,7 +2339,7 @@ preferred display. There are four modes:
 .TP
 .I lower
 Force the short name to lower case upon display; store a long name when
-the short name is not all upper case. This mode is the default.
+the short name is not all upper case.
 .TP
 .I win95
 Force the short name to upper case upon display; store a long name when
@@ -2338,7 +2351,7 @@ not all lower case or all upper case.
 .TP
 .I mixed
 Display the short name as is; store a long name when the short name is not
-all upper case.
+all upper case. This mode is the default since Linux 2.6.32.
 .RE
 
 

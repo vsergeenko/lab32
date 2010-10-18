@@ -626,6 +626,9 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 	if (fstat(fd, &sb))
 		goto err;
 
+	if (!S_ISBLK(sb.st_mode) && !S_ISCHR(sb.st_mode) && !S_ISREG(sb.st_mode))
+		goto err;
+
 	pr->mode = sb.st_mode;
 	if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode))
 		pr->devno = sb.st_rdev;
@@ -707,6 +710,45 @@ int blkid_probe_set_dimension(blkid_probe pr,
 		pr->flags |= BLKID_TINY_DEV;
 
 	blkid_probe_reset_buffer(pr);
+
+	return 0;
+}
+
+int blkid_probe_get_idmag(blkid_probe pr, const struct blkid_idinfo *id,
+			blkid_loff_t *offset, const struct blkid_idmag **res)
+{
+	const struct blkid_idmag *mag = NULL;
+	blkid_loff_t off = 0;
+
+	if (id)
+		mag = id->magics ? &id->magics[0] : NULL;
+	if (res)
+		*res = NULL;
+
+	/* try to detect by magic string */
+	while(mag && mag->magic) {
+		unsigned char *buf;
+
+		off = (mag->kboff + (mag->sboff >> 10)) << 10;
+		buf = blkid_probe_get_buffer(pr, off, 1024);
+
+		if (buf && !memcmp(mag->magic,
+				buf + (mag->sboff & 0x3ff), mag->len)) {
+			DBG(DEBUG_LOWPROBE, printf(
+				"\tmagic sboff=%u, kboff=%ld\n",
+				mag->sboff, mag->kboff));
+			if (offset)
+				*offset = off + (mag->sboff & 0x3ff);
+			if (res)
+				*res = mag;
+			return 0;
+		}
+		mag++;
+	}
+
+	if (id->magics && id->magics[0].magic)
+		/* magic string(s) defined, but not found */
+		return 1;
 
 	return 0;
 }
