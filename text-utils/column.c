@@ -64,12 +64,22 @@ static char *mtsafe_strtok(char *, const char *, char **);
 #define wcstok mtsafe_strtok
 #endif
 
+#define DEFCOLS     25
+#define TAB         8
+#define DEFNUM      1000
+#define MAXLINELEN  (LINE_MAX + 1)
+
 static void  c_columnate __P((void));
 static void *emalloc __P((int));
 static void  input __P((FILE *));
 static void  maketbl __P((void));
 static void  print __P((void));
 static void  r_columnate __P((void));
+
+typedef struct _tbl {
+	wchar_t **list;
+	int cols, *len;
+} TBL;
 
 int termwidth = 80;		/* default terminal width */
 
@@ -131,8 +141,8 @@ main(int argc, char **argv)
 		switch(ch) {
 		case 'h':
 		case '?':
-		        usage(EXIT_SUCCESS);
-		        break;
+			usage(EXIT_SUCCESS);
+			break;
 		case 'c':
 			termwidth = atoi(optarg);
 			break;
@@ -147,20 +157,23 @@ main(int argc, char **argv)
 			break;
 		default:
 			usage(EXIT_FAILURE);
-		}
+        }
 	argc -= optind;
 	argv += optind;
 
 	if (!*argv)
 		input(stdin);
-	else for (; *argv; ++argv)
-		if ((fp = fopen(*argv, "r")) != NULL) {
-			input(fp);
-			(void)fclose(fp);
-		} else {
-			warn("%s", *argv);
-			eval = 1;
+	else {
+		for (; *argv; ++argv) {
+			if ((fp = fopen(*argv, "r")) != NULL) {
+				input(fp);
+				(void)fclose(fp);
+			} else {
+				warn("%s", *argv);
+				eval = EXIT_FAILURE;
+			}
 		}
+	}
 
 	if (!entries)
 		exit(eval);
@@ -174,11 +187,10 @@ main(int argc, char **argv)
 	else
 		r_columnate();
 	if (ferror(stdout) || fclose(stdout))
-		eval = 1;
+		eval = EXIT_FAILURE;
 	exit(eval);
 }
 
-#define	TAB	8
 static void
 c_columnate()
 {
@@ -217,7 +229,7 @@ r_columnate()
 	maxlength = (maxlength + TAB) & ~(TAB - 1);
 	numcols = termwidth / maxlength;
 	if (!numcols) 
-	  numcols = 1;
+		numcols = 1;
 	numrows = entries / numcols;
 	if (entries % numcols)
 		++numrows;
@@ -251,12 +263,6 @@ print()
 	}
 }
 
-typedef struct _tbl {
-	wchar_t **list;
-	int cols, *len;
-} TBL;
-#define	DEFCOLS	25
-
 static void
 maketbl()
 {
@@ -272,48 +278,47 @@ maketbl()
 	cols = emalloc((maxcols = DEFCOLS) * sizeof(wchar_t *));
 	lens = emalloc(maxcols * sizeof(int));
 	for (cnt = 0, lp = list; cnt < entries; ++cnt, ++lp, ++t) {
-	    for (coloff = 0, p = *lp;
-	         (cols[coloff] = wcstok(p, separator, &wcstok_state)) != NULL;
-	         p = NULL)
-		if (++coloff == maxcols) {
-		    if (!(cols = realloc(cols, ((u_int)maxcols + DEFCOLS)
-					       * sizeof(wchar_t *))) ||
-			!(lens = realloc(lens, ((u_int)maxcols + DEFCOLS)
-					       * sizeof(int))))
-			err(1, NULL);
-		    memset((char *)lens + maxcols * sizeof(int),
-			   0, DEFCOLS * sizeof(int));
-		    maxcols += DEFCOLS;
+		for (coloff = 0, p = *lp;
+		    (cols[coloff] = wcstok(p, separator, &wcstok_state)) != NULL;
+		    p = NULL) {
+			if (++coloff == maxcols) {
+				cols = realloc(cols, ((u_int)maxcols + DEFCOLS)
+					 * sizeof(wchar_t *));
+				lens = realloc(lens, ((u_int)maxcols + DEFCOLS)
+					* sizeof(int));
+				if (!cols || !lens)
+					err(EXIT_FAILURE, _("out of memory?"));
+				memset((char *)lens + maxcols * sizeof(int),
+					0, DEFCOLS * sizeof(int));
+				maxcols += DEFCOLS;
+			}
 		}
-	    t->list = emalloc(coloff * sizeof(wchar_t *));
-	    t->len = emalloc(coloff * sizeof(int));
-	    for (t->cols = coloff; --coloff >= 0;) {
-		t->list[coloff] = cols[coloff];
-		t->len[coloff] = wcs_width(cols[coloff]);
-		if (t->len[coloff] > lens[coloff])
-		    lens[coloff] = t->len[coloff];
-	    }
+		t->list = emalloc(coloff * sizeof(wchar_t *));
+		t->len = emalloc(coloff * sizeof(int));
+		for (t->cols = coloff; --coloff >= 0;) {
+			t->list[coloff] = cols[coloff];
+			t->len[coloff] = wcs_width(cols[coloff]);
+			if (t->len[coloff] > lens[coloff])
+				lens[coloff] = t->len[coloff];
+		}
 	}
 	for (cnt = 0, t = tbl; cnt < entries; ++cnt, ++t) {
-	    for (coloff = 0; coloff < t->cols - 1; ++coloff) {
+		for (coloff = 0; coloff < t->cols - 1; ++coloff) {
+			fputws(t->list[coloff], stdout);
+			for (i = lens[coloff] - t->len[coloff] + 2; i > 0; i--)
+				putwchar(' ');
+		}
 		fputws(t->list[coloff], stdout);
-		for (i = lens[coloff] - t->len[coloff] + 2; i > 0; i--)
-		    putwchar(' ');
-	    }
-	    fputws(t->list[coloff], stdout);
-	    putwchar('\n');
+		putwchar('\n');
 	}
 }
-
-#define	DEFNUM		1000
-#define	MAXLINELEN	(LINE_MAX + 1)
 
 static void
 input(fp)
 	FILE *fp;
 {
 	static int maxentry;
-	int len;
+	int len, lineno = 1, reportedline = 0;
 	wchar_t *p, buf[MAXLINELEN];
 
 	if (!list)
@@ -322,20 +327,26 @@ input(fp)
 		for (p = buf; *p && iswspace(*p); ++p);
 		if (!*p)
 			continue;
-		if (!(p = wcschr(p, '\n'))) {
-			warnx(_("line too long"));
-			eval = 1;
+		if (!(p = wcschr(p, '\n')) && !feof(fp)) {
+			if (reportedline < lineno) {
+				warnx(_("line %d is too long, output will be truncated"),
+					lineno);
+				reportedline = lineno;
+			}
+			eval = EXIT_FAILURE;
 			continue;
 		}
-		*p = '\0';
+		lineno++;
+		if (!feof(fp))
+			*p = '\0';
 		len = wcs_width(buf);	/* len = p - buf; */
 		if (maxlength < len)
 			maxlength = len;
 		if (entries == maxentry) {
 			maxentry += DEFNUM;
-			if (!(list = realloc(list,
-			    (u_int)maxentry * sizeof(wchar_t *))))
-				err(1, NULL);
+			list = realloc(list, (u_int)maxentry * sizeof(wchar_t *));
+			if (!list)
+				err(EXIT_FAILURE, _("out of memory?"));
 		}
 		list[entries++] = wcsdup(buf);
 	}
@@ -385,14 +396,12 @@ static char *mtsafe_strtok(char *str, const char *delim, char **ptr)
 
 static void *
 emalloc(size)
-	int size;
+        int size;
 {
 	char *p;
 
 	if (!(p = malloc(size)))
-		err(1, NULL);
+		err(EXIT_FAILURE, _("out of memory?"));
 	memset(p, 0, size);
 	return (p);
 }
-
-
