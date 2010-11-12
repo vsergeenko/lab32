@@ -69,7 +69,7 @@ install: build
 	dh_installdirs
 	$(MAKE) install DESTDIR=`pwd`/debian/util-linux INSTALL_STRIP_FLAG=""
 	dh_installdocs -i -s
-	install -m 644 login-utils/README.modems-with-agetty debian/util-linux/usr/share/doc/util-linux/README.modems-with-getty
+	install -m 644 login-utils/README.modems-with-agetty debian/util-linux/usr/share/doc/util-linux/README.modems-with-agetty
 	install -m 755 debian/util-linux.initramfs debian/util-linux/usr/share/initramfs-tools/hooks/utillinux
 	dh_installexamples -i -s
 	dh_installmenu -i -s
@@ -152,11 +152,8 @@ else
 endif
 endif
 ifneq ($(DEB_HOST_ARCH_OS),hurd)
-	cd debian/util-linux/sbin ; mv agetty getty
-	cd debian/util-linux/usr/share/man/man8 ; mv agetty.8 getty.8
-	perl -pi.bak -e 's/agetty/getty/g' debian/util-linux/usr/share/man/man8/getty.8 \
-		  debian/util-linux/usr/share/doc/util-linux/README.*
-	rm `find debian/util-linux/usr -name \*.bak`
+	cd debian/util-linux/sbin ; ln agetty getty
+	cd debian/util-linux/usr/share/man/man8 ; ln agetty.8 getty.8
 endif
 ifneq ($(DEB_HOST_ARCH_OS),linux)
 	cd debian/util-linux/sbin ; mv mkswap mkswap.linux
