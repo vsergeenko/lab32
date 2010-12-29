@@ -20,6 +20,7 @@
 #include "lomount.h"
 #include "rmd160.h"
 #include "xstrncpy.h"
+#include "strutils.h"
 #include "nls.h"
 #include "sundries.h"
 #include "xmalloc.h"
@@ -80,6 +81,62 @@ struct looplist {
 #define LLFLG_PROCFS	(1 << 4)	/* try to found used devices in /proc/partitions */
 #define LLFLG_SUBDIR	(1 << 5)	/* /dev/loop/N */
 #define LLFLG_DFLT	(1 << 6)	/* directly try to check default loops */
+
+/* TODO: move to lib/sysfs.c */
+static char *loopfile_from_sysfs(const char *device)
+{
+	FILE *f;
+	struct stat st;
+	char buf[PATH_MAX], *res = NULL;
+
+	if (stat(device, &st) || !S_ISBLK(st.st_mode))
+		return NULL;
+
+	snprintf(buf, sizeof(buf), _PATH_SYS_DEVBLOCK "/%d:%d/loop/backing_file",
+			major(st.st_rdev), minor(st.st_rdev));
+
+	f = fopen(buf, "r");
+	if (!f)
+		return NULL;
+
+	if (fgets(buf, sizeof(buf), f)) {
+		size_t sz = strlen(buf);
+		if (sz) {
+			buf[sz - 1] = '\0';
+			res = xstrdup(buf);
+		}
+	}
+
+	fclose(f);
+	return res;
+}
+
+char *loopdev_get_loopfile(const char *device)
+{
+	char *res = loopfile_from_sysfs(device);
+
+	if (!res) {
+		struct loop_info lo;
+		struct loop_info64 lo64;
+		int fd;
+
+		if ((fd = open(device, O_RDONLY)) < 0)
+			return NULL;
+
+		if (ioctl(fd, LOOP_GET_STATUS64, &lo64) == 0) {
+			lo64.lo_file_name[LO_NAME_SIZE-2] = '*';
+			lo64.lo_file_name[LO_NAME_SIZE-1] = 0;
+			res = xstrdup((char *) lo64.lo_file_name);
+
+		} else if (ioctl(fd, LOOP_GET_STATUS, &lo) == 0) {
+			lo.lo_name[LO_NAME_SIZE-2] = '*';
+			lo.lo_name[LO_NAME_SIZE-1] = 0;
+			res = xstrdup((char *) lo.lo_name);
+		}
+		close(fd);
+	}
+	return res;
+}
 
 int
 is_loop_device (const char *device) {
@@ -380,13 +437,26 @@ show_loop_fd(int fd, char *device) {
 
 	if (ioctl(fd, LOOP_GET_STATUS64, &loopinfo64) == 0) {
 
+		char *lofile = NULL;
+
 		loopinfo64.lo_file_name[LO_NAME_SIZE-2] = '*';
 		loopinfo64.lo_file_name[LO_NAME_SIZE-1] = 0;
 		loopinfo64.lo_crypt_name[LO_NAME_SIZE-1] = 0;
 
+		/* ioctl has limited buffer for backing file name, since
+		 * kernel 2.6.37 the filename is available in sysfs too
+		 */
+		if (strlen((char *) loopinfo64.lo_file_name) == LO_NAME_SIZE - 1)
+			lofile = loopfile_from_sysfs(device);
+		if (!lofile)
+			lofile = (char *) loopinfo64.lo_file_name;
+
 		printf("%s: [%04" PRIx64 "]:%" PRIu64 " (%s)",
 		       device, loopinfo64.lo_device, loopinfo64.lo_inode,
-		       loopinfo64.lo_file_name);
+		       lofile);
+
+		if (lofile != (char *) loopinfo64.lo_file_name)
+			free(lofile);
 
 		if (loopinfo64.lo_offset)
 			printf(_(", offset %" PRIu64 ), loopinfo64.lo_offset);
@@ -955,7 +1025,7 @@ find_unused_loop_device (void) {
 #include <getopt.h>
 #include <stdarg.h>
 
-#include "strtosize.h"
+#include "strutils.h"
 
 static void
 usage(FILE *f) {

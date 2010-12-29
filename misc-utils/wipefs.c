@@ -35,7 +35,7 @@
 
 #include "nls.h"
 #include "xalloc.h"
-#include "strtosize.h"
+#include "strutils.h"
 
 struct wipe_desc {
 	loff_t		offset;		/* magic string offset */
@@ -134,15 +134,6 @@ add_offset(struct wipe_desc *wp0, loff_t offset, int zap)
 	wp->next = wp0;
 	wp->zap = zap;
 	return wp;
-}
-
-static inline char *
-xstrdup(const char *s)
-{
-	char *x = strdup(s);
-	if (!x)
-		err(EXIT_FAILURE, _("strdup failed"));
-	return x;
 }
 
 static struct wipe_desc *

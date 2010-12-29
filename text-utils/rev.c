@@ -59,6 +59,7 @@
 #include <signal.h>
 
 #include "nls.h"
+#include "xalloc.h"
 #include "widechar.h"
 
 wchar_t *buf;
@@ -66,7 +67,7 @@ wchar_t *buf;
 static void sig_handler(int signo)
 {
 	free(buf);
-	exit(EXIT_SUCCESS);
+	_exit(EXIT_SUCCESS);
 }
 
 static void __attribute__((__noreturn__)) usage(FILE *out)
@@ -117,9 +118,7 @@ int main(int argc, char *argv[])
 			filename = *argv++;
 		}
 
-		buf = malloc(bufsiz * sizeof(wchar_t));
-		if (!buf)
-			err(EXIT_FAILURE, _("malloc failed"));
+		buf = xmalloc(bufsiz * sizeof(wchar_t));
 
 		while (fgetws(buf, bufsiz, fp)) {
 			len = wcslen(buf);

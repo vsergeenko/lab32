@@ -3,7 +3,7 @@
 #
 # Copyright (C) 2007 Karel Zak <kzak@redhat.com>
 #
-# This file is part of util-linux-ng.
+# This file is part of util-linux.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ if [ -n "$1" ]; then
 fi
 
 echo
-echo "------------------ Utils-linux-ng regression tests ------------------"
+echo "------------------ Utils-linux regression tests ------------------"
 echo
 echo "                    For development purpose only.                    "
 echo "                 Don't execute on production system!                 "

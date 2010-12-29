@@ -41,7 +41,7 @@
 #include "env.h"
 #include "nls.h"
 #include "blkdev.h"
-#include "strtosize.h"
+#include "strutils.h"
 
 #define DO_PS_FIDDLING
 
@@ -261,9 +261,23 @@ parse_string_opt(char *s) {
 /* Report on a single mount.  */
 static void
 print_one (const struct my_mntent *me) {
+
+	char *fsname = NULL;
+
 	if (mount_quiet)
 		return;
-	printf ("%s on %s", me->mnt_fsname, me->mnt_dir);
+
+	/* users assume backing file name rather than /dev/loopN in
+	 * mount(8) output if the device has been initialized by mount(8).
+	 */
+	if (strncmp(me->mnt_fsname, "/dev/loop", 9) == 0 &&
+	    is_loop_autoclear(me->mnt_fsname))
+		fsname = loopdev_get_loopfile(me->mnt_fsname);
+
+	if (!fsname)
+		fsname = (char *) me->mnt_fsname;
+
+	printf ("%s on %s", fsname, me->mnt_dir);
 	if (me->mnt_type != NULL && *(me->mnt_type) != '\0')
 		printf (" type %s", me->mnt_type);
 	if (me->mnt_opts != NULL)
@@ -389,6 +403,56 @@ append_context(const char *optname, char *optdata, char **extra_opts)
 
 	freecon(raw);
 	return 0;
+}
+
+/* returns newly allocated string without *context= options */
+static char *remove_context_options(char *opts)
+{
+	char *begin = NULL, *end = NULL, *p;
+	int open_quote = 0, changed = 0;
+
+	if (!opts)
+		return NULL;
+
+	opts = xstrdup(opts);
+
+	for (p = opts; p && *p; p++) {
+		if (!begin)
+			begin = p;		/* begin of the option item */
+		if (*p == '"')
+			open_quote ^= 1;	/* reverse the status */
+		if (open_quote)
+			continue;		/* still in quoted block */
+		if (*p == ',')
+			end = p;		/* terminate the option item */
+		else if (*(p + 1) == '\0')
+			end = p + 1;		/* end of optstr */
+		if (!begin || !end)
+			continue;
+
+		if (strncmp(begin, "context=", 8) == 0 ||
+		    strncmp(begin, "fscontext=", 10) == 0 ||
+		    strncmp(begin, "defcontext=", 11) == 0 ||
+	            strncmp(begin, "rootcontext=", 12) == 0) {
+			size_t sz;
+
+			if ((begin == opts || *(begin - 1) == ',') && *end == ',')
+				end++;
+			sz = strlen(end);
+
+			memmove(begin, end, sz + 1);
+			if (!*begin && *(begin - 1) == ',')
+				*(begin - 1) = '\0';
+
+			p = begin;
+			changed = 1;
+		}
+	}
+
+	if (changed && verbose)
+		printf (_("mount: SELinux *context= options are ignore on remount.\n"));
+
+	return opts;
 }
 #endif
 
@@ -1168,9 +1232,19 @@ loop_check(const char **spec, const char **type, int *flags,
       if (verbose)
 	printf(_("mount: skipping the setup of a loop device\n"));
     } else {
-      /* use autoclear loopdev on system without regular mtab only */
-      int loop_opts = mtab_is_writable() ? 0 : SETLOOP_AUTOCLEAR;
+      int loop_opts;
       int res;
+
+      /* since 2.6.37 we don't have to store backing filename to mtab
+       * because kernel provides the name in /sys
+       */
+      if (get_linux_version() >= KERNEL_VERSION(2, 6, 37) ||
+	  mtab_is_writable() == 0) {
+
+	if (verbose)
+	  printf(_("mount: enabling autoclear loopdev flag\n"));
+	loop_opts = SETLOOP_AUTOCLEAR;
+      }
 
       if (*flags & MS_RDONLY)
         loop_opts |= SETLOOP_RDONLY;
@@ -1328,8 +1402,6 @@ cdrom_setspeed(const char *spec) {
 static int
 is_readonly(const char *path)
 {
-	int fd;
-
 	if (access(path, W_OK) == 0)
 		return 0;
 	if (errno == EROFS)
@@ -1347,19 +1419,14 @@ is_readonly(const char *path)
 	 *
 	 * - for read-write filesystem with read-only VFS node (aka -o remount,ro,bind)
 	 */
-	fd = open(path, O_RDONLY);
-	if (fd >= 0) {
+	{
 		struct timespec times[2];
-		int errsv = 0;
 
 		times[0].tv_nsec = UTIME_NOW;	/* atime */
 		times[1].tv_nsec = UTIME_OMIT;	/* mtime */
 
-		if (futimens(fd, times) == -1)
-			errsv = errno;
-		close(fd);
-
-		return errsv == EROFS;
+		if (utimensat(AT_FDCWD, path, times, 0) == -1)
+			return errno == EROFS;
 	}
 #endif
 	return 0;
@@ -1404,6 +1471,7 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
 
   parse_opts (opts, &flags, &extra_opts);
   extra_opts1 = extra_opts;
+  mount_opts = extra_opts;
 
   /* quietly succeed for fstab entries that don't get mounted automatically */
   if (mount_all && (flags & MS_NOAUTO))
@@ -1418,8 +1486,6 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
       die(EX_USAGE, _("mount: according to mtab, "
                       "%s is already mounted on %s\n"),
 		      spec, node);
-
-  mount_opts = extra_opts;
 
   if (opt_speed)
       cdrom_setspeed(spec);
@@ -1441,12 +1507,17 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
   if (flags & (MS_BIND | MS_MOVE | MS_PROPAGATION))
       types = "none";
 
+#ifdef HAVE_LIBSELINUX
+  if ((flags & MS_REMOUNT) && mount_opts)
+      mount_opts = remove_context_options(mount_opts);
+#endif
+
   /*
    * Call mount.TYPE for types that require a separate mount program.
    * For the moment these types are ncpfs and smbfs. Maybe also vxfs.
    * All such special things must occur isolated in the types string.
    */
-  if (check_special_mountprog(spec, node, types, flags, extra_opts, &status)) {
+  if (check_special_mountprog(spec, node, types, flags, mount_opts, &status)) {
       res = status;
       goto out;
   }
@@ -1740,6 +1811,8 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
   }
 #endif
 
+  if (extra_opts1 != mount_opts)
+	  my_free(mount_opts);
   my_free(extra_opts1);
   my_free(spec1);
   my_free(node1);

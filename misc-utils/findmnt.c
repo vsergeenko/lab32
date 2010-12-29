@@ -26,9 +26,6 @@
 #include <getopt.h>
 #include <string.h>
 #include <termios.h>
-#ifdef HAVE_LANGINFO_H
-#include <langinfo.h>
-#endif
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
@@ -191,46 +188,6 @@ static int column_name_to_id(const char *name, size_t namesz)
 	}
 	warnx(_("unknown column: %s"), name);
 	return -1;
-}
-
-/*
- * parses list of columns from @str and add IDs to columns[]
- */
-static int set_columns(const char *str)
-{
-	const char *begin = NULL, *p;
-
-	ncolumns = 0;
-
-	if (!str || !*str)
-		return -1;
-
-	ncolumns = 0;
-
-	for (p = str; p && *p; p++) {
-		const char *end = NULL;
-		int id;
-
-		if (!begin)
-			begin = p;		/* begin of the column name */
-		if (*p == ',')
-			end = p;		/* terminate the name */
-		if (*(p + 1) == '\0')
-			end = p + 1;		/* end of string */
-		if (!begin || !end)
-			continue;
-		if (end <= begin)
-			return -1;
-
-		id = column_name_to_id(begin, end - begin);
-		if (id == -1)
-			return -1;
-		columns[ ncolumns++ ] = id;
-		begin = NULL;
-		if (end && !*end)
-			break;
-	}
-	return 0;
 }
 
 /* Returns LABEL or UUID */
@@ -447,8 +404,10 @@ again:
 	return fs;
 }
 
-static int __attribute__((__noreturn__)) usage(FILE *out)
+static void __attribute__((__noreturn__)) usage(FILE *out)
 {
+	int i;
+
 	fprintf(out, _(
 	"\nUsage:\n"
 	" %1$s [options]\n"
@@ -481,12 +440,23 @@ static int __attribute__((__noreturn__)) usage(FILE *out)
 	" -S, --source <string>  device, LABEL= or UUID=device\n"
 	" -T, --target <string>  mountpoint\n\n"));
 
+
+	fprintf(out, _("\nAvailable columns:\n"));
+
+	for (i = 0; i < __NCOLUMNS; i++) {
+
+		fprintf(out, "  %-12s", infos[i].name);
+		if (i && !((i+1) % 3))
+			fputc('\n', out);
+	}
+	fputc('\n', out);
+
 	fprintf(out, _("\nFor more information see findmnt(1).\n"));
 
 	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
-static int __attribute__((__noreturn__))
+static void __attribute__((__noreturn__))
 errx_mutually_exclusive(const char *opts)
 {
 	errx(EXIT_FAILURE, "%s %s", opts, _("options are mutually exclusive"));
@@ -580,7 +550,8 @@ int main(int argc, char *argv[])
 			set_all_columns_truncate(FALSE);
 			break;
 		case 'o':
-			if (set_columns(optarg))
+			if (tt_parse_columns_list(optarg, columns, &ncolumns,
+						column_name_to_id))
 				exit(EXIT_FAILURE);
 			break;
 		case 'O':
@@ -698,7 +669,7 @@ int main(int argc, char *argv[])
 	}
 
 	for (i = 0; i < ncolumns; i++) {
-		int fl = get_column_truncate(i) ? TT_FL_TRUNCATE : 0;
+		int fl = get_column_truncate(i) ? TT_FL_TRUNC : 0;
 
 		if (get_column_id(i) == COL_TARGET && (tt_flags & TT_FL_TREE))
 			fl |= TT_FL_TREE;

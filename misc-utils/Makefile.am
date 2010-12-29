@@ -18,7 +18,9 @@ usrbin_exec_SCRIPTS = chkdupexe
 CLEANFILES = chkdupexe
 
 dist_man_MANS = cal.1 chkdupexe.1 ddate.1 logger.1 look.1 mcookie.1 \
-	namei.1 script.1 whereis.1 scriptreplay.1
+		namei.1 script.1 whereis.1 scriptreplay.1
+
+namei_SOURCES = namei.c $(top_srcdir)/lib/strutils.c
 
 if BUILD_LIBUUID
 usrbin_exec_PROGRAMS += uuidgen
@@ -37,14 +39,26 @@ if BUILD_LIBBLKID
 sbin_PROGRAMS += blkid findfs wipefs
 dist_man_MANS += blkid.8 findfs.8 wipefs.8
 blkid_SOURCES = blkid.c $(top_srcdir)/lib/ismounted.c \
-		$(top_srcdir)/lib/strtosize.c
+		$(top_srcdir)/lib/strutils.c
 blkid_LDADD = $(ul_libblkid_la)
 blkid_CFLAGS = $(AM_CFLAGS) -I$(ul_libblkid_incdir)
+
 findfs_LDADD = $(ul_libblkid_la)
 findfs_CFLAGS = $(AM_CFLAGS) -I$(ul_libblkid_incdir)
-wipefs_SOURCES = wipefs.c $(top_srcdir)/lib/strtosize.c
+
+wipefs_SOURCES = wipefs.c $(top_srcdir)/lib/strutils.c
 wipefs_LDADD = $(ul_libblkid_la)
 wipefs_CFLAGS = $(AM_CFLAGS) -I$(ul_libblkid_incdir)
+
+bin_PROGRAMS += lsblk
+dist_man_MANS += lsblk.8
+lsblk_SOURCES = lsblk.c \
+		$(top_srcdir)/lib/canonicalize.c \
+		$(top_srcdir)/lib/ismounted.c \
+		$(top_srcdir)/lib/tt.c \
+		$(top_srcdir)/lib/strutils.c
+lsblk_LDADD = $(ul_libblkid_la)
+lsblk_CFLAGS = $(AM_CFLAGS) -I$(ul_libblkid_incdir)
 if HAVE_STATIC_BLKID
 sbin_PROGRAMS += blkid.static
 blkid_static_SOURCES = $(blkid_SOURCES)
@@ -60,9 +74,15 @@ dist_man_MANS += findmnt.8
 findmnt_LDADD = $(ul_libmount_la)
 findmnt_CFLAGS = $(AM_CFLAGS) -I$(ul_libmount_incdir)
 findmnt_SOURCES = findmnt.c $(top_srcdir)/lib/tt.c
+if !HAVE_LANGINFO
+findmnt_SOURCES += $(top_srcdir)/lib/langinfo.c
+endif
 endif
 
 cal_SOURCES = cal.c $(top_srcdir)/lib/mbsalign.c
+if !HAVE_LANGINFO
+cal_SOURCES += $(top_srcdir)/lib/langinfo.c
+endif
 if HAVE_TINFO
 cal_LDADD = -ltinfo @NCURSES_LIBS@
 else

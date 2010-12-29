@@ -47,6 +47,8 @@
 #include <sys/time.h>
 #include <sys/uio.h>
 
+#include <err.h>
+#include <errno.h>
 #include <paths.h>
 #include <ctype.h>
 #include <pwd.h>
@@ -58,7 +60,8 @@
 #include <utmp.h>
 
 #include "nls.h"
-#include "xstrncpy.h"
+#include "xalloc.h"
+#include "strutils.h"
 #include "ttymsg.h"
 #include "pathnames.h"
 #include "carefulputc.h"
@@ -79,8 +82,6 @@ int nobanner;
 int mbufsize;
 char *mbuf;
 
-char *progname = "wall";
-
 int
 main(int argc, char **argv) {
 	extern int optind;
@@ -94,12 +95,7 @@ main(int argc, char **argv) {
         bindtextdomain(PACKAGE, LOCALEDIR);
         textdomain(PACKAGE);
 
-	progname = argv[0];
-	p = strrchr(progname, '/');
-	if (p)
-	     progname = p+1;
-
-	while ((ch = getopt(argc, argv, "n")) != -1)
+	while ((ch = getopt(argc, argv, "n")) != -1) {
 		switch (ch) {
 		case 'n':
 			/* undoc option for shutdown: suppress banner */
@@ -109,9 +105,11 @@ main(int argc, char **argv) {
 		case '?':
 		default:
 usage:
-			(void)fprintf(stderr, _("usage: %s [file]\n"), progname);
-			exit(1);
+			fprintf(stderr, _("usage: %s [file]\n"),
+					program_invocation_short_name);
+			exit(EXIT_FAILURE);
 		}
+	}
 	argc -= optind;
 	argv += optind;
 	if (argc > 1)
@@ -141,10 +139,10 @@ usage:
 
 		xstrncpy(line, utmpptr->ut_line, sizeof(utmpptr->ut_line));
 		if ((p = ttymsg(&iov, 1, line, 60*5)) != NULL)
-			(void)fprintf(stderr, "%s: %s\n", progname, p);
+			warnx("%s", p);
 	}
 	endutent();
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 void
@@ -162,12 +160,11 @@ makemsg(fname)
 		lbuf[MAXHOSTNAMELEN + 320],
 		tmpname[sizeof(_PATH_TMP) + 20];
 
-	(void)sprintf(tmpname, "%s/wall.XXXXXX", _PATH_TMP);
-	if (!(fd = mkstemp(tmpname)) || !(fp = fdopen(fd, "r+"))) {
-		(void)fprintf(stderr, _("%s: can't open temporary file.\n"), progname);
-		exit(1);
-	}
-	(void)unlink(tmpname);
+	sprintf(tmpname, "%s/wall.XXXXXX", _PATH_TMP);
+	if (!(fd = mkstemp(tmpname)) || !(fp = fdopen(fd, "r+")))
+		errx(EXIT_FAILURE, _("can't open temporary file"));
+
+	unlink(tmpname);
 
 	if (!nobanner) {
 		if (!(whom = getlogin()) || !*whom)
@@ -177,8 +174,8 @@ makemsg(fname)
 		where = ttyname(2);
 		if (!where || strlen(where) > 100)
 			where = "somewhere";
-		(void)gethostname(hostname, sizeof(hostname));
-		(void)time(&now);
+		gethostname(hostname, sizeof(hostname));
+		time(&now);
 		lt = localtime(&now);
 
 		/*
@@ -190,15 +187,15 @@ makemsg(fname)
 		 */
 		/* snprintf is not always available, but the sprintf's here
 		   will not overflow as long as %d takes at most 100 chars */
-		(void)fprintf(fp, "\r%79s\r\n", " ");
-		(void)sprintf(lbuf, _("Broadcast Message from %s@%s"),
+		fprintf(fp, "\r%79s\r\n", " ");
+		sprintf(lbuf, _("Broadcast Message from %s@%s"),
 			      whom, hostname);
-		(void)fprintf(fp, "%-79.79s\007\007\r\n", lbuf);
-		(void)sprintf(lbuf, "        (%s) at %d:%02d ...",
+		fprintf(fp, "%-79.79s\007\007\r\n", lbuf);
+		sprintf(lbuf, "        (%s) at %d:%02d ...",
 			      where, lt->tm_hour, lt->tm_min);
-		(void)fprintf(fp, "%-79.79s\r\n", lbuf);
+		fprintf(fp, "%-79.79s\r\n", lbuf);
 	}
-	(void)fprintf(fp, "%79s\r\n", " ");
+	fprintf(fp, "%79s\r\n", " ");
 
 	if (fname) {
 		/*
@@ -208,16 +205,12 @@ makemsg(fname)
 		 * instead of "wall file".
 		 */
 		int uid = getuid();
-		if (uid && (uid != geteuid() || getgid() != getegid())) {
-			fprintf(stderr, _("%s: will not read %s - use stdin.\n"),
-				progname, fname);
-			exit(1);
-		}
-		if (!freopen(fname, "r", stdin)) {
-			fprintf(stderr, _("%s: can't read %s.\n"),
-				progname, fname);
-			exit(1);
-		}
+		if (uid && (uid != geteuid() || getgid() != getegid()))
+			errx(EXIT_FAILURE, _("will not read %s - use stdin."),
+			     fname);
+
+		if (!freopen(fname, "r", stdin))
+			errx(EXIT_FAILURE, _("can't read %s."), fname);
 	}
 
 	while (fgets(lbuf, sizeof(lbuf), stdin)) {
@@ -236,19 +229,14 @@ makemsg(fname)
 	fprintf(fp, "%79s\r\n", " ");
 	rewind(fp);
 
-	if (fstat(fd, &sbuf)) {
-		fprintf(stderr, _("%s: can't stat temporary file.\n"),
-			progname);
-		exit(1);
-	}
+	if (fstat(fd, &sbuf))
+		err(EXIT_FAILURE, _("fstat failed"));
+
 	mbufsize = sbuf.st_size;
-	if (!(mbuf = malloc((u_int)mbufsize))) {
-		(void)fprintf(stderr, _("%s: Out of memory!\n"), progname);
-		exit(1);
-	}
-	if (fread(mbuf, sizeof(*mbuf), mbufsize, fp) != mbufsize) {
-		(void)fprintf(stderr, _("%s: can't read temporary file.\n"), progname);
-		exit(1);
-	}
-	(void)close(fd);
+	mbuf = xmalloc(mbufsize);
+
+	if (fread(mbuf, sizeof(*mbuf), mbufsize, fp) != mbufsize)
+		err(EXIT_FAILURE, _("fread failed"));
+
+	close(fd);
 }

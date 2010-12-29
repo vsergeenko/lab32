@@ -32,7 +32,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#include "xstrncpy.h"
+#include "strutils.h"
 #include "nls.h"
 #include "pathnames.h"
 
@@ -364,7 +364,6 @@ main(argc, argv)
 
     (void) execl(options.login, options.login, "--", logname, NULL);
     error(_("%s: can't exec %s: %m"), options.tty, options.login);
-    exit(0);  /* quiet GCC */
 }
 
 /* parse-args - parse command-line arguments */
@@ -714,6 +713,13 @@ termio_init(tp, op)
      struct termios *tp;
      struct options *op;
 {
+    speed_t ispeed, ospeed;
+
+    if (op->flags & F_KEEPSPEED) {
+	ispeed = cfgetispeed(tp);		/* save the original setting */
+	ospeed = cfgetospeed(tp);
+    } else
+	ospeed = ispeed = op->speeds[FIRST_SPEED];
 
     /*
      * Initial termios settings: 8-bit characters, raw-mode, blocking i/o.
@@ -724,18 +730,21 @@ termio_init(tp, op)
     /* flush input and output queues, important for modems! */
     (void) tcflush(0, TCIOFLUSH);
 
+    tp->c_iflag = tp->c_lflag = tp->c_oflag = 0;
+
     if (!(op->flags & F_KEEPCFLAGS))
 	tp->c_cflag = CS8 | HUPCL | CREAD | (tp->c_cflag & CLOCAL);
 
-    if (!(op->flags & F_KEEPSPEED)) {
-	    cfsetispeed(tp, op->speeds[FIRST_SPEED]);
-	    cfsetospeed(tp, op->speeds[FIRST_SPEED]);
-    }
+    /* Note that the speed is stored in the c_cflag termios field, so we have
+     * set the speed always when the cflag se reseted.
+     */
+    cfsetispeed(tp, ispeed);
+    cfsetospeed(tp, ospeed);
+
     if (op->flags & F_LOCAL) {
 	tp->c_cflag |= CLOCAL;
     }
 
-    tp->c_iflag = tp->c_lflag = tp->c_oflag = 0;
 #ifdef HAVE_STRUCT_TERMIOS_C_LINE
     tp->c_line = 0;
 #endif
@@ -911,12 +920,6 @@ do_prompt(op, tp)
 		  case 'd':
 		  case 't':
 		    {
-		      /* TODO: use nl_langinfo() */
-		      char *weekday[] = { "Sun", "Mon", "Tue", "Wed", "Thu",
-					  "Fri", "Sat" };
-		      char *month[] = { "Jan", "Feb", "Mar", "Apr", "May",
-					"Jun", "Jul", "Aug", "Sep", "Oct",
-					"Nov", "Dec" };
 		      time_t now;
 		      struct tm *tm;
 
@@ -925,14 +928,14 @@ do_prompt(op, tp)
 
 		      if (c == 'd')
 			(void) printf ("%s %s %d  %d",
-				weekday[tm->tm_wday], month[tm->tm_mon],
-				tm->tm_mday, 
+				nl_langinfo(ABDAY_1 + tm->tm_wday),
+				nl_langinfo(ABMON_1 + tm->tm_mon),
+				tm->tm_mday,
 				tm->tm_year < 70 ? tm->tm_year + 2000 :
 				tm->tm_year + 1900);
 		      else
 			(void) printf ("%02d:%02d:%02d",
 				tm->tm_hour, tm->tm_min, tm->tm_sec);
-		      
 		      break;
 		    }
 
@@ -995,9 +998,18 @@ next_speed(tp, op)
      struct termios *tp;
      struct options *op;
 {
-    static int baud_index = FIRST_SPEED;/* current speed index */
+    static int baud_index = -1;
 
-    baud_index = (baud_index + 1) % op->numspeed;
+    if (baud_index == -1)
+	/*
+	 * if the F_KEEPSPEED flags is set then the FIRST_SPEED is not
+	 * tested yet (see termio_init()).
+	 */
+	baud_index = (op->flags & F_KEEPSPEED) ? FIRST_SPEED :
+		                                 1 % op->numspeed;
+    else
+	baud_index = (baud_index + 1) % op->numspeed;
+
     cfsetispeed(tp, op->speeds[baud_index]);
     cfsetospeed(tp, op->speeds[baud_index]);
     (void) tcsetattr(0, TCSANOW, tp);
@@ -1048,13 +1060,13 @@ char   *get_logname(op, cp, tp)
 
 	    if (read(0, &c, 1) < 1) {
 		if (errno == EINTR || errno == EIO)
-		    exit(0);
+		    exit(EXIT_SUCCESS);
 		error(_("%s: read: %m"), op->tty);
 	    }
 	    /* Do BREAK handling elsewhere. */
 
 	    if ((c == 0) && op->numspeed > 1)
-		return (0);
+		return EXIT_SUCCESS;
 	    /* Do parity bit handling. */
 
 	    if (op->eightbits) {
@@ -1091,7 +1103,7 @@ char   *get_logname(op, cp, tp)
 		}
 		break;
 	    case CTL('D'):
-		exit(0);
+		exit(EXIT_SUCCESS);
 	    default:
 		if (!isascii(ascval) || !isprint(ascval)) {
 		     /* ignore garbage characters */ ;
@@ -1111,7 +1123,7 @@ char   *get_logname(op, cp, tp)
 	    if (isupper(*bp))
 		*bp = tolower(*bp);		/* map name to lower case */
     }
-    return (logname);
+    return logname;
 }
 
 /* termio_final - set the final tty mode bits */
@@ -1199,11 +1211,11 @@ caps_lock(s)
 
     for (capslock = 0; *s; s++) {
 	if (islower(*s))
-	    return (0);
+	    return EXIT_SUCCESS;
 	if (capslock == 0)
 	    capslock = isupper(*s);
     }
-    return (capslock);
+    return capslock;
 }
 
 /* bcode - convert speed string to speed code; return 0 on failure */
@@ -1216,17 +1228,16 @@ bcode(s)
 
     for (sp = speedtab; sp->speed; sp++)
 	if (sp->speed == speed)
-	    return (sp->code);
-    return (0);
+	    return sp->code;
+    return 0;
 }
 
 /* usage - explain */
 
-void
-usage()
+void __attribute__((__noreturn__)) usage(void)
 {
     fprintf(stderr, _("Usage: %s [-8hiLmsUw] [-l login_program] [-t timeout] [-I initstring] [-H login_host] baud_rate,... line [termtype]\nor\t[-hiLmw] [-l login_program] [-t timeout] [-I initstring] [-H login_host] line baud_rate,... [termtype]\n"), progname);
-    exit(1);
+    exit(EXIT_FAILURE);
 }
 
 /* error - report errors to console or syslog; only understands %s and %m */

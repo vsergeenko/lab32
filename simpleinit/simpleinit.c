@@ -42,12 +42,17 @@
 #ifdef SHADOW_PWD
 #  include <shadow.h>
 #endif
-#include "my_crypt.h"
+
+#if defined (__GNU_LIBRARY__) && __GNU_LIBRARY__ > 1
+#include <crypt.h>
+#endif
+
 #include "pathnames.h"
 #include "linux_reboot.h"
-#include "xstrncpy.h"
+#include "strutils.h"
 #include "nls.h"
 #include "simpleinit.h"
+
 
 #define CMDSIZ     150	/* max size of a line in inittab */
 #define NUMCMD     30	/* max number of lines in inittab */
@@ -241,7 +246,7 @@ int main(int argc, char *argv[])
 		printf("tty= %s\n", inittab[i].tty);
 		printf("termcap= %s\n", inittab[i].termcap);
 	}
-	exit(0);
+	exit(EXIT_SUCCESS);
 #endif
 	signal (SIGHUP, sighup_handler);  /* Better semantics with signal(2) */
 
@@ -257,7 +262,7 @@ int main(int argc, char *argv[])
 		  case 0:   /*  Child   */
 		    execl (final_prog, final_prog, "start", NULL);
 		    err ( _("error running finalprog\n") );
-		    _exit (1);
+		    _exit (EXIT_FAILURE);
 		    break;
 		  case -1:  /*  Error   */
 		    err ( _("error forking finalprog\n") );
@@ -539,7 +544,7 @@ static void spawn (int i)
 		execve(inittab[i].toks[0], inittab[i].toks, env);
 		err(_("exec failed\n"));
 		sleep(5);
-		_exit(1);
+		_exit(EXIT_FAILURE);
 	}
 }
 
@@ -699,7 +704,7 @@ static void sigint_handler (int sig)
 
     caught_sigint = 1;
     kill (rc_child, SIGKILL);
-    if (no_reboot) _exit (1) /*kill (0, SIGKILL)*/;
+    if (no_reboot) _exit (EXIT_FAILURE) /*kill (0, SIGKILL)*/;
     sync ();
     sync ();
     pid = fork ();
@@ -964,7 +969,7 @@ static void process_command (const struct command_struct *command)
 	{
 	    FILE *fp;
 
-	    if ( ( fp = fopen (command->name, "w") ) == NULL ) _exit (1);
+	    if ( ( fp = fopen (command->name, "w") ) == NULL ) _exit (EXIT_FAILURE);
 	    show_scripts (fp, available_list.first, "AVAILABLE");
 	    show_scripts (fp, starting_list.first, "STARTING");
 	    fputs ("UNAVAILABLE SERVICES:\n", fp);
@@ -973,7 +978,7 @@ static void process_command (const struct command_struct *command)
 		fprintf (fp, "%s (%s)\n", service->name,
 			 service->failed ? "FAILED" : "not configured");
 	    fclose (fp);
-	    _exit (0);
+	    _exit (EXIT_SUCCESS);
 	}
 	break;
       case COMMAND_PROVIDE:

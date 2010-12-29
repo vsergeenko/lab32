@@ -1,6 +1,5 @@
 
-                            utils-linux-ng
-           (fork of util-linux, based on version 2.13-pre7)
+                            utils-linux
 
 MAINTAINER:
 
@@ -19,6 +18,8 @@ AUTHORS (merged projects & commands):
                        Karel Zak <kzak@redhat.com>
       findmnt:         Karel Zak <kzak@redhat.com>
       flock:           H. Peter Anvin <hpa@zytor.com>
+      fstrim:          Lukas Czerner <lczerner@redhat.com>
+      fsfreeze:        Hajime Taira <htaira@redhat.com>
       getopt:          Frodo Looijaard <frodol@dds.nl>
       hwclock:         Bryan Henderson <bryanh@giraffe-data.com>
       ipcmk:           Hayden James <hayden.james@gmail.com>
@@ -27,6 +28,8 @@ AUTHORS (merged projects & commands):
       libmount:        Karel Zak <kzak@redhat.com>
       libuuid:         Theodore Ts'o <tytso@mit.edu>
       lscpu:           Cai Qian <qcai@redhat.com>
+      lsblk:           Milan Broz <mbroz@redhat.com>
+                       Karel Zak <kzak@redhat.com>
       rtcwake:         David Brownell <david-b@pacbell.net>
                        Bernhard Walle <bwalle@suse.de>
       schedutils:      Robert Love <rlove@rlove.org>
@@ -84,6 +87,7 @@ CONTRIBUTORS:
       David Brownell <david-b@pacbell.net>
       David Miller <davem@davemloft.net>
       David Woodhouse <dwmw2@infradead.org>
+      Davidlohr Bueso <dave@gnu.org>
       Denis ChengRq <crquan@gmail.com>
       Dennis Gilmore <dennis@ausil.us>
       Dmitry V. Levin <ldv@altlinux.org>
@@ -210,6 +214,7 @@ CONTRIBUTORS:
       Sven Jost <sven.jost@googlemail.com>
       Theodore Ts'o <tytso@mit.edu>
       Thomas Fehr <fehr@suse.de>
+      Thorsten Glaser <tg@mirbsd.org>
       Tilman Schmidt <tilman@imap.cc>
       Timo Juhani Lindfors <timo.lindfors@iki.fi>
       Tom Prince <tom.prince@ualberta.net>

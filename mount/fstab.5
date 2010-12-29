@@ -176,8 +176,11 @@ This field describes the mount options associated with the filesystem.
 
 It is formatted as a comma separated list of options.  It contains at least
 the type of mount plus any additional options appropriate to the filesystem
-type. For documentation on the available options, see
+type. For documentation on the available mount options, see
 .BR mount (8).
+For documentation on the available swap options, see
+.BR swapon (8).
+
 Basic file system independent options are:
 .TP
 .B defaults
@@ -250,5 +253,5 @@ file format appeared in 4.0BSD.
 .\" But without comment convention, and options and vfs_type.
 .\" Instead there was a type rw/ro/rq/sw/xx, where xx is the present 'ignore'.
 .SH AVAILABILITY
-This man page is part of the util-linux-ng package and is available from
-ftp://ftp.kernel.org/pub/linux/utils/util-linux-ng/.
+This man page is part of the util-linux package and is available from
+ftp://ftp.kernel.org/pub/linux/utils/util-linux/.

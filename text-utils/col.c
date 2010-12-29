@@ -50,8 +50,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "nls.h"
 
+#include "nls.h"
+#include "xalloc.h"
 #include "widechar.h"
 
 #define	BS	'\b'		/* backspace */
@@ -92,14 +93,10 @@ struct line_str {
 	int	l_max_col;		/* max column in the line */
 };
 
-void usage(void);
-void wrerr(void);
-void warn(int);
 void free_line(LINE *l);
 void flush_line(LINE *l);
 void flush_lines(int);
 void flush_blanks(void);
-void *xmalloc(void *p, size_t size);
 LINE *alloc_line(void);
 
 CSET last_set;			/* char_set of last char printed */
@@ -115,6 +112,17 @@ int pass_unknown_seqs;		/* whether to pass unknown control sequences */
 	if (putwchar(ch) == WEOF) \
 		wrerr();
 
+static void __attribute__((__noreturn__)) usage()
+{
+	errx(EXIT_FAILURE, _("usage: %s [-bfpx] [-l nline]"),
+			program_invocation_short_name);
+}
+
+static void __attribute__((__noreturn__)) wrerr()
+{
+	errx(EXIT_FAILURE, _("write error."));
+}
+
 int main(int argc, char **argv)
 {
 	register wint_t ch;
@@ -128,12 +136,12 @@ int main(int argc, char **argv)
 	int this_line;			/* line l points to */
 	int nflushd_lines;		/* number of lines that were flushed */
 	int adjust, opt, warned;
-	int ret = 0;
+	int ret = EXIT_SUCCESS;
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	
+
 	max_bufd_lines = 128;
 	compress_spaces = 1;		/* compress spaces into tabs */
 	pass_unknown_seqs = 0;          /* remove unknown escape sequences */
@@ -149,11 +157,8 @@ int main(int argc, char **argv)
 			compress_spaces = 1;
 			break;
 		case 'l':		/* buffered line count */
-			if ((max_bufd_lines = atoi(optarg)) <= 0) {
-				(void)fprintf(stderr,
-				    _("col: bad -l argument %s.\n"), optarg);
-				exit(1);
-			}
+			if ((max_bufd_lines = atoi(optarg)) <= 0)
+				errx(EXIT_FAILURE, _("bad -l argument %s."), optarg);
 			break;
 		case 'p':
 			pass_unknown_seqs = 1;
@@ -176,16 +181,16 @@ int main(int argc, char **argv)
 	cur_line = max_line = nflushd_lines = this_line = 0;
 	cur_set = last_set = CS_NORMAL;
 	lines = l = alloc_line();
-	
+
 	while (feof(stdin)==0) {
 		errno = 0;
 		if ((ch = getwchar()) == WEOF) {
 			if (errno==EILSEQ) {
-				perror("col");
-				ret = 1;
+				warn(NULL);
+				ret = EXIT_FAILURE;
 			}
 			break;
-		}	
+		}
 		if (!iswgraph(ch)) {
 			switch (ch) {
 			case BS:		/* can't go back further */
@@ -275,7 +280,9 @@ int main(int argc, char **argv)
 						}
 					} else {
 						if (!warned++)
-							warn(cur_line);
+							warnx(
+			_("warning: can't back up %s."), cur_line < 0 ?
+			_("past first line") : _("-- line already flushed"));
 						cur_line -= nmove;
 					}
 				}
@@ -302,8 +309,8 @@ int main(int argc, char **argv)
 			int need;
 
 			need = l->l_lsize ? l->l_lsize * 2 : 90;
-			l->l_line = (CHAR *)xmalloc((void *) l->l_line,
-			    (unsigned) need * sizeof(CHAR));
+			l->l_line = (CHAR *)xrealloc((void *) l->l_line,
+						    (unsigned) need * sizeof(CHAR));
 			l->l_lsize = need;
 		}
 		c = &l->l_line[l->l_line_len++];
@@ -340,7 +347,7 @@ int main(int argc, char **argv)
 		nblank_lines = 2;
 	flush_blanks();
 	if (ferror(stdout) || fclose(stdout))
-		return 1;
+		return EXIT_FAILURE;
 	return ret;
 }
 
@@ -415,12 +422,12 @@ void flush_line(LINE *l)
 		 */
 		if (l->l_lsize > sorted_size) {
 			sorted_size = l->l_lsize;
-			sorted = (CHAR *)xmalloc((void *)sorted,
-			    (unsigned)sizeof(CHAR) * sorted_size);
+			sorted = (CHAR *)xrealloc((void *)sorted,
+						  (unsigned)sizeof(CHAR) * sorted_size);
 		}
 		if (l->l_max_col >= count_size) {
 			count_size = l->l_max_col + 1;
-			count = (int *)xmalloc((void *)count,
+			count = (int *)xrealloc((void *)count,
 			    (unsigned)sizeof(int) * count_size);
 		}
 		memset(count, 0, sizeof(int) * l->l_max_col + 1);
@@ -510,7 +517,7 @@ alloc_line()
 	int i;
 
 	if (!line_freelist) {
-		l = (LINE *)xmalloc((void *)NULL, sizeof(LINE) * NALLOC);
+		l = xmalloc(sizeof(LINE) * NALLOC);
 		line_freelist = l;
 		for (i = 1; i < NALLOC; i++, l++)
 			l->l_next = l + 1;
@@ -529,31 +536,4 @@ void free_line(LINE *l)
 	line_freelist = l;
 }
 
-void *
-xmalloc(void *p, size_t size)
-{
-	if (!(p = (void *)realloc(p, size))) {
-		(void)fprintf(stderr, "col: %s.\n", strerror(ENOMEM));
-		exit(1);
-	}
-	return(p);
-}
 
-void usage()
-{
-	(void)fprintf(stderr, _("usage: col [-bfpx] [-l nline]\n"));
-	exit(1);
-}
-
-void wrerr()
-{
-	(void)fprintf(stderr, _("col: write error.\n"));
-	exit(1);
-}
-
-void warn(int line)
-{
-	(void)fprintf(stderr,
-	    _("col: warning: can't back up %s.\n"), line < 0 ?
-	    _("past first line") : _("-- line already flushed"));
-}

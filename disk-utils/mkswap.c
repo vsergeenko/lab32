@@ -48,7 +48,7 @@
 
 #include "linux_version.h"
 #include "swapheader.h"
-#include "xstrncpy.h"
+#include "strutils.h"
 #include "nls.h"
 #include "blkdev.h"
 #include "pathnames.h"
@@ -172,11 +172,6 @@ init_signature_page(void) {
 					program_name, strerror(errno));
 		exit(1);
 	}
-}
-
-static void
-deinit_signature_page(void) {
-	free(signature_page);
 }
 
 static void
@@ -538,7 +533,6 @@ main(int argc, char ** argv) {
 #endif
 
 	init_signature_page();	/* get pagesize */
-	atexit(deinit_signature_page);
 
 	if (!device_name) {
 		fprintf(stderr,

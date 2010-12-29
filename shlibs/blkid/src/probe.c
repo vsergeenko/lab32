@@ -429,16 +429,14 @@ int __blkid_probe_invert_filter(blkid_probe pr, int chain)
 {
 	int i;
 	struct blkid_chain *chn;
-	unsigned long *fltr;
-
-	fltr = blkid_probe_get_filter(pr, chain, FALSE);
-	if (!fltr)
-		return -1;
 
 	chn = &pr->chains[chain];
 
+	if (!chn->driver->has_fltr || !chn->fltr)
+		return -1;
+
 	for (i = 0; i < blkid_bmp_nwords(chn->driver->nidinfos); i++)
-		fltr[i] = ~fltr[i];
+		chn->fltr[i] = ~chn->fltr[i];
 
 	DBG(DEBUG_LOWPROBE, printf("probing filter inverted\n"));
 	/* blkid_probe_dump_filter(pr, chain); */
@@ -1185,6 +1183,17 @@ unsigned int blkid_probe_get_sectorsize(blkid_probe pr)
 
 	pr->blkssz = DEFAULT_SECTOR_SIZE;
 	return pr->blkssz;
+}
+
+/**
+ * blkid_probe_get_sectors:
+ * @pr: probe
+ *
+ * Returns: 512-byte sector count or -1 in case of error.
+ */
+blkid_loff_t blkid_probe_get_sectors(blkid_probe pr)
+{
+	return pr ? pr->size >> 9 : -1;
 }
 
 /**
