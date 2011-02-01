@@ -234,7 +234,7 @@ umount_one (const char *spec, const char *node, const char *type,
 	 * Ignore the option "-d" for non-loop devices and loop devices with
 	 * LO_FLAGS_AUTOCLEAR flag.
 	 */
-	if (delloop && is_loop_device(spec) && !is_loop_autoclear(spec))
+	if (delloop && is_loop_device(spec))
 		myloop = 1;
 
 	if (lazy) {
@@ -329,13 +329,25 @@ umount_one (const char *spec, const char *node, const char *type,
 			loopdev = spec;
 	}
  gotloop:
-	if (loopdev)
+	if (loopdev && !is_loop_autoclear(loopdev))
 		del_loop(loopdev);
 
  writemtab:
 	if (!nomtab &&
 	    (umnt_err == 0 || umnt_err == EINVAL || umnt_err == ENOENT)) {
+#ifdef HAVE_LIBMOUNT_MOUNT
+		struct libmnt_update *upd = mnt_new_update();
+
+		if (upd && !mnt_update_set_fs(upd, 0, node, NULL)) {
+			struct libmnt_lock *lc = init_libmount_lock(
+						mnt_update_get_filename(upd));
+			mnt_update_table(upd, lc);
+			init_libmount_lock(NULL);
+		}
+		mnt_free_update(upd);
+#else
 		update_mtab (node, NULL);
+#endif
 	}
 
 	if (res >= 0)
@@ -443,26 +455,6 @@ contains(const char *list, const char *s) {
 	return 0;
 }
 
-/*
- * If list contains "user=peter" and we ask for "user=", return "peter"
- */
-static char *
-get_value(const char *list, const char *s) {
-	const char *t;
-	int n = strlen(s);
-
-	while (list && *list) {
-		if (strncmp(list, s, n) == 0) {
-			s = t = list+n;
-			while (*s && *s != ',')
-				s++;
-			return xstrndup(t, s-t);
-		}
-		while (*list && *list++ != ',') ;
-	}
-	return NULL;
-}
-
 /* check if @mc contains a loop device which is associated
  * with the @file in fs
  */
@@ -482,7 +474,7 @@ is_valid_loop(struct mntentchn *mc, struct mntentchn *fs)
 		return 0;
 
 	/* check for offset option in fstab */
-	p = get_value(fs->m.mnt_opts, "offset=");
+	p = get_option_value(fs->m.mnt_opts, "offset=");
 	if (p && strtosize(p, &offset)) {
 		if (verbose > 1)
 			printf(_("failed to parse 'offset=%s' options\n"), p);
@@ -560,7 +552,8 @@ umount_file (char *arg) {
 			char *uhelper = NULL;
 
 			if (mc->m.mnt_opts)
-				uhelper = get_value(mc->m.mnt_opts, "uhelper=");
+				uhelper = get_option_value(mc->m.mnt_opts,
+							   "uhelper=");
 			if (uhelper) {
 				int status = 0;
 				if (check_special_umountprog(arg, arg,
@@ -629,7 +622,7 @@ umount_file (char *arg) {
 			options = mc->m.mnt_opts;
 			if (!options)
 				options = "";
-			mtab_user = get_value(options, "user=");
+			mtab_user = get_option_value(options, "user=");
 
 			if (user && mtab_user && streq (user, mtab_user))
 				ok = 1;
@@ -738,6 +731,9 @@ main (int argc, char *argv[]) {
 
 	atexit(unlock_mtab);
 
+#ifdef HAVE_LIBMOUNT_MOUNT
+	mnt_init_debug(0);
+#endif
 	if (all) {
 		/* nodev stuff: sysfs, usbfs, oprofilefs, ... */
 		if (types == NULL)

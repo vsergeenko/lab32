@@ -98,6 +98,7 @@
 #endif
 
 #include "nls.h"
+#include "rpmatch.h"
 #include "blkdev.h"
 #include "strutils.h"
 #include "common.h"
@@ -150,7 +151,6 @@
 
 #define COL_ID_WIDTH 25
 
-#define CR '\015'
 #define ESC '\033'
 #define DEL '\177'
 #define BELL '\007'
@@ -427,8 +427,9 @@ fdexit(int ret) {
  */
 static int
 get_string(char *str, int len, char *def) {
-    size_t cells = 0, i = 0;
-    int x, y, key;
+    size_t cells = 0;
+    ssize_t i = 0;
+    int x, y;
     int use_def = FALSE;
     wint_t c;
 
@@ -445,13 +446,21 @@ get_string(char *str, int len, char *def) {
 
     refresh();
 
+    while (1) {
 #if !defined(HAVE_SLCURSES_H) && !defined(HAVE_SLANG_SLCURSES_H) && \
     defined(HAVE_LIBNCURSESW) && defined(HAVE_WIDECHAR)
-    while ((key = get_wch(&c)) != ERR &&
-	   c != '\r' && c != '\n' && c != KEY_ENTER) {
+	if (get_wch(&c) == ERR) {
 #else
-    while ((c = getch()) != '\n' && c != CR) {
+	if ((c = getch()) == ERR) {
 #endif
+		if (!isatty(STDIN_FILENO))
+			exit(2);
+		else
+			break;
+	}
+	if (c == '\r' || c == '\n' || c == KEY_ENTER)
+		break;
+
 	switch (c) {
 	case ESC:
 	    move(y, x);
@@ -554,11 +563,11 @@ fatal(char *s, int ret) {
 	 char *str = xmalloc(strlen(s) + strlen(err1) + strlen(err2) + 10);
 
 	 sprintf(str, "%s: %s", err1, s);
-	 if (strlen(str) > COLS)
+	 if (strlen(str) > (size_t) COLS)
 	     str[COLS] = 0;
 	 mvaddstr(WARNING_START, (COLS-strlen(str))/2, str);
 	 sprintf(str, "%s", err2);
-	 if (strlen(str) > COLS)
+	 if (strlen(str) > (size_t) COLS)
 	     str[COLS] = 0;
 	 mvaddstr(WARNING_START+1, (COLS-strlen(str))/2, str);
 	 putchar(BELL); /* CTRL-G */
@@ -1059,7 +1068,7 @@ menuUpdate( int y, int x, struct MenuItem *menuItems, int itemLength,
         if(lenName > itemLength || lenName >= sizeof(buff))
             print_warning(_("Menu item too long. Menu may look odd."));
 #endif
-	if (lenName >= sizeof(buff)) {	/* truncate ridiculously long string */
+	if ((size_t) lenName >= sizeof(buff)) {	/* truncate ridiculously long string */
 	    xstrncpy(buff, mi, sizeof(buff));
 	} else if (lenName >= itemLength) {
             snprintf(buff, sizeof(buff),
@@ -1131,6 +1140,10 @@ menuSelect( int y, int x, struct MenuItem *menuItems, int itemLength,
         refresh();
         key = getch();
 
+	if (key == ERR)
+		if (!isatty(STDIN_FILENO))
+			exit(2);
+
         /* Clear out all prompts and such */
         clear_warning();
         for (i = y; i < ylast; i++) {
@@ -1176,7 +1189,7 @@ menuSelect( int y, int x, struct MenuItem *menuItems, int itemLength,
         }
 
         /* Enter equals the keyboard shortcut of current menu item */
-        if (key == CR)
+        if (key == '\r')
             key = menuItems[current].key;
 
 	/* Give alternatives for arrow keys in case the window manager
@@ -1437,17 +1450,12 @@ get_kernel_geometry(void) {
 
 static int
 said_yes(char answer) {
-#ifdef HAVE_RPMATCH
 	char reply[2];
-	int yn;
 
 	reply[0] = answer;
 	reply[1] = 0;
-	yn = rpmatch(reply);	/* 1: yes, 0: no, -1: ? */
-	if (yn >= 0)
-		return yn;
-#endif
-	return (answer == 'y' || answer == 'Y');
+
+	return (rpmatch(reply) == 1) ? 1 : 0;
 }
 
 static void
@@ -1558,7 +1566,11 @@ fill_p_info(void) {
     unsigned long long llsectors;
     struct partition *p;
     partition_table buffer;
-    partition_info tmp_ext = { 0, 0, 0, 0, FREE_SPACE, PRIMARY };
+    partition_info tmp_ext;
+
+    memset(&tmp_ext, 0, sizeof tmp_ext);
+    tmp_ext.id = FREE_SPACE;
+    tmp_ext.num = PRIMARY;
 
     if ((fd = open(disk_device, O_RDWR)) < 0) {
 	 if ((fd = open(disk_device, O_RDONLY)) < 0)

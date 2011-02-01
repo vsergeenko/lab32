@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/include-Makefile.am
 
 dist_noinst_HEADERS = \
+	at.h \
 	bitops.h \
 	blkdev.h \
 	canonicalize.h \
@@ -27,4 +28,5 @@ dist_noinst_HEADERS = \
 	wholedisk.h \
 	widechar.h \
 	writeall.h \
+	rpmatch.h \
 	xalloc.h

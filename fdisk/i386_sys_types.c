@@ -10,7 +10,7 @@ struct systypes i386_sys_types[] = {
 	{0x04, N_("FAT16 <32M")},
 	{0x05, N_("Extended")},		/* DOS 3.3+ extended partition */
 	{0x06, N_("FAT16")},		/* DOS 16-bit >=32M */
-	{0x07, N_("HPFS/NTFS")},	/* OS/2 IFS, eg, HPFS or NTFS or QNX */
+	{0x07, N_("HPFS/NTFS/exFAT")},	/* OS/2 IFS, eg, HPFS or NTFS or QNX or exFAT */
 	{0x08, N_("AIX")},		/* AIX boot (AIX -- PS/2 port) or SplitDrive */
 	{0x09, N_("AIX bootable")},	/* AIX data or Coherent */
 	{0x0a, N_("OS/2 Boot Manager")},/* OS/2 Boot Manager */
@@ -29,6 +29,7 @@ struct systypes i386_sys_types[] = {
 	{0x1c, N_("Hidden W95 FAT32 (LBA)")},
 	{0x1e, N_("Hidden W95 FAT16 (LBA)")},
 	{0x24, N_("NEC DOS")},
+	{0x27, N_("Hidden NTFS WinRE")},
 	{0x39, N_("Plan 9")},
 	{0x3c, N_("PartitionMagic recovery")},
 	{0x40, N_("Venix 80286")},

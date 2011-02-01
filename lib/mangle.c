@@ -21,6 +21,9 @@ char *mangle(const char *s)
 	char *ss, *sp;
 	int n;
 
+	if (!s)
+		return NULL;
+
 	n = strlen(s);
 	ss = sp = malloc(4*n+1);
 	if (!sp)
@@ -44,9 +47,12 @@ char *mangle(const char *s)
 	return ss;
 }
 
-void unmangle_to_buffer(char *s, char *buf, size_t len)
+void unmangle_to_buffer(const char *s, char *buf, size_t len)
 {
 	size_t sz = 0;
+
+	if (!s)
+		return;
 
 	while(*s && sz < len - 1) {
 		if (*s == '\\' && sz + 4 < len - 1 && isoctal(s[1]) &&
@@ -63,23 +69,30 @@ void unmangle_to_buffer(char *s, char *buf, size_t len)
 	*buf = '\0';
 }
 
-static inline char *skip_nonspaces(char *s)
+static inline char *skip_nonspaces(const char *s)
 {
 	while (*s && !(*s == ' ' || *s == '\t'))
 		s++;
-	return s;
+	return (char *) s;
 }
 
 /*
  * Returns mallocated buffer or NULL in case of error.
  */
-char *unmangle(char *s)
+char *unmangle(const char *s, char **end)
 {
-	char *buf, *end;
+	char *buf;
+	char *e;
 	size_t sz;
 
-	end = skip_nonspaces(s);
-	sz = end - s + 1;
+	if (!s)
+		return NULL;
+
+	e = skip_nonspaces(s);
+	sz = e - s + 1;
+
+	if (end)
+		*end = e;
 
 	buf = malloc(sz);
 	if (!buf)
@@ -104,11 +117,20 @@ int main(int argc, char *argv[])
 		printf("mangled: '%s'\n", mangle(argv[2]));
 
 	else if (!strcmp(argv[1], "--unmangle")) {
-		char *x = unmangle(argv[2]);
-		if (x)
+		char *x = unmangle(argv[2], NULL);
+
+		if (x) {
 			printf("unmangled: '%s'\n", x);
-		else
-			err(EXIT_FAILURE, "unmangle failed");
+			free(x);
+		}
+
+		x = strdup(argv[2]);
+		unmangle_to_buffer(x, x, strlen(x) + 1);
+
+		if (x) {
+			printf("self-unmangled: '%s'\n", x);
+			free(x);
+		}
 	}
 
 	return EXIT_SUCCESS;

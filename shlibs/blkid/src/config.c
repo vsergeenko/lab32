@@ -17,18 +17,14 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-#ifdef HAVE_SYS_MKDEV_H
-#include <sys/mkdev.h>
-#endif
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
 #include <stdint.h>
 #include <stdarg.h>
 
-#include "blkdev.h"
 #include "blkidP.h"
-
+#include "env.h"
 
 static int parse_evaluate(struct blkid_config *conf, char *s)
 {
@@ -120,7 +116,7 @@ struct blkid_config *blkid_read_config(const char *filename)
 	FILE *f;
 
 	if (!filename)
-		filename = blkid_safe_getenv("BLKID_CONF");
+		filename = safe_getenv("BLKID_CONF");
 	if (!filename)
 		filename = BLKID_CONFIG_FILE;
 

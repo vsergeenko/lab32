@@ -3,8 +3,15 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#ifdef HAVE_SYS_IOCCOM_H
+# include <sys/ioccom.h> /* for _IO macro on e.g. Solaris */
+#endif
 #include <fcntl.h>
 #include <unistd.h>
+
+#if HAVE_SYS_MKDEV_H
+# include <sys/mkdev.h>		/* major and minor on Solaris */
+#endif
 
 #define DEFAULT_SECTOR_SIZE       512
 

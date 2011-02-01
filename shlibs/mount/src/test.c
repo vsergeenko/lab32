@@ -17,10 +17,10 @@
 
 #include "mountP.h"
 
-int mnt_run_test(struct mtest *tests, int argc, char *argv[])
+int mnt_run_test(struct libmnt_test *tests, int argc, char *argv[])
 {
 	int rc = -1;
-	struct mtest *ts;
+	struct libmnt_test *ts;
 
 	assert(tests);
 	assert(argc);
@@ -42,7 +42,7 @@ int mnt_run_test(struct mtest *tests, int argc, char *argv[])
 		}
 	}
 
-	if (rc == -1 && ts->name == NULL)
+	if (rc < 0 && ts->name == NULL)
 		goto usage;
 
 	return rc == 0 ? EXIT_SUCCESS : EXIT_FAILURE;

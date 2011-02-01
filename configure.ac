@@ -1,4 +1,4 @@
-AC_INIT(util-linux, 2.18, kzak@redhat.com)
+AC_INIT(util-linux, 2.19-rc3, kzak@redhat.com)
 
 AC_PREREQ(2.60)
 
@@ -22,7 +22,7 @@ PACKAGE_VERSION_RELEASE=0
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="30-Jun-2010"
+LIBBLKID_DATE="25-Jan-2011"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -119,6 +119,7 @@ AC_CHECK_HEADERS(
 	locale.h \
 	stdint.h \
 	inttypes.h \
+	paths.h \
 	pty.h \
 	mntent.h \
         net/if.h \
@@ -129,6 +130,7 @@ AC_CHECK_HEADERS(
 	sys/disk.h \
 	sys/disklabel.h \
 	sys/ioctl.h \
+	sys/ioccom.h \
 	sys/io.h \
 	sys/time.h \
 	sys/mkdev.h \
@@ -189,6 +191,7 @@ AC_CHECK_FUNCS(
 	strtoull \
 	sysconf \
 	getdtablesize \
+	getexecname \
 	getrlimit \
 	srandom \
 	setresgid \
@@ -210,6 +213,56 @@ AC_CHECK_MEMBER(struct sockaddr.sa_len,
 		AC_DEFINE_UNQUOTED(HAVE_SA_LEN,1,[Define if struct sockaddr contains sa_len]),,
 	[#include <sys/types.h>
 	 #include <sys/socket.h>])
+
+SOCKET_LIBS=
+AC_SEARCH_LIBS([gethostbyname], [nsl],
+	[if test x"$ac_cv_search_gethostbyname" != x"none required"; then
+		SOCKET_LIBS="$SOCKET_LIBS -lnsl";
+	 fi])
+AC_SEARCH_LIBS([socket], [socket],
+	[if test x"$ac_cv_search_socket" != x"none required"; then
+		SOCKET_LIBS="$SOCKET_LIBS -lsocket";
+	fi])
+AC_SUBST([SOCKET_LIBS])
+
+
+have_dirfd=no
+AC_CHECK_FUNCS([dirfd], [have_dirfd=yes], [have_dirfd=no])
+if test x"$have_dirfd" = xno ; then
+	AC_CHECK_DECLS([dirfd],
+		[have_dirfd=yes], [have_dirfd=no],
+		[#include <sys/types.h>
+		 #include <dirent.h>])
+fi
+
+have_ddfd=no
+if test x"$have_dirfd" = xno ; then
+	AC_CHECK_MEMBERS([DIR.dd_fd],
+		[have_ddfd=yes], [have_ddfd=no],
+		[#include <sys/types.h>
+		 #include <dirent.h>])
+fi
+
+case "$have_dirfd:$have_ddfd" in
+no:no)
+  AC_MSG_ERROR([cannot find a method to get filedescriptor of directory]) ;;
+esac
+
+
+AC_MSG_CHECKING(whether program_invocation_short_name is defined)
+AC_TRY_COMPILE([#include <argp.h>],
+               [program_invocation_short_name = "test";],
+               AC_DEFINE(HAVE_PROGRAM_INVOCATION_SHORT_NAME, 1,
+                         [Define if program_invocation_short_name is defined])
+               AC_MSG_RESULT(yes),
+               AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING([whether __progname is defined])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([extern char *__progname;],
+           [if (*__progname == 0) return;])],
+           AC_DEFINE(HAVE___PROGNAME, 1, [Define if __progname is defined])
+           AC_MSG_RESULT(yes),
+           AC_MSG_RESULT(no))
 
 dnl Static compilation
 m4_define([UTIL_STATIC_PROGRAMS], [losetup, mount, umount, fdisk, sfdisk, blkid])
@@ -408,10 +461,19 @@ AC_ARG_VAR([BLKID_LIBS_STATIC], [-l options for linking statically with blkid])
 
 AC_ARG_ENABLE([libmount],
   AS_HELP_STRING([--disable-libmount], [do not build libmount]),
-  [], enable_libmount=yes
+  [], enable_libmount=check
 )
+build_libmount=yes
+if test "x$enable_libmount" = xcheck; then
+  if test "x$linux_os" = xno; then
+    AC_MSG_WARN([non-linux system; do not build libmount])
+    build_libmount=no
+  fi
+elif test "x$enable_libmount" = xno; then
+    build_libmount=no
+fi
 
-case "$enable_libblkid:$enable_libmount" in
+case "$enable_libblkid:$build_libmount" in
 no:yes)
   AC_MSG_ERROR([cannot enable libmount when libblkid is disabled]) ;;
 esac
@@ -419,7 +481,21 @@ esac
 AC_SUBST([LIBMOUNT_VERSION])
 AC_SUBST([LIBMOUNT_VERSION_INFO])
 AC_DEFINE_UNQUOTED(LIBMOUNT_VERSION, "$LIBMOUNT_VERSION", [libmount version string])
-AM_CONDITIONAL(BUILD_LIBMOUNT, test "x$enable_libmount" = xyes)
+AM_CONDITIONAL(BUILD_LIBMOUNT, test "x$build_libmount" = xyes)
+
+
+AC_ARG_ENABLE([libmount-mount],
+  AS_HELP_STRING([--enable-libmount-mount], [link mount(8) with libmount (EXPERIMENTAL)]),
+  [], enable_libmount_mount=no
+)
+
+case "$build_libmount:$enable_libmount_mount" in
+no:yes)
+  AC_MSG_ERROR([cannot link mount(8) with libmount when libmount is disabled]) ;;
+yes:yes)
+  AC_DEFINE(HAVE_LIBMOUNT_MOUNT, 1, [use libmount for mount(8)])
+esac
+AM_CONDITIONAL(BUILD_LIBMOUNT_MOUNT, test "x$enable_libmount_mount" = xyes)
 
 
 UTIL_CHECK_LIB(util, openpty)
@@ -506,17 +582,28 @@ else
   AM_CONDITIONAL(HAVE_UTEMPTER, false)
 fi
 
-
+# on Solaris, you can't mix and match standards, since we use c99
+# aparently at this stage, XOPEN_SOURCE will conflict.  As workaround,
+# check for crypt.h and use that without XOPEN_SOURCE.
+AC_CHECK_HEADERS([crypt.h])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#else
 #define _XOPEN_SOURCE
 #include <unistd.h>
+#endif
 ]], [[
 char *c = crypt("abc","pw");
 ]])],[],[
   LIBS="$LIBS -lcrypt"
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+  #ifdef HAVE_CRYPT_H
+  #include <crypt.h>
+  #else
   #define _XOPEN_SOURCE
   #include <unistd.h>
+  #endif
   ]], [[
   char *c = crypt("abc","pw");
   ]])],[
@@ -541,6 +628,7 @@ printf(__progname);
 AC_CHECK_TYPES([union semun], [], [], [[
 #include <sys/sem.h>
 ]])
+AC_CHECK_TYPES(loff_t)
 
 
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -1168,9 +1256,10 @@ shlibs/blkid/samples/Makefile
 shlibs/mount/mount.pc
 shlibs/mount/Makefile
 shlibs/mount/src/Makefile
-shlibs/mount/src/mount.h
+shlibs/mount/src/libmount.h
 shlibs/mount/docs/Makefile
 shlibs/mount/docs/version.xml
+shlibs/mount/samples/Makefile
 shlibs/uuid/uuid.pc
 shlibs/uuid/Makefile
 shlibs/uuid/man/Makefile

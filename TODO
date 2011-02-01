@@ -1,3 +1,43 @@
+build-sys
+--------
+
+ - we use something like
+
+	AC_ARG_ENABLE(...., enable_foo=check)
+	build_foo=yes
+	if test "x$enable_foo" = xcheck; then
+		if test "x$linux_os" = xno; then
+			build_foo=no
+		fi
+	fi
+	AM_CONDITIONAL(BUILD_LIBMOUNT, test "x$build_foo" = xyes)
+
+   for Linux-only utils in configure.ac. It would be nice to set all defaults
+   for all $enable_ variables at begin of the configure script according to
+   $linux_os. Something like:
+
+	if test "x$linux_os" = xno
+		enable_mount=no
+		enable_libmount=no
+		enable_lsblk=no
+	fi
+
+   then we can remove all "if test "x$enable_foo" = xcheck;" stuff from the rest
+   of the configure script.
+
+ - it would be nice to remove all "if BUILD_LIB{MOUNT,BLKID,UUID}" from the 
+   Makefiles (e.g. misc-utils/Makefile.am) and use BUILD_<utilname> only
+
+   The configure.ac has to care about dependence between utils and librares and
+   enable BUILD_<utilname>.
+
+fsprobe
+-------
+
+ - remove the lib/fsprobe.c wrapper for libblkid used in mount and fsck. Use
+   everywhere libblkid from util-linux only.
+ - update ./configure script
+
 login-utils:
 -----------
 
@@ -20,6 +60,10 @@ sysfs
  - add lib/sysfs.c with functions that read block device attributes from /sys.
    For more details see devno.c from libblkid, lsblk.c and lomount.c.
 
+lib/tt.c
+--------
+
+ - allows to sort columns, for example sort lsblk(8) output by SIZE
 
 libblkid
 --------
@@ -58,6 +102,9 @@ wipefs
 
 fdisk(s)
 --------
+
+ * sfdisk has to use rpmatch() for answers to y/n questions
+   (e.g. "Are you satisfied with this? [ynq]")
 
  * sfdisk rounds to cylinders is -uM (megabyte units) is specified, this is
    pretty stupid feature. It has to round to sectors if -uS or -uM is specified.

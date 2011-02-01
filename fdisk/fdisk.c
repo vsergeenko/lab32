@@ -22,7 +22,9 @@
 #include <time.h>
 #include <limits.h>
 
+#include "xalloc.h"
 #include "nls.h"
+#include "rpmatch.h"
 #include "blkdev.h"
 #include "common.h"
 #include "mbsalign.h"
@@ -243,10 +245,26 @@ int	possibly_osf_label = 0;
 
 jmp_buf listingbuf;
 
+static void __attribute__ ((__noreturn__)) usage(FILE *out)
+{
+	fprintf(out, _("Usage:\n"
+		       " %1$s [options] <disk>    change partition table\n"
+		       " %1$s [options] -l <disk> list partition table(s)\n"
+		       " %1$s -s <partition>      give partition size(s) in blocks\n"
+		       "\nOptions:\n"
+		       " -b <size>             sector size (512, 1024, 2048 or 4096)\n"
+		       " -c[=<mode>]           compatible mode: 'dos' or 'nondos' (default)\n"
+		       " -h                    print this help text\n"
+		       " -u[=<unit>]           display units: 'cylinders' or 'sectors' (default)\n"
+		       " -v                    print program version\n"
+		       " -C <number>           specify the number of cylinders\n"
+		       " -H <number>           specify the number of heads\n"
+		       " -S <number>           specify the number of sectors per track\n"
+		       "\n"), program_invocation_short_name);
+	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+}
+
 void fatal(enum failure why) {
-	char	error[LINE_LENGTH],
-		*message = error;
-	int	rc = EXIT_FAILURE;
 
 	if (listing) {
 		close(fd);
@@ -254,55 +272,24 @@ void fatal(enum failure why) {
 	}
 
 	switch (why) {
-		case help:
-			rc = EXIT_SUCCESS;
-		case usage: message = _(
-"Usage:\n"
-" fdisk [options] <disk>    change partition table\n"
-" fdisk [options] -l <disk> list partition table(s)\n"
-" fdisk -s <partition>      give partition size(s) in blocks\n"
-"\nOptions:\n"
-" -b <size>             sector size (512, 1024, 2048 or 4096)\n"
-" -c[=<mode>]           compatible mode: 'dos' or 'nondos' (default)\n"
-" -h                    print this help text\n"
-" -u[=<unit>]           display units: 'cylinders' or 'sectors' (default)\n"
-" -v                    print program version\n"
-" -C <number>           specify the number of cylinders\n"
-" -H <number>           specify the number of heads\n"
-" -S <number>           specify the number of sectors per track\n"
-"\n");
-			break;
 		case unable_to_open:
-			snprintf(error, sizeof(error),
-				 _("Unable to open %s\n"), disk_device);
-			break;
-		case unable_to_read:
-			snprintf(error, sizeof(error),
-				 _("Unable to read %s\n"), disk_device);
-			break;
-		case unable_to_seek:
-			snprintf(error, sizeof(error),
-				_("Unable to seek on %s\n"),disk_device);
-			break;
-		case unable_to_write:
-			snprintf(error, sizeof(error),
-				_("Unable to write %s\n"), disk_device);
-			break;
-		case ioctl_error:
-			snprintf(error, sizeof(error),
-				 _("BLKGETSIZE ioctl failed on %s\n"),
-				disk_device);
-			break;
-		case out_of_memory:
-			message = _("Unable to allocate any more memory\n");
-			break;
-		default:
-			message = _("Fatal error\n");
-	}
+			err(EXIT_FAILURE, _("unable to open %s"), disk_device);
 
-	fputc('\n', stderr);
-	fputs(message, stderr);
-	exit(rc);
+		case unable_to_read:
+			err(EXIT_FAILURE, _("unable to read %s"), disk_device);
+
+		case unable_to_seek:
+			err(EXIT_FAILURE, _("unable to seek on %s"), disk_device);
+
+		case unable_to_write:
+			err(EXIT_FAILURE, _("unable to write %s"), disk_device);
+
+		case ioctl_error:
+			err(EXIT_FAILURE, _("BLKGETSIZE ioctl failed on %s"), disk_device);
+
+		default:
+			err(EXIT_FAILURE, _("fatal error"));
+	}
 }
 
 static void
@@ -332,9 +319,7 @@ read_pte(int fd, int pno, unsigned long long offset) {
 	struct pte *pe = &ptes[pno];
 
 	pe->offset = offset;
-	pe->sectorbuffer = malloc(sector_size);
-	if (!pe->sectorbuffer)
-		fatal(out_of_memory);
+	pe->sectorbuffer = xmalloc(sector_size);
 	read_sector(fd, offset, pe->sectorbuffer);
 	pe->changed = 0;
 	pe->part_table = pe->ext_pointer = NULL;
@@ -1172,9 +1157,7 @@ static void init_mbr_buffer(void)
 	if (MBRbuffer)
 		return;
 
-	MBRbuffer = calloc(1, MAX_SECTOR_SIZE);
-	if (!MBRbuffer)
-		fatal(out_of_memory);
+	MBRbuffer = xcalloc(1, MAX_SECTOR_SIZE);
 }
 
 void zeroize_mbr_buffer(void)
@@ -1316,23 +1299,46 @@ got_dos_table:
 	return 0;
 }
 
+static int is_partition_table_changed(void)
+{
+	int i;
+
+	for (i = 0; i < partitions; i++)
+		if (ptes[i].changed)
+			return 1;
+	return 0;
+}
+
+static void maybe_exit(int rc, int *asked)
+{
+	char line[LINE_LENGTH];
+
+	putchar('\n');
+	if (asked)
+		*asked = 0;
+
+	if (is_partition_table_changed() || MBRbuffer_changed) {
+		fprintf(stderr, _("Do you really want to quit? "));
+
+		if (!fgets(line, LINE_LENGTH, stdin) || rpmatch(line) == 1)
+			exit(rc);
+		if (asked)
+			*asked = 1;
+	} else
+		exit(rc);
+}
+
 /* read line; return 0 or first char */
 int
-read_line(void)
+read_line(int *asked)
 {
-	static int got_eof = 0;
-
 	line_ptr = line_buffer;
 	if (!fgets(line_buffer, LINE_LENGTH, stdin)) {
-		if (feof(stdin))
-			got_eof++; 	/* user typed ^D ? */
-		if (got_eof >= 3) {
-			fflush(stdout);
-			fprintf(stderr, _("\ngot EOF thrice - exiting..\n"));
-			exit(1);
-		}
+		maybe_exit(1, asked);
 		return 0;
 	}
+	if (asked)
+		*asked = 0;
 	while (*line_ptr && !isgraph(*line_ptr))
 		line_ptr++;
 	return *line_ptr;
@@ -1344,16 +1350,22 @@ read_char(char *mesg)
 	do {
 		fputs(mesg, stdout);
 		fflush (stdout);	 /* requested by niles@scyld.com */
-	} while (!read_line());
+	} while (!read_line(NULL));
 	return *line_ptr;
 }
 
 char
 read_chars(char *mesg)
 {
-        fputs(mesg, stdout);
-	fflush (stdout);	/* niles@scyld.com */
-        if (!read_line()) {
+	int rc, asked = 0;
+
+	do {
+	        fputs(mesg, stdout);
+		fflush (stdout);	/* niles@scyld.com */
+		rc = read_line(&asked);
+	} while (asked);
+
+	if (!rc) {
 		*line_ptr = '\n';
 		line_ptr[1] = 0;
 	}
@@ -1392,8 +1404,7 @@ read_int_sx(unsigned int low, unsigned int dflt, unsigned int high,
 
 	if (!ms || strlen(mesg)+100 > mslen) {
 		mslen = strlen(mesg)+200;
-		if (!(ms = realloc(ms,mslen)))
-			fatal(out_of_memory);
+		ms = xrealloc(ms,mslen);
 	}
 
 	if (dflt < low || dflt > high)
@@ -2444,8 +2455,7 @@ add_partition(int n, int sys) {
 		ext_index = n;
 		pen->ext_pointer = p;
 		pe4->offset = extended_offset = start;
-		if (!(pe4->sectorbuffer = calloc(1, sector_size)))
-			fatal(out_of_memory);
+		pe4->sectorbuffer = xcalloc(1, sector_size);
 		pe4->part_table = pt_offset(pe4->sectorbuffer, 0);
 		pe4->ext_pointer = pe4->part_table + 1;
 		pe4->changed = 1;
@@ -2458,8 +2468,7 @@ add_logical(void) {
 	if (partitions > 5 || ptes[4].part_table->sys_ind) {
 		struct pte *pe = &ptes[partitions];
 
-		if (!(pe->sectorbuffer = calloc(1, sector_size)))
-			fatal(out_of_memory);
+		pe->sectorbuffer = xcalloc(1, sector_size);
 		pe->part_table = pt_offset(pe->sectorbuffer, 0);
 		pe->ext_pointer = pe->part_table + 1;
 		pe->offset = 0;
@@ -2949,7 +2958,7 @@ main(int argc, char **argv) {
 			sector_size = atoi(optarg);
 			if (sector_size != 512 && sector_size != 1024 &&
 			    sector_size != 2048 && sector_size != 4096)
-				fatal(usage);
+				usage(stderr);
 			sector_offset = 2;
 			user_set_sector_size = 1;
 			break;
@@ -2962,10 +2971,10 @@ main(int argc, char **argv) {
 			if (optarg && !strcmp(optarg, "=dos"))
 				dos_compatible_flag = ~0;
 			else if (optarg && strcmp(optarg, "=nondos"))
-				fatal(usage);
+				usage(stderr);
 			break;
 		case 'h':
-			fatal(help);
+			usage(stdout);
 			break;
 		case 'H':
 			user_heads = atoi(optarg);
@@ -2988,14 +2997,14 @@ main(int argc, char **argv) {
 			if (optarg && strcmp(optarg, "=cylinders") == 0)
 				display_in_cyl_units = !display_in_cyl_units;
 			else if (optarg && strcmp(optarg, "=sectors"))
-				fatal(usage);
+				usage(stderr);
 			break;
 		case 'V':
 		case 'v':
 			printf("fdisk (%s)\n", PACKAGE_STRING);
 			exit(0);
 		default:
-			fatal(usage);
+			usage(stderr);
 		}
 	}
 
@@ -3037,7 +3046,7 @@ main(int argc, char **argv) {
 
 		opts = argc - optind;
 		if (opts <= 0)
-			fatal(usage);
+			usage(stderr);
 
 		for (j = optind; j < argc; j++) {
 			disk_device = argv[j];
@@ -3057,7 +3066,7 @@ main(int argc, char **argv) {
 	if (argc-optind == 1)
 		disk_device = argv[optind];
 	else
-		fatal(usage);
+		usage(stderr);
 
 	gpt_warning(disk_device);
 	get_boot(fdisk);

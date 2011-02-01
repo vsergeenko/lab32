@@ -2,6 +2,13 @@
 #define MOUNT_FSTAB_H
 
 #include "mount_mntent.h"
+
+#ifdef HAVE_LIBMOUNT_MOUNT
+#define USE_UNSTABLE_LIBMOUNT_API
+#include <libmount.h>
+extern struct libmnt_lock *init_libmount_lock(const char *filename);
+#endif
+
 int mtab_is_writable(void);
 int mtab_is_a_symlink(void);
 int mtab_does_not_exist(void);
@@ -31,5 +38,7 @@ struct mntentchn *getfs_by_label (const char *label);
 void lock_mtab (void);
 void unlock_mtab (void);
 void update_mtab (const char *special, struct my_mntent *with);
+
+char *get_option_value(const char *list, const char *s);
 
 #endif /* MOUNT_FSTAB_H */

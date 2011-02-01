@@ -45,9 +45,9 @@ struct partition {
 	unsigned char size4[4];         /* nr of sectors in partition */
 } PACKED;
 
-enum failure {help, usage, ioctl_error,
+enum failure {ioctl_error,
 	unable_to_open, unable_to_read, unable_to_seek,
-	unable_to_write, out_of_memory};
+	unable_to_write};
 
 enum action {fdisk, require, try_only, create_empty_dos, create_empty_sun};
 
@@ -67,7 +67,7 @@ extern void get_geometry(int fd, struct geom *);
 extern int get_boot(enum action what);
 extern int  get_partition(int warn, int max);
 extern void list_types(struct systypes *sys);
-extern int read_line (void);
+extern int read_line (int *asked);
 extern char read_char(char *mesg);
 extern int read_hex(struct systypes *sys);
 extern void reread_partition_table(int leave);

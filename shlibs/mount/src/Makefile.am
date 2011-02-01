@@ -5,28 +5,38 @@ AM_CPPFLAGS += -I$(ul_libmount_incdir) \
 	       -I$(ul_libblkid_incdir)
 
 # includes
-mountincdir = $(includedir)/mount
-nodist_mountinc_HEADERS = mount.h
+mountincdir = $(includedir)/libmount
+nodist_mountinc_HEADERS = libmount.h
 
 usrlib_exec_LTLIBRARIES = libmount.la
 libmount_la_SOURCES =	mountP.h version.c utils.c test.c init.c cache.c \
-			optstr.c optmap.c optent.c optls.c iter.c lock.c \
-		      	fs.c tab.c tab_parse.c \
+			optstr.c optmap.c iter.c lock.c \
+			fs.c tab.c tab_parse.c tab_update.c \
+			context.c context_mount.c context_umount.c \
 			$(mountinc_HEADERS) \
+			$(top_srcdir)/lib/at.c \
 			$(top_srcdir)/include/list.h \
 			$(top_srcdir)/lib/mangle.c \
-			$(top_srcdir)/lib/canonicalize.c
+			$(top_srcdir)/lib/canonicalize.c \
+			$(top_srcdir)/lib/strutils.c \
+			$(top_srcdir)/lib/env.c
 
 nodist_libmount_la_SOURCES = mountP.h
 
-libmount_la_LIBADD = $(ul_libblkid_la)
+libmount_la_LIBADD = $(ul_libblkid_la) $(SELINUX_LIBS)
 
-libmount_la_DEPENDENCIES = $(libmount_la_LIBADD) mount.sym mount.h.in
+libmount_la_DEPENDENCIES = $(libmount_la_LIBADD) libmount.sym libmount.h.in
 
-libmount_la_LDFLAGS = -Wl,--version-script=$(ul_libmount_srcdir)/mount.sym \
+libmount_la_LDFLAGS = -Wl,--version-script=$(ul_libmount_srcdir)/libmount.sym \
                       -version-info $(LIBMOUNT_VERSION_INFO)
 
-EXTRA_DIST = mount.sym mount.h.in
+TESTS_LIBS = $(UUID_LIBS)
+
+if HAVE_SELINUX
+TESTS_LIBS += $(SELINUX_LIBS)
+endif
+
+EXTRA_DIST = libmount.sym libmount.h.in
 CLEANFILES = $(tests)
 
 # move lib from $(usrlib_execdir) to $(libdir) if needed
@@ -45,12 +55,12 @@ uninstall-hook:
 	rm -f $(DESTDIR)$(libdir)/libmount.so*
 
 
-tests = test_version test_cache test_optstr test_optls test_lock \
-		  test_tab test_utils
+tests = test_version test_cache test_optstr test_lock \
+		  test_tab test_utils test_tab_update test_context
 
 tests: all $(tests)
 test_%: %.c
-	$(COMPILE) -DTEST_PROGRAM $< .libs/libmount.a \
+	$(AM_V_CC)$(COMPILE) -DTEST_PROGRAM $< .libs/libmount.a \
 		$(ul_libblkid_builddir)/.libs/libblkid.a -o $@ \
-		$(UUID_LIBS)
+		$(TESTS_LIBS)
 
