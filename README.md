@@ -31,7 +31,8 @@ dpkg-buildpackage: source version 2.27.1-1ubuntu3
 dpkg-buildpackage: source changed by Matthias Klose <doko@ubuntu.com>  
 dpkg-buildpackage: host architecture amd64 dpkg-source --before-build 
 util-linux-2.27.1  
-dpkg-source: warning: can't parse dependency libpam0g-dev <!stage1> dpkg-source: error: error occurred while parsing Build-Depends  
+dpkg-source: warning: can't parse dependency libpam0g-dev <!stage1>  
+dpkg-source: error: error occurred while parsing Build-Depends  
 dpkg-buildpackage: error: dpkg-source --before-build util-linux-2.27.1 gave error exit status 255  
 
 
