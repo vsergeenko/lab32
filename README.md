@@ -7,6 +7,8 @@ make
 ./dmesg -V
 dmesg from util-linux 2.27.125-28a2d
 
+![dmesg color](https://github.com/vsergeenko/lab32/blob/master/screenshot1.jpg)
+
 * http://packages.ubuntu.com/xenial/util-linux
 sudo apt-get install devscripts
 
@@ -36,6 +38,4 @@ dpkg-source: warning: can't parse dependency libpam0g-dev <!stage1> dpkg-source:
 Build-Depends
 dpkg-buildpackage: error: dpkg-source --before-build util-linux-2.27.1 gave error exit status 255
 
-
-![dmesg color](https://github.com/vsergeenko/lab32/blob/master/screenshot1.jpg)
 
