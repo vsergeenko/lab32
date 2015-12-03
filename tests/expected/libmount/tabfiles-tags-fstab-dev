@@ -1,0 +1,4 @@
+------ fs:
+
+target: /mnt/mountpoint3
+fstype: auto
