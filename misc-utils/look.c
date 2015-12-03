@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
- /* 1999-02-22 Arkadiusz Mi∂kiewicz <misiek@pld.ORG.PL>
+ /* 1999-02-22 Arkadiusz Mi≈õkiewicz <misiek@pld.ORG.PL>
   * - added Native Language Support
   */
 
@@ -46,23 +46,21 @@
  * the manual page.
  */
 
-#include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-
-#include <limits.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
-#include <strings.h>
 #include <ctype.h>
 #include <getopt.h>
 
 #include "nls.h"
 #include "xalloc.h"
 #include "pathnames.h"
+#include "closestream.h"
 
 #define	EQUAL		0
 #define	GREATER		1
@@ -80,7 +78,7 @@ static int compare (char *, char *);
 static char *linear_search (char *, char *);
 static int look (char *, char *);
 static void print_from (char *, char *);
-static void usage (void);
+static void __attribute__ ((__noreturn__)) usage(FILE * out);
 
 int
 main(int argc, char *argv[])
@@ -89,9 +87,20 @@ main(int argc, char *argv[])
 	int ch, fd, termchar;
 	char *back, *file, *front, *p;
 
+	static const struct option longopts[] = {
+		{"alternative", no_argument, NULL, 'a'},
+		{"alphanum", no_argument, NULL, 'd'},
+		{"ignore-case", no_argument, NULL, 'f'},
+		{"terminate", required_argument, NULL, 't'},
+		{"version", no_argument, NULL, 'V'},
+		{"help", no_argument, NULL, 'h'},
+		{NULL, 0, NULL, 0}
+	};
+
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
+	atexit(close_stdout);
 
 	setlocale(LC_ALL, "");
 
@@ -99,11 +108,11 @@ main(int argc, char *argv[])
 	termchar = '\0';
 	string = NULL;		/* just for gcc */
 
-	while ((ch = getopt(argc, argv, "adft:")) != -1)
+	while ((ch = getopt_long(argc, argv, "adft:Vh", longopts, NULL)) != -1)
 		switch(ch) {
 		case 'a':
-		        file = _PATH_WORDS_ALT;
-		        break;
+			file = _PATH_WORDS_ALT;
+			break;
 		case 'd':
 			dflag = 1;
 			break;
@@ -113,9 +122,14 @@ main(int argc, char *argv[])
 		case 't':
 			termchar = *optarg;
 			break;
+		case 'V':
+			printf(UTIL_LINUX_VERSION);
+			return EXIT_SUCCESS;
+		case 'h':
+			usage(stdout);
 		case '?':
 		default:
-			usage();
+			usage(stderr);
 		}
 	argc -= optind;
 	argv += optind;
@@ -130,7 +144,7 @@ main(int argc, char *argv[])
 		string = *argv;
 		break;
 	default:
-		usage();
+		usage(stderr);
 	}
 
 	if (termchar != '\0' && (p = strchr(string, termchar)) != NULL)
@@ -139,9 +153,6 @@ main(int argc, char *argv[])
 	if ((fd = open(file, O_RDONLY, 0)) < 0 || fstat(fd, &sb))
 		err(EXIT_FAILURE, "%s", file);
 	front = mmap(NULL, (size_t) sb.st_size, PROT_READ,
-#ifdef MAP_FILE
-		     MAP_FILE |
-#endif
 		     MAP_SHARED, fd, (off_t) 0);
 	if
 #ifdef MAP_FAILED
@@ -150,13 +161,6 @@ main(int argc, char *argv[])
 		((void *)(front) <= (void *)0)
 #endif
 			err(EXIT_FAILURE, "%s", file);
-
-#if 0
-	/* workaround for mmap problem (rmiller@duskglow.com) */
-	if (front == (void *)0)
-		return 1;
-#endif
-
 	back = front + sb.st_size;
 	return look(front, back);
 }
@@ -227,7 +231,7 @@ look(char *front, char *back)
  *	more trouble than it's worth.
  */
 #define	SKIP_PAST_NEWLINE(p, back) \
-	while (p < back && *p++ != '\n');
+	while (p < back && *p++ != '\n')
 
 char *
 binary_search(char *front, char *back)
@@ -347,9 +351,24 @@ compare(char *s2, char *s2end) {
 	return ((i > 0) ? LESS : (i < 0) ? GREATER : EQUAL);
 }
 
-static void
-usage()
+static void __attribute__ ((__noreturn__)) usage(FILE * out)
 {
-	(void)fprintf(stderr, _("usage: look [-dfa] [-t char] string [file]\n"));
-	exit(2);
+	fputs(USAGE_HEADER, out);
+	fprintf(out, _(" %s [options] <string> [<file>...]\n"), program_invocation_short_name);
+
+	fputs(USAGE_SEPARATOR, out);
+	fputs(_("Display lines beginning with a specified string.\n"), out);
+
+	fputs(USAGE_OPTIONS, out);
+	fputs(_(" -a, --alternative        use the alternative dictionary\n"), out);
+	fputs(_(" -d, --alphanum           compare only alphanumeric characters\n"), out);
+	fputs(_(" -f, --ignore-case        ignore case differences when comparing\n"), out);
+	fputs(_(" -t, --terminate <char>   define the string-termination character\n"), out);
+
+	fputs(USAGE_SEPARATOR, out);
+	fputs(USAGE_HELP, out);
+	fputs(USAGE_VERSION, out);
+	fprintf(out, USAGE_MAN_TAIL("look(1)"));
+
+	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
 }

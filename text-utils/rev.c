@@ -37,7 +37,7 @@
  *                           last line that has no newline correctly.
  * 3-Jun-1998: Patched by Nicolai Langfeldt to work better on Linux:
  *	Handle any-length-lines.  Code copied from util-linux' setpwnam.c
- * 1999-02-22 Arkadiusz Mi∂kiewicz <misiek@pld.ORG.PL>
+ * 1999-02-22 Arkadiusz Mi≈õkiewicz <misiek@pld.ORG.PL>
  *	added Native Language Support
  * 1999-09-19 Bruno Haible <haible@clisp.cons.org>
  *	modified to work correctly in multi-byte locales
@@ -55,49 +55,76 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <err.h>
 #include <signal.h>
+#include <getopt.h>
 
 #include "nls.h"
 #include "xalloc.h"
 #include "widechar.h"
+#include "c.h"
+#include "closestream.h"
 
 wchar_t *buf;
 
-static void sig_handler(int signo)
+static void sig_handler(int signo __attribute__ ((__unused__)))
 {
 	free(buf);
 	_exit(EXIT_SUCCESS);
 }
 
-static void __attribute__((__noreturn__)) usage(FILE *out)
+static void __attribute__ ((__noreturn__)) usage(FILE * out)
 {
-	fprintf(out, _("Usage: %s [file ...]\n"),
-			program_invocation_short_name);
+	fprintf(out, _("Usage: %s [options] [file ...]\n"),
+		program_invocation_short_name);
 
-	fprintf(out, _("\nFor more information see rev(1).\n"));
+	fputs(USAGE_SEPARATOR, out);
+	fputs(_("Reverse lines characterwise.\n"), out);
+
+	fputs(USAGE_OPTIONS, out);
+	fputs(USAGE_HELP, out);
+	fputs(USAGE_VERSION, out);
+	fprintf(out, USAGE_MAN_TAIL("rev(1)"));
 
 	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+}
+
+static void reverse_str(wchar_t *str, size_t n)
+{
+	size_t i;
+
+	for (i = 0; i < n / 2; ++i) {
+		wchar_t tmp = str[i];
+		str[i] = str[n - 1 - i];
+		str[n - 1 - i] = tmp;
+	}
 }
 
 int main(int argc, char *argv[])
 {
 	char *filename = "stdin";
-	wchar_t *t;
 	size_t len, bufsiz = BUFSIZ;
 	FILE *fp = stdin;
 	int ch, rval = EXIT_SUCCESS;
 
+	static const struct option longopts[] = {
+		{ "version",    no_argument,       0, 'V' },
+		{ "help",       no_argument,       0, 'h' },
+		{ NULL,         0, 0, 0 }
+	};
+
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
+	atexit(close_stdout);
 
 	signal(SIGINT, sig_handler);
 	signal(SIGTERM, sig_handler);
 
-	while ((ch = getopt(argc, argv, "")) != -1)
+	while ((ch = getopt_long(argc, argv, "Vh", longopts, NULL)) != -1)
 		switch(ch) {
-		case '?':
+		case 'V':
+			printf(UTIL_LINUX_VERSION);
+			exit(EXIT_SUCCESS);
 		case 'h':
 			usage(stdout);
 		default:
@@ -107,10 +134,12 @@ int main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	buf = xmalloc(bufsiz * sizeof(wchar_t));
+
 	do {
 		if (*argv) {
 			if ((fp = fopen(*argv, "r")) == NULL) {
-				warn(_("%s: open failed"), *argv );
+				warn(_("cannot open %s"), *argv );
 				rval = EXIT_FAILURE;
 				++argv;
 				continue;
@@ -118,26 +147,16 @@ int main(int argc, char *argv[])
 			filename = *argv++;
 		}
 
-		buf = xmalloc(bufsiz * sizeof(wchar_t));
-
 		while (fgetws(buf, bufsiz, fp)) {
 			len = wcslen(buf);
 
 			/* This is my hack from setpwnam.c -janl */
 			while (buf[len-1] != '\n' && !feof(fp)) {
-				wchar_t *x;
-
 				/* Extend input buffer if it failed getting the whole line */
-
 				/* So now we double the buffer size */
 				bufsiz *= 2;
 
-				x = realloc(buf, bufsiz * sizeof(wchar_t));
-				if (!x) {
-					free(buf);
-					err(EXIT_FAILURE, _("realloc failed"));
-				}
-				buf = x;
+				buf = xrealloc(buf, bufsiz * sizeof(wchar_t));
 
 				/* And fill the rest of the buffer */
 				if (!fgetws(&buf[len], bufsiz/2, fp))
@@ -145,22 +164,16 @@ int main(int argc, char *argv[])
 
 				len = wcslen(buf);
 			}
-
-			t = buf + len - 1 - (*(buf+len-1)=='\r' || *(buf+len-1)=='\n');
-			for ( ; t >= buf; --t) {
-				if (*t != 0)
-					putwchar(*t);
-			}
-			putwchar('\n');
+			if (buf[len - 1] == '\n')
+				buf[len--] = '\0';
+			reverse_str(buf, len);
+			fputws(buf, stdout);
 		}
-
-		fflush(fp);
 		if (ferror(fp)) {
 			warn("%s", filename);
 			rval = EXIT_FAILURE;
 		}
-		if (fclose(fp))
-			rval = EXIT_FAILURE;
+		fclose(fp);
 	} while(*argv);
 
 	free(buf);

@@ -15,32 +15,34 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-TS_TOPDIR="$(dirname $0)/../.."
+TS_TOPDIR="${0%/*}/../.."
 TS_DESC="by uuid"
 
 . $TS_TOPDIR/functions.sh
 ts_init "$*"
+
+ts_check_test_command "$TS_CMD_MKSWAP"
+ts_check_test_command "$TS_CMD_SWAPON"
+ts_check_test_command "$TS_CMD_SWAPOFF"
+
 ts_skip_nonroot
+ts_check_losetup
 
-set -o pipefail
-
-DEVICE=$(ts_device_init)
-[ "$?" == 0 ] || ts_die "Cannot init device"
+ts_device_init
+DEVICE=$TS_LODEV
 
 $TS_CMD_MKSWAP $DEVICE > /dev/null 2>> $TS_OUTPUT \
- || ts_die "Cannot make swap $DEVICE" $DEVICE
+ || ts_die "Cannot make swap $DEVICE"
 
-ts_device_has_uuid $DEVICE || ts_die "Cannot found UUID on $DEVICE" $DEVICE
+ts_device_has_uuid $DEVICE || ts_die "Cannot find UUID on $DEVICE"
 
 UUID=$(ts_uuid_by_devname $DEVICE)
 
-LD_LIBRARY_PATH="$U_L_LIBRARY_PATH" \
-	$TS_CMD_SWAPON -U $UUID 2>&1 >> $TS_OUTPUT
+$TS_CMD_SWAPON -U $UUID 2>&1 >> $TS_OUTPUT
 
-grep -q $DEVICE /proc/swaps || ts_die "Cannot found $DEVICE in /proc/swaps" $DEVICE
+grep -q $DEVICE /proc/swaps || ts_die "Cannot find $DEVICE in /proc/swaps"
 
-ts_swapoff $DEVICE
-ts_device_deinit $DEVICE
+$TS_CMD_SWAPOFF $DEVICE
 
 ts_log "Success"
 ts_finalize

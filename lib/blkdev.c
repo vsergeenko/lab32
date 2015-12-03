@@ -1,4 +1,9 @@
-
+/*
+ * No copyright is claimed.  This code is in the public domain; do with
+ * it what you wish.
+ *
+ * Written by Karel Zak <kzak@redhat.com>
+ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -14,14 +19,21 @@
 #endif
 
 #ifdef HAVE_SYS_DISK_H
-#ifdef HAVE_SYS_QUEUE_H
-#include <sys/queue.h> /* for LIST_HEAD */
+# ifdef HAVE_SYS_QUEUE_H
+#  include <sys/queue.h>	/* for LIST_HEAD */
+# endif
+# include <sys/disk.h>
 #endif
-#include <sys/disk.h>
+
+#ifndef EBADFD
+# define EBADFD 77		/* File descriptor in bad state */
 #endif
 
 #include "blkdev.h"
+#include "c.h"
 #include "linux_version.h"
+#include "fileutils.h"
+#include "nls.h"
 
 static long
 blkdev_valid_offset (int fd, off_t offset) {
@@ -32,6 +44,12 @@ blkdev_valid_offset (int fd, off_t offset) {
 	if (read (fd, &ch, 1) < 1)
 		return 0;
 	return 1;
+}
+
+int is_blkdev(int fd)
+{
+	struct stat st;
+	return (fstat(fd, &st) == 0 && S_ISBLK(st.st_mode));
 }
 
 off_t
@@ -112,7 +130,7 @@ blkdev_get_size(int fd, unsigned long long *bytes)
 		struct floppy_struct this_floppy;
 
 		if (ioctl(fd, FDGETPRM, &this_floppy) >= 0) {
-			*bytes = this_floppy.size << 9;
+			*bytes = ((unsigned long long) this_floppy.size) << 9;
 			return 0;
 		}
 	}
@@ -178,24 +196,17 @@ blkdev_get_sectors(int fd, unsigned long long *sectors)
 	return -1;
 }
 
-/* get logical sector size (default is 512)
+/*
+ * Get logical sector size.
  *
  * This is the smallest unit the storage device can
  * address. It is typically 512 bytes.
  */
-int
-blkdev_get_sector_size(int fd, int *sector_size)
+int blkdev_get_sector_size(int fd, int *sector_size)
 {
 #ifdef BLKSSZGET
-#ifdef __linux__
-	if (get_linux_version() < KERNEL_VERSION(2,3,3)) {
-		*sector_size = DEFAULT_SECTOR_SIZE;
-		return 0;
-	}
-#endif
 	if (ioctl(fd, BLKSSZGET, sector_size) >= 0)
 		return 0;
-
 	return -1;
 #else
 	*sector_size = DEFAULT_SECTOR_SIZE;
@@ -203,18 +214,161 @@ blkdev_get_sector_size(int fd, int *sector_size)
 #endif
 }
 
+/*
+ * Get physical block device size. The BLKPBSZGET is supported since Linux
+ * 2.6.32. For old kernels is probably the best to assume that physical sector
+ * size is the same as logical sector size.
+ *
+ * Example:
+ *
+ * rc = blkdev_get_physector_size(fd, &physec);
+ * if (rc || physec == 0) {
+ *	rc = blkdev_get_sector_size(fd, &physec);
+ *	if (rc)
+ *		physec = DEFAULT_SECTOR_SIZE;
+ * }
+ */
+int blkdev_get_physector_size(int fd, int *sector_size)
+{
+#ifdef BLKPBSZGET
+	if (ioctl(fd, BLKPBSZGET, &sector_size) >= 0)
+		return 0;
+	return -1;
+#else
+	*sector_size = DEFAULT_SECTOR_SIZE;
+	return 0;
+#endif
+}
 
-#ifdef TEST_PROGRAM
+/*
+ * Return the alignment status of a device
+ */
+int blkdev_is_misaligned(int fd)
+{
+#ifdef BLKALIGNOFF
+	int aligned;
+
+	if (ioctl(fd, BLKALIGNOFF, &aligned) < 0)
+		return 0;			/* probably kernel < 2.6.32 */
+	/*
+	 * Note that kernel returns -1 as alignement offset if no compatible
+	 * sizes and alignments exist for stacked devices
+	 */
+	return aligned != 0 ? 1 : 0;
+#else
+	return 0;
+#endif
+}
+
+int open_blkdev_or_file(const struct stat *st, const char *name, const int oflag)
+{
+	int fd;
+
+	if (S_ISBLK(st->st_mode)) {
+		fd = open(name, oflag | O_EXCL);
+	} else
+		fd = open(name, oflag);
+	if (-1 < fd && !is_same_inode(fd, st)) {
+		close(fd);
+		errno = EBADFD;
+		return -1;
+	}
+	if (-1 < fd && S_ISBLK(st->st_mode) && blkdev_is_misaligned(fd))
+		warnx(_("warning: %s is misaligned"), name);
+	return fd;
+}
+
+int blkdev_is_cdrom(int fd)
+{
+#ifdef CDROM_GET_CAPABILITY
+	int ret;
+
+	if ((ret = ioctl(fd, CDROM_GET_CAPABILITY, NULL)) < 0)
+		return 0;
+	else
+		return ret;
+#else
+	return 0;
+#endif
+}
+
+/*
+ * Get kernel's interpretation of the device's geometry.
+ *
+ * Returns the heads and sectors - but not cylinders
+ * as it's truncated for disks with more than 65535 tracks.
+ *
+ * Note that this is deprecated in favor of LBA addressing.
+ */
+int blkdev_get_geometry(int fd, unsigned int *h, unsigned int *s)
+{
+#ifdef HDIO_GETGEO
+	struct hd_geometry geometry;
+
+	if (ioctl(fd, HDIO_GETGEO, &geometry) == 0) {
+		*h = geometry.heads;
+		*s = geometry.sectors;
+		return 0;
+	}
+#else
+	*h = 0;
+	*s = 0;
+#endif
+	return -1;
+}
+
+/*
+ * Convert scsi type to human readable string.
+ */
+const char *blkdev_scsi_type_to_name(int type)
+{
+	switch (type) {
+	case SCSI_TYPE_DISK:
+		return "disk";
+	case SCSI_TYPE_TAPE:
+		return "tape";
+	case SCSI_TYPE_PRINTER:
+		return "printer";
+	case SCSI_TYPE_PROCESSOR:
+		return "processor";
+	case SCSI_TYPE_WORM:
+		return "worm";
+	case SCSI_TYPE_ROM:
+		return "rom";
+	case SCSI_TYPE_SCANNER:
+		return "scanner";
+	case SCSI_TYPE_MOD:
+		return "mo-disk";
+	case SCSI_TYPE_MEDIUM_CHANGER:
+		return "changer";
+	case SCSI_TYPE_COMM:
+		return "comm";
+	case SCSI_TYPE_RAID:
+		return "raid";
+	case SCSI_TYPE_ENCLOSURE:
+		return "enclosure";
+	case SCSI_TYPE_RBC:
+		return "rbc";
+	case SCSI_TYPE_OSD:
+		return "osd";
+	case SCSI_TYPE_NO_LUN:
+		return "no-lun";
+	default:
+		break;
+	}
+	return NULL;
+}
+
+#ifdef TEST_PROGRAM_BLKDEV
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <err.h>
 int
 main(int argc, char **argv)
 {
 	unsigned long long bytes;
 	unsigned long long sectors;
-	int sector_size;
+	int sector_size, phy_sector_size;
 	int fd;
 
 	if (argc != 2) {
@@ -222,7 +376,7 @@ main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	if ((fd = open(argv[1], O_RDONLY)) < 0)
+	if ((fd = open(argv[1], O_RDONLY|O_CLOEXEC)) < 0)
 		err(EXIT_FAILURE, "open %s failed", argv[1]);
 
 	if (blkdev_get_size(fd, &bytes) < 0)
@@ -231,10 +385,13 @@ main(int argc, char **argv)
 		err(EXIT_FAILURE, "blkdev_get_sectors() failed");
 	if (blkdev_get_sector_size(fd, &sector_size) < 0)
 		err(EXIT_FAILURE, "blkdev_get_sector_size() failed");
+	if (blkdev_get_physector_size(fd, &phy_sector_size) < 0)
+		err(EXIT_FAILURE, "blkdev_get_physector_size() failed");
 
-	printf("bytes %llu\n", bytes);
-	printf("sectors %llu\n", sectors);
-	printf("sectorsize %d\n", sector_size);
+	printf("          bytes: %llu\n", bytes);
+	printf("        sectors: %llu\n", sectors);
+	printf("    sector size: %d\n", sector_size);
+	printf("phy-sector size: %d\n", phy_sector_size);
 
 	return EXIT_SUCCESS;
 }

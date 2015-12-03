@@ -7,6 +7,9 @@
  *
  * Based on code from taskset.c and Linux kernel.
  *
+ * This file may be redistributed under the terms of the
+ * GNU Lesser General Public License.
+ *
  * Copyright (C) 2010 Karel Zak <kzak@redhat.com>
  */
 
@@ -20,6 +23,7 @@
 #include <sys/syscall.h>
 
 #include "cpuset.h"
+#include "c.h"
 
 static inline int val_to_char(int v)
 {
@@ -58,6 +62,7 @@ static const char *nexttoken(const char *q,  int sep)
  */
 int get_max_number_of_cpus(void)
 {
+#ifdef SYS_sched_getaffinity
 	int n, cpus = 2048;
 	size_t setsize;
 	cpu_set_t *set = cpuset_alloc(cpus, &setsize, NULL);
@@ -82,6 +87,7 @@ int get_max_number_of_cpus(void)
 		cpuset_free(set);
 		return n * 8;
 	}
+#endif
 	return -1;
 }
 
@@ -146,15 +152,15 @@ int __cpuset_count_s(size_t setsize, const cpu_set_t *set)
 char *cpulist_create(char *str, size_t len,
 			cpu_set_t *set, size_t setsize)
 {
-	int i;
+	size_t i;
 	char *ptr = str;
 	int entry_made = 0;
 	size_t max = cpuset_nbits(setsize);
 
 	for (i = 0; i < max; i++) {
 		if (CPU_ISSET_S(i, setsize, set)) {
-			int j, rlen;
-			int run = 0;
+			int rlen;
+			size_t j, run = 0;
 			entry_made = 1;
 			for (j = i + 1; j < max; j++) {
 				if (CPU_ISSET_S(j, setsize, set))
@@ -163,18 +169,21 @@ char *cpulist_create(char *str, size_t len,
 					break;
 			}
 			if (!run)
-				rlen = snprintf(ptr, len, "%d,", i);
+				rlen = snprintf(ptr, len, "%zu,", i);
 			else if (run == 1) {
-				rlen = snprintf(ptr, len, "%d,%d,", i, i + 1);
+				rlen = snprintf(ptr, len, "%zu,%zu,", i, i + 1);
 				i++;
 			} else {
-				rlen = snprintf(ptr, len, "%d-%d,", i, i + run);
+				rlen = snprintf(ptr, len, "%zu-%zu,", i, i + run);
 				i += run;
 			}
-			if (rlen < 0 || rlen + 1 > len)
+			if (rlen < 0 || (size_t) rlen + 1 > len)
 				return NULL;
 			ptr += rlen;
-			len -= rlen;
+			if (rlen > 0 && len > (size_t) rlen)
+				len -= rlen;
+			else
+				len = 0;
 		}
 	}
 	ptr -= entry_made;
@@ -196,7 +205,7 @@ char *cpumask_create(char *str, size_t len,
 	for (cpu = cpuset_nbits(setsize) - 4; cpu >= 0; cpu -= 4) {
 		char val = 0;
 
-		if (len == (ptr - str))
+		if (len == (size_t) (ptr - str))
 			break;
 
 		if (CPU_ISSET_S(cpu, setsize, set))
@@ -217,7 +226,7 @@ char *cpumask_create(char *str, size_t len,
 }
 
 /*
- * Parses string with list of CPU ranges.
+ * Parses string with CPUs mask.
  */
 int cpumask_parse(const char *str, cpu_set_t *set, size_t setsize)
 {
@@ -258,13 +267,20 @@ int cpumask_parse(const char *str, cpu_set_t *set, size_t setsize)
 }
 
 /*
- * Parses string with CPUs mask.
+ * Parses string with list of CPU ranges.
+ * Returns 0 on success.
+ * Returns 1 on error.
+ * Returns 2 if fail is set and a cpu number passed in the list doesn't fit
+ * into the cpu_set. If fail is not set cpu numbers that do not fit are
+ * ignored and 0 is returned instead.
  */
-int cpulist_parse(const char *str, cpu_set_t *set, size_t setsize)
+int cpulist_parse(const char *str, cpu_set_t *set, size_t setsize, int fail)
 {
+	size_t max = cpuset_nbits(setsize);
 	const char *p, *q;
-	q = str;
+	int r = 0;
 
+	q = str;
 	CPU_ZERO_S(setsize, set);
 
 	while (p = q, q = nexttoken(q, ','), p) {
@@ -272,8 +288,9 @@ int cpulist_parse(const char *str, cpu_set_t *set, size_t setsize)
 		unsigned int b;	/* end of range */
 		unsigned int s;	/* stride */
 		const char *c1, *c2;
+		char c;
 
-		if (sscanf(p, "%u", &a) < 1)
+		if ((r = sscanf(p, "%u%c", &a, &c)) < 1)
 			return 1;
 		b = a;
 		s = 1;
@@ -281,11 +298,13 @@ int cpulist_parse(const char *str, cpu_set_t *set, size_t setsize)
 		c1 = nexttoken(p, '-');
 		c2 = nexttoken(p, ',');
 		if (c1 != NULL && (c2 == NULL || c1 < c2)) {
-			if (sscanf(c1, "%u", &b) < 1)
+			if ((r = sscanf(c1, "%u%c", &b, &c)) < 1)
 				return 1;
 			c1 = nexttoken(c1, ':');
-			if (c1 != NULL && (c2 == NULL || c1 < c2))
-				if (sscanf(c1, "%u", &s) < 1) {
+			if (c1 != NULL && (c2 == NULL || c1 < c2)) {
+				if ((r = sscanf(c1, "%u%c", &s, &c)) < 1)
+					return 1;
+				if (s == 0)
 					return 1;
 			}
 		}
@@ -293,17 +312,20 @@ int cpulist_parse(const char *str, cpu_set_t *set, size_t setsize)
 		if (!(a <= b))
 			return 1;
 		while (a <= b) {
+			if (fail && (a >= max))
+				return 2;
 			CPU_SET_S(a, setsize, set);
 			a += s;
 		}
 	}
 
+	if (r == 2)
+		return 1;
 	return 0;
 }
 
 #ifdef TEST_PROGRAM
 
-#include <err.h>
 #include <getopt.h>
 
 int main(int argc, char *argv[])
@@ -313,7 +335,7 @@ int main(int argc, char *argv[])
 	char *buf, *mask = NULL, *range = NULL;
 	int ncpus = 2048, rc, c;
 
-	struct option longopts[] = {
+	static const struct option longopts[] = {
 	    { "ncpus", 1, 0, 'n' },
 	    { "mask",  1, 0, 'm' },
 	    { "range", 1, 0, 'r' },
@@ -356,7 +378,7 @@ int main(int argc, char *argv[])
 	if (mask)
 		rc = cpumask_parse(mask, set, setsize);
 	else
-		rc = cpulist_parse(range, set, setsize);
+		rc = cpulist_parse(range, set, setsize, 0);
 
 	if (rc)
 		errx(EXIT_FAILURE, "failed to parse string: %s", mask ? : range);
@@ -366,6 +388,8 @@ int main(int argc, char *argv[])
 	printf("[%s]\n", cpulist_create(buf, buflen, set, setsize));
 
 	free(buf);
+	free(mask);
+	free(range);
 	cpuset_free(set);
 
 	return EXIT_SUCCESS;

@@ -19,15 +19,19 @@
 # topology.
 #
 
-TS_TOPDIR="$(dirname $0)/../.."
+TS_TOPDIR="${0%/*}/../.."
 TS_DESC="align 512/512"
 
 . $TS_TOPDIR/functions.sh
 ts_init "$*"
-ts_skip_nonroot
 
-DEVICE=$(ts_device_init 50)
-[ "$?" == 0 ] || ts_die "Cannot init device"
+ts_check_test_command "$TS_CMD_FDISK"
+
+ts_skip_nonroot
+ts_check_losetup
+
+ts_device_init 50
+DEVICE=$TS_LODEV
 
 ts_log "Create partitions"
 $TS_CMD_FDISK ${DEVICE} >> $TS_OUTPUT 2>&1 <<EOF
@@ -63,10 +67,6 @@ p
 q
 EOF
 
-ts_device_deinit $DEVICE
-
-# remove disk ID 
-sed -i -e 's/Disk identifier:.*//g' $TS_OUTPUT
-sed -i -e 's/Building a new.*//g' $TS_OUTPUT
+ts_fdisk_clean $DEVICE
 
 ts_finalize

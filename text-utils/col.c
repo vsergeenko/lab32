@@ -37,11 +37,20 @@
  *                           patches from Andries.Brouwer@cwi.nl
  * Wed Sep 14 22:31:17 1994: patches from Carl Christofferson
  *                           (cchris@connected.com)
- * 1999-02-22 Arkadiusz Mi∂kiewicz <misiek@pld.ORG.PL>
+ * 1999-02-22 Arkadiusz Mi≈õkiewicz <misiek@pld.ORG.PL>
  * 	added Native Language Support
  * 1999-09-19 Bruno Haible <haible@clisp.cons.org>
  * 	modified to work correctly in multi-byte locales
  *
+ */
+
+/*
+ * This command is deprecated.  The utility is in maintenance mode,
+ * meaning we keep them in source tree for backward compatibility
+ * only.  Do not waste time making this command better, unless the
+ * fix is about security or other very critical issue.
+ *
+ * See Documentation/deprecated.txt for more information.
  */
 
 #include <stdlib.h>
@@ -50,10 +59,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <getopt.h>
 
 #include "nls.h"
 #include "xalloc.h"
 #include "widechar.h"
+#include "strutils.h"
+#include "closestream.h"
 
 #define	BS	'\b'		/* backspace */
 #define	TAB	'\t'		/* tab */
@@ -103,7 +115,7 @@ CSET last_set;			/* char_set of last char printed */
 LINE *lines;
 int compress_spaces;		/* if doing space -> tab conversion */
 int fine;			/* if `fine' resolution (half lines) */
-int max_bufd_lines;		/* max # lines to keep in memory */
+unsigned max_bufd_lines;	/* max # lines to keep in memory */
 int nblank_lines;		/* # blanks after last flushed line */
 int no_backspaces;		/* if not to output any backspaces */
 int pass_unknown_seqs;		/* whether to pass unknown control sequences */
@@ -112,15 +124,37 @@ int pass_unknown_seqs;		/* whether to pass unknown control sequences */
 	if (putwchar(ch) == WEOF) \
 		wrerr();
 
-static void __attribute__((__noreturn__)) usage(void)
+static void __attribute__((__noreturn__)) usage(FILE *out)
 {
-	errx(EXIT_FAILURE, _("usage: %s [-bfpx] [-l nline]"),
-			program_invocation_short_name);
+	fprintf(out, _(
+		"\nUsage:\n"
+		" %s [options]\n"), program_invocation_short_name);
+
+	fputs(USAGE_SEPARATOR, out);
+	fputs(_("Filter out reverse line feeds.\n"), out);
+
+	fprintf(out, _(
+		"\nOptions:\n"
+		" -b, --no-backspaces    do not output backspaces\n"
+		" -f, --fine             permit forward half line feeds\n"
+		" -p, --pass             pass unknown control sequences\n"
+		" -h, --tabs             convert spaces to tabs\n"
+		" -x, --spaces           convert tabs to spaces\n"
+		" -l, --lines NUM        buffer at least NUM lines\n"
+		" -V, --version          output version information and exit\n"
+		" -H, --help             display this help and exit\n\n"));
+
+	fprintf(out, _(
+		"%s reads from standard input and writes to standard output\n\n"),
+		program_invocation_short_name);
+
+	fprintf(out, USAGE_MAN_TAIL("col(1)"));
+	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
-static void __attribute__((__noreturn__)) wrerr()
+static void __attribute__((__noreturn__)) wrerr(void)
 {
-	errx(EXIT_FAILURE, _("write error."));
+	errx(EXIT_FAILURE, _("write error"));
 }
 
 int main(int argc, char **argv)
@@ -138,14 +172,28 @@ int main(int argc, char **argv)
 	int adjust, opt, warned;
 	int ret = EXIT_SUCCESS;
 
+	static const struct option longopts[] = {
+		{ "no-backspaces", no_argument,		0, 'b' },
+		{ "fine",	   no_argument,		0, 'f' },
+		{ "pass",	   no_argument,		0, 'p' },
+		{ "tabs",	   no_argument,		0, 'h' },
+		{ "spaces",	   no_argument,		0, 'x' },
+		{ "lines",	   required_argument,	0, 'l' },
+		{ "version",	   no_argument,		0, 'V' },
+		{ "help",	   no_argument,		0, 'H' },
+		{ NULL, 0, 0, 0 }
+	};
+
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
+	atexit(close_stdout);
 
-	max_bufd_lines = 128;
+	max_bufd_lines = 128 * 2;
 	compress_spaces = 1;		/* compress spaces into tabs */
 	pass_unknown_seqs = 0;          /* remove unknown escape sequences */
-	while ((opt = getopt(argc, argv, "bfhl:px")) != -1)
+
+	while ((opt = getopt_long(argc, argv, "bfhl:pxVH", longopts, NULL)) != -1)
 		switch (opt) {
 		case 'b':		/* do not output backspaces */
 			no_backspaces = 1;
@@ -156,9 +204,12 @@ int main(int argc, char **argv)
 		case 'h':		/* compress spaces into tabs */
 			compress_spaces = 1;
 			break;
-		case 'l':		/* buffered line count */
-			if ((max_bufd_lines = atoi(optarg)) <= 0)
-				errx(EXIT_FAILURE, _("bad -l argument %s."), optarg);
+		case 'l':
+			/*
+			 * Buffered line count, which is a value in half
+			 * lines e.g. twice the amount specified.
+			 */
+			max_bufd_lines = strtou32_or_err(optarg, _("bad -l argument")) * 2;
 			break;
 		case 'p':
 			pass_unknown_seqs = 1;
@@ -166,26 +217,27 @@ int main(int argc, char **argv)
 		case 'x':		/* do not compress spaces into tabs */
 			compress_spaces = 0;
 			break;
-		case '?':
+		case 'V':
+			printf(UTIL_LINUX_VERSION);
+			return EXIT_SUCCESS;
+		case 'H':
+			usage(stdout);
 		default:
-			usage();
+			usage(stderr);
 		}
 
 	if (optind != argc)
-		usage();
-
-	/* this value is in half lines */
-	max_bufd_lines *= 2;
+		usage(stderr);
 
 	adjust = cur_col = extra_lines = warned = 0;
 	cur_line = max_line = nflushd_lines = this_line = 0;
 	cur_set = last_set = CS_NORMAL;
 	lines = l = alloc_line();
 
-	while (feof(stdin)==0) {
+	while (feof(stdin) == 0) {
 		errno = 0;
 		if ((ch = getwchar()) == WEOF) {
-			if (errno==EILSEQ) {
+			if (errno == EILSEQ) {
 				warn(NULL);
 				ret = EXIT_FAILURE;
 			}
@@ -299,7 +351,8 @@ int main(int argc, char **argv)
 			}
 			this_line = cur_line + adjust;
 			nmove = this_line - nflushd_lines;
-			if (nmove >= max_bufd_lines + BUFFER_MARGIN) {
+			if (nmove > 0
+			    && (unsigned) nmove >= max_bufd_lines + BUFFER_MARGIN) {
 				nflushd_lines += nmove - max_bufd_lines;
 				flush_lines(nmove - max_bufd_lines);
 			}
@@ -346,8 +399,6 @@ int main(int argc, char **argv)
 		/* missing a \n on the last line? */
 		nblank_lines = 2;
 	flush_blanks();
-	if (ferror(stdout) || fclose(stdout))
-		return EXIT_FAILURE;
 	return ret;
 }
 
@@ -363,8 +414,7 @@ void flush_lines(int nflush)
 			flush_line(l);
 		}
 		nblank_lines++;
-		if (l->l_line)
-			(void)free((void *)l->l_line);
+		free((void *)l->l_line);
 		free_line(l);
 	}
 	if (lines)
@@ -376,7 +426,7 @@ void flush_lines(int nflush)
  * is the number of half line feeds, otherwise it is the number of whole line
  * feeds.
  */
-void flush_blanks()
+void flush_blanks(void)
 {
 	int half, i, nb;
 
@@ -471,11 +521,11 @@ void flush_line(LINE *l)
 				int ntabs;
 
 				ntabs = this_col / 8 - last_col / 8;
-                                if (ntabs > 0) {
-                                        nspace = this_col & 7;
-                                        while (--ntabs >= 0)
-                                                PUTC('\t');
-                                }
+				if (ntabs > 0) {
+					nspace = this_col & 7;
+					while (--ntabs >= 0)
+						PUTC('\t');
+				}
 			}
 			while (--nspace >= 0)
 				PUTC(' ');
@@ -494,7 +544,7 @@ void flush_line(LINE *l)
 				last_set = c->c_set;
 			}
 			PUTC(c->c_char);
-			if ((c+1) < endc) {
+			if ((c + 1) < endc) {
 				int i;
 				for (i=0; i < c->c_width; i++)
 					PUTC('\b');
@@ -502,7 +552,7 @@ void flush_line(LINE *l)
 			if (++c >= endc)
 				break;
 		}
-		last_col += (c-1)->c_width;
+		last_col += (c - 1)->c_width;
 	}
 }
 
@@ -511,7 +561,7 @@ void flush_line(LINE *l)
 static LINE *line_freelist;
 
 LINE *
-alloc_line()
+alloc_line(void)
 {
 	LINE *l;
 	int i;
@@ -527,7 +577,7 @@ alloc_line()
 	line_freelist = l->l_next;
 
 	memset(l, 0, sizeof(LINE));
-	return(l);
+	return l;
 }
 
 void free_line(LINE *l)
@@ -535,5 +585,3 @@ void free_line(LINE *l)
 	l->l_next = line_freelist;
 	line_freelist = l;
 }
-
-

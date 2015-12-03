@@ -48,7 +48,7 @@
  * 01.07.96  - Fixed the v2 fs stuff to use the right #defines and such
  *	       for modern libcs (janl@math.uio.no, Nicolai Langfeldt)
  *
- * 02.07.96  - Added C bit fiddling routines from rmk@ecs.soton.ac.uk 
+ * 02.07.96  - Added C bit fiddling routines from rmk@ecs.soton.ac.uk
  *             (Russell King).  He made them for ARM.  It would seem
  *	       that the ARM is powerful enough to do this in C whereas
  *             i386 and m64k must use assembly to get it fast >:-)
@@ -56,13 +56,13 @@
  *	       (janl@math.uio.no, Nicolai Langfeldt)
  *
  * 04.11.96  - Added minor fixes from Andreas Schwab to avoid compiler
- *             warnings.  Added mc68k bitops from 
+ *             warnings.  Added mc68k bitops from
  *	       Joerg Dorchain <dorchain@mpi-sb.mpg.de>.
  *
  * 06.11.96  - Added v2 code submitted by Joerg Dorchain, but written by
  *             Andreas Schwab.
  *
- * 1999-02-22 Arkadiusz Mi∂kiewicz <misiek@pld.ORG.PL>
+ * 1999-02-22 Arkadiusz Mi≈õkiewicz <misiek@pld.ORG.PL>
  * - added Native Language Support
  *
  * 2008-04-06 James Youngman <jay@gnu.org>
@@ -76,17 +76,6 @@
  * unless you can be sure nobody is writing to it (and remember that the
  * kernel can write to it when it searches for files).
  *
- * Usuage: fsck [-larvsm] device
- *	-l for a listing of all the filenames
- *	-a for automatic repairs (not implemented)
- *	-r for repairs (interactive) (not implemented)
- *	-v for verbose (tells how many files)
- *	-s for super-block info
- *	-m for minix-like "mode not cleared" warnings
- *	-f force filesystem check even if filesystem marked as valid
- *
- * The device may be a block device or a image of one, but this isn't
- * enforced (but it's not much fun on a character device :-). 
  */
 
 #include <stdio.h>
@@ -101,137 +90,134 @@
 #include <mntent.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <getopt.h>
 
-#include "minix.h"
+#include "c.h"
+#include "exitcodes.h"
+#include "minix_programs.h"
 #include "nls.h"
 #include "pathnames.h"
 #include "bitops.h"
+#include "ismounted.h"
+#include "all-io.h"
+#include "closestream.h"
+#include "rpmatch.h"
+#include "strutils.h"
 
 #ifndef __linux__
 #define volatile
 #endif
 
 #define ROOT_INO 1
+#define YESNO_LENGTH 64
 
-#define UPPER(size,n) ((size+((n)-1))/(n))
-#define INODE_SIZE (sizeof(struct minix_inode))
-#define INODE_SIZE2 (sizeof(struct minix2_inode))
-#define INODE_BLOCKS UPPER(INODES, (version2 ? MINIX2_INODES_PER_BLOCK \
-				    : MINIX_INODES_PER_BLOCK))
-#define INODE_BUFFER_SIZE (INODE_BLOCKS * BLOCK_SIZE)
+/* Global variables used in minix_programs.h inline fuctions */
+int fs_version = 1;
+char *super_block_buffer;
 
-#define BITS_PER_BLOCK (BLOCK_SIZE<<3)
+static char *inode_buffer;
 
-static char * program_name = "fsck.minix";
-static char * device_name = NULL;
-static int IN;
-static int repair=0, automatic=0, verbose=0, list=0, show=0, warn_mode=0, 
-	force=0;
-static int directory=0, regular=0, blockdev=0, chardev=0, links=0,
-		symlinks=0, total=0;
+#define Inode (((struct minix_inode *) inode_buffer) - 1)
+#define Inode2 (((struct minix2_inode *) inode_buffer) - 1)
 
-static int changed = 0; /* flags if the filesystem has been changed */
-static int errors_uncorrected = 0; /* flag if some error was not corrected */
-static int dirsize = 16;
-static int namelen = 14;
-static int version2 = 0;
+static char *device_name;
+static int device_fd;
+static int repair, automatic, verbose, list, show, warn_mode, force;
+static int directory, regular, blockdev, chardev, links, symlinks, total;
+
+static int changed;		/* flags if the filesystem has been changed */
+static int errors_uncorrected;	/* flag if some error was not corrected */
+static size_t dirsize = 16;
+static size_t namelen = 14;
 static struct termios termios;
-static volatile sig_atomic_t termios_set = 0;
+static volatile sig_atomic_t termios_set;
 
 /* File-name data */
 #define MAX_DEPTH 50
-static int name_depth = 0;
-static char name_list[MAX_DEPTH][NAME_MAX+1];
-/* Copy of the previous, just for error reporting - see get_current_name */
-/* This is a waste of 12kB or so. */
-static char current_name[MAX_DEPTH*(NAME_MAX+1)+1];
+static int name_depth;
+static char name_list[MAX_DEPTH][MINIX_NAME_MAX + 1];
 
-static char * inode_buffer = NULL;
-#define Inode (((struct minix_inode *) inode_buffer)-1)
-#define Inode2 (((struct minix2_inode *) inode_buffer)-1)
+/* Copy of the previous, just for error reporting - see get_current_name.  This
+ * is a waste of 12kB or so.  */
+static char current_name[MAX_DEPTH * (MINIX_NAME_MAX + 1) + 1];
 
-static char *super_block_buffer;
-#define Super (*(struct minix_super_block *)super_block_buffer)
-#define INODES ((unsigned long)Super.s_ninodes)
-#define ZONES ((unsigned long)(version2 ? Super.s_zones : Super.s_nzones))
-#define IMAPS ((unsigned long)Super.s_imap_blocks)
-#define ZMAPS ((unsigned long)Super.s_zmap_blocks)
-#define FIRSTZONE ((unsigned long)Super.s_firstdatazone)
-#define ZONESIZE ((unsigned long)Super.s_log_zone_size)
-#define MAXSIZE ((unsigned long)Super.s_max_size)
-#define MAGIC (Super.s_magic)
-#define NORM_FIRSTZONE (2+IMAPS+ZMAPS+INODE_BLOCKS)
-
-static char *inode_map;
-static char *zone_map;
-
-static unsigned char * inode_count = NULL;
-static unsigned char * zone_count = NULL;
+static unsigned char *inode_count = NULL;
+static unsigned char *zone_count = NULL;
 
 static void recursive_check(unsigned int ino);
 static void recursive_check2(unsigned int ino);
 
+static char *inode_map;
+static char *zone_map;
+
 #define inode_in_use(x) (isset(inode_map,(x)) != 0)
-#define zone_in_use(x) (isset(zone_map,(x)-FIRSTZONE+1) != 0)
+#define zone_in_use(x) (isset(zone_map,(x)-get_first_zone()+1) != 0)
 
 #define mark_inode(x) (setbit(inode_map,(x)),changed=1)
 #define unmark_inode(x) (clrbit(inode_map,(x)),changed=1)
 
-#define mark_zone(x) (setbit(zone_map,(x)-FIRSTZONE+1),changed=1)
-#define unmark_zone(x) (clrbit(zone_map,(x)-FIRSTZONE+1),changed=1)
+#define mark_zone(x) (setbit(zone_map,(x)-get_first_zone()+1),changed=1)
+#define unmark_zone(x) (clrbit(zone_map,(x)-get_first_zone()+1),changed=1)
 
 static void
 reset(void) {
 	if (termios_set)
-		tcsetattr(0, TCSANOW, &termios);
+		tcsetattr(STDIN_FILENO, TCSANOW, &termios);
 }
-
 
 static void
 fatalsig(int sig) {
-	/* We received a fatal signal.  Reset the terminal.
-	 * Also reset the signal handler and re-send the signal,
-	 * so that the parent process knows which signal actually
-	 * caused our death.
-	 */
+	/* We received a fatal signal.  Reset the terminal.  Also reset the
+	 * signal handler and re-send the signal, so that the parent process
+	 * knows which signal actually caused our death.  */
 	signal(sig, SIG_DFL);
 	reset();
 	raise(sig);
 }
 
-static void
+static void __attribute__((__noreturn__))
 leave(int status) {
-        reset();
+	reset();
 	exit(status);
 }
 
 static void
-usage(void) {
-	fprintf(stderr,
-		_("Usage: %s [-larvsmf] /dev/name\n"),
-		program_name);
-	leave(16);
+usage(FILE *out) {
+	fputs(USAGE_HEADER, out);
+	fprintf(out, _(" %s [options] <device>\n"), program_invocation_short_name);
+	fputs(USAGE_SEPARATOR, out);
+	fputs(_("Check the consistency of a Minix filesystem.\n"), out);
+	fputs(USAGE_OPTIONS, out);
+	fputs(_(" -l, --list       list all filenames\n"), out);
+	fputs(_(" -a, --auto       automatic repair\n"), out);
+	fputs(_(" -r, --repair     interactive repair\n"), out);
+	fputs(_(" -v, --verbose    be verbose\n"), out);
+	fputs(_(" -s, --super      output super-block information\n"), out);
+	fputs(_(" -m, --uncleared  activate mode not cleared warnings\n"), out);
+	fputs(_(" -f, --force      force check\n"), out);
+	fputs(USAGE_SEPARATOR, out);
+	fputs(USAGE_HELP, out);
+	fputs(USAGE_VERSION, out);
+	fprintf(out, USAGE_MAN_TAIL("fsck.minix(8)"));
+	leave(out == stderr ? FSCK_EX_USAGE : FSCK_EX_OK);
 }
 
 static void die(const char *fmt, ...)
-	__attribute__ ((__format__ (__printf__, 1, 2)));
+    __attribute__ ((__format__(__printf__, 1, 2)));
 
 static void
 die(const char *fmt, ...) {
 	va_list ap;
 
-	fprintf(stderr, "%s: ", program_name);
+	fprintf(stderr, UTIL_LINUX_VERSION);
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
-	va_end (ap);
+	va_end(ap);
 	fputc('\n', stderr);
-	leave(8);
+	leave(FSCK_EX_ERROR);
 }
 
-/*
- * This simply goes through the file-name data and prints out the
- * current file.
- */
+/* This simply goes through the file-name data and prints out the current file.  */
 static void
 get_current_name(void) {
 	int i = 0, ct;
@@ -251,8 +237,9 @@ get_current_name(void) {
 }
 
 static int
-ask(const char * string, int def) {
-	int c;
+ask(const char *string, int def) {
+	int resp;
+	char input[YESNO_LENGTH];
 
 	if (!repair) {
 		printf("\n");
@@ -262,103 +249,76 @@ ask(const char * string, int def) {
 	if (automatic) {
 		printf("\n");
 		if (!def)
-		      errors_uncorrected = 1;
+			errors_uncorrected = 1;
 		return def;
 	}
-	printf(def?"%s (y/n)? ":"%s (n/y)? ",string);
-	for (;;) {
-		fflush(stdout);
-		if ((c=getchar())==EOF) {
-		        if (!def)
-			      errors_uncorrected = 1;
-			return def;
-		}
-		c=toupper(c);
-		if (c == 'Y') {
-			def = 1;
-			break;
-		} else if (c == 'N') {
-			def = 0;
-			break;
-		} else if (c == ' ' || c == '\n')
-			break;
+	/* TRANSLATORS: these yes no questions uses rpmatch(), and should be
+	 * translated.  */
+	printf(def ? _("%s (y/n)? ") : _("%s (n/y)? "), string);
+	fflush(stdout);
+	ignore_result( fgets(input, YESNO_LENGTH, stdin) );
+	resp = rpmatch(input);
+	switch (resp) {
+	case RPMATCH_INVALID:
+		/* def = def */
+		break;
+	case RPMATCH_NO:
+	case RPMATCH_YES:
+		def = resp;
+		break;
+	default:
+		/* rpmatch bug? */
+		abort();
 	}
 	if (def)
-		printf("y\n");
+		printf(_("y\n"));
 	else {
-		printf("n\n");
+		printf(_("n\n"));
 		errors_uncorrected = 1;
-	     }
+	}
 	return def;
 }
 
-/*
- * Make certain that we aren't checking a filesystem that is on a
- * mounted partition.  Code adapted from e2fsck, Copyright (C) 1993,
- * 1994 Theodore Ts'o.  Also licensed under GPL.
- */
+/* Make certain that we aren't checking a filesystem that is on a mounted
+ * partition.  Code adapted from e2fsck, Copyright (C) 1993, 1994 Theodore
+ * Ts'o.  Also licensed under GPL.  */
 static void
 check_mount(void) {
-	FILE * f;
-	struct mntent * mnt;
 	int cont;
-	int fd;
 
-	if ((f = setmntent (_PATH_MOUNTED, "r")) == NULL)
-		return;
-	while ((mnt = getmntent (f)) != NULL)
-		if (strcmp (device_name, mnt->mnt_fsname) == 0)
-			break;
-	endmntent (f);
-	if (!mnt)
+	if (!is_mounted(device_name))
 		return;
 
-	/*
-	 * If the root is mounted read-only, then /etc/mtab is
-	 * probably not correct; so we won't issue a warning based on
-	 * it.
-	 */
-	fd = open(_PATH_MOUNTED, O_RDWR);
-	if (fd < 0 && errno == EROFS)
-		return;
-	else
-		close(fd);
-	
-	printf (_("%s is mounted.	 "), device_name);
-	if (isatty(0) && isatty(1))
+	printf(_("%s is mounted.	 "), device_name);
+	if (isatty(STDIN_FILENO) && isatty(STDOUT_FILENO))
 		cont = ask(_("Do you really want to continue"), 0);
 	else
 		cont = 0;
 	if (!cont) {
-		printf (_("check aborted.\n"));
-		exit (0);
+		printf(_("check aborted.\n"));
+		exit(FSCK_EX_OK);
 	}
 	return;
 }
 
-/*
- * check_zone_nr checks to see that *nr is a valid zone nr. If it
- * isn't, it will possibly be repaired. Check_zone_nr sets *corrected
- * if an error was corrected, and returns the zone (0 for no zone
- * or a bad zone-number).
- */
+/* check_zone_nr checks to see that *nr is a valid zone nr.  If it isn't, it
+ * will possibly be repaired.  Check_zone_nr sets *corrected if an error was
+ * corrected, and returns the zone (0 for no zone or a bad zone-number).  */
 static int
-check_zone_nr(unsigned short * nr, int * corrected) {
+check_zone_nr(unsigned short *nr, int *corrected) {
 	if (!*nr)
 		return 0;
 
-	if (*nr < FIRSTZONE) {
+	if (*nr < get_first_zone()) {
 		get_current_name();
-		printf(_("Zone nr < FIRSTZONE in file `%s'."),
-		       current_name);
-	} else if (*nr >= ZONES) {
+		printf(_("Zone nr < FIRSTZONE in file `%s'."), current_name);
+	} else if (*nr >= get_nzones()) {
 		get_current_name();
-		printf(_("Zone nr >= ZONES in file `%s'."),
-		       current_name);
+		printf(_("Zone nr >= ZONES in file `%s'."), current_name);
 	} else
 		return *nr;
 
-	if (ask(_("Remove block"),1)) {
+	if (ask(_("Remove block"), 1)) {
 		*nr = 0;
 		*corrected = 1;
 	}
@@ -366,68 +326,61 @@ check_zone_nr(unsigned short * nr, int * corrected) {
 }
 
 static int
-check_zone_nr2 (unsigned int *nr, int *corrected) {
+check_zone_nr2(unsigned int *nr, int *corrected) {
 	if (!*nr)
 		return 0;
 
-	if (*nr < FIRSTZONE) {
+	if (*nr < get_first_zone()) {
 		get_current_name();
-		printf (_("Zone nr < FIRSTZONE in file `%s'."),
-			current_name);
-	} else if (*nr >= ZONES) {
+		printf(_("Zone nr < FIRSTZONE in file `%s'."), current_name);
+	} else if (*nr >= get_nzones()) {
 		get_current_name();
-		printf (_("Zone nr >= ZONES in file `%s'."),
-			current_name);
+		printf(_("Zone nr >= ZONES in file `%s'."), current_name);
 	} else
 		return *nr;
 
-	if (ask (_("Remove block"), 1)) {
+	if (ask(_("Remove block"), 1)) {
 		*nr = 0;
 		*corrected = 1;
 	}
 	return 0;
 }
 
-/*
- * read-block reads block nr into the buffer at addr.
- */
+/* read-block reads block nr into the buffer at addr.  */
 static void
-read_block(unsigned int nr, char * addr) {
+read_block(unsigned int nr, char *addr) {
 	if (!nr) {
-		memset(addr,0,BLOCK_SIZE);
+		memset(addr, 0, MINIX_BLOCK_SIZE);
 		return;
 	}
-	if (BLOCK_SIZE*nr != lseek(IN, BLOCK_SIZE*nr, SEEK_SET)) {
+	if (MINIX_BLOCK_SIZE * nr != lseek(device_fd, MINIX_BLOCK_SIZE * nr, SEEK_SET)) {
 		get_current_name();
 		printf(_("Read error: unable to seek to block in file '%s'\n"),
 		       current_name);
-		memset(addr,0,BLOCK_SIZE);
+		memset(addr, 0, MINIX_BLOCK_SIZE);
 		errors_uncorrected = 1;
-	} else if (BLOCK_SIZE != read(IN, addr, BLOCK_SIZE)) {
+	} else if (MINIX_BLOCK_SIZE != read(device_fd, addr, MINIX_BLOCK_SIZE)) {
 		get_current_name();
-		printf(_("Read error: bad block in file '%s'\n"),
-		       current_name);
-		memset(addr,0,BLOCK_SIZE);
+		printf(_("Read error: bad block in file '%s'\n"), current_name);
+		memset(addr, 0, MINIX_BLOCK_SIZE);
 		errors_uncorrected = 1;
 	}
 }
 
-/*
- * write_block writes block nr to disk.
- */
+/* write_block writes block nr to disk.  */
 static void
-write_block(unsigned int nr, char * addr) {
+write_block(unsigned int nr, char *addr) {
 	if (!nr)
 		return;
-	if (nr < FIRSTZONE || nr >= ZONES) {
+	if (nr < get_first_zone() || nr >= get_nzones()) {
 		printf(_("Internal error: trying to write bad block\n"
-		"Write request ignored\n"));
+			 "Write request ignored\n"));
 		errors_uncorrected = 1;
 		return;
 	}
-	if (BLOCK_SIZE*nr != lseek(IN, BLOCK_SIZE*nr, SEEK_SET))
+	if (MINIX_BLOCK_SIZE * nr != lseek(device_fd, MINIX_BLOCK_SIZE * nr, SEEK_SET))
 		die(_("seek failed in write_block"));
-	if (BLOCK_SIZE != write(IN, addr, BLOCK_SIZE)) {
+	if (MINIX_BLOCK_SIZE != write(device_fd, addr, MINIX_BLOCK_SIZE)) {
 		get_current_name();
 		printf(_("Write error: bad block in file '%s'\n"),
 		       current_name);
@@ -435,148 +388,153 @@ write_block(unsigned int nr, char * addr) {
 	}
 }
 
-/*
- * map-block calculates the absolute block nr of a block in a file.
- * It sets 'changed' if the inode has needed changing, and re-writes
- * any indirect blocks with errors.
- */
+/* map-block calculates the absolute block nr of a block in a file.  It sets
+ * 'changed' if the inode has needed changing, and re-writes any indirect
+ * blocks with errors.  */
 static int
-map_block(struct minix_inode * inode, unsigned int blknr) {
-	unsigned short ind[BLOCK_SIZE>>1];
-	unsigned short dind[BLOCK_SIZE>>1];
+map_block(struct minix_inode *inode, unsigned int blknr) {
+	unsigned short ind[MINIX_BLOCK_SIZE >> 1];
+	unsigned short dind[MINIX_BLOCK_SIZE >> 1];
 	int blk_chg, block, result;
 
-	if (blknr<7)
+	if (blknr < 7)
 		return check_zone_nr(inode->i_zone + blknr, &changed);
 	blknr -= 7;
-	if (blknr<512) {
+	if (blknr < 512) {
 		block = check_zone_nr(inode->i_zone + 7, &changed);
-		read_block(block, (char *) ind);
+		read_block(block, (char *)ind);
 		blk_chg = 0;
 		result = check_zone_nr(blknr + ind, &blk_chg);
 		if (blk_chg)
-			write_block(block, (char *) ind);
+			write_block(block, (char *)ind);
 		return result;
 	}
 	blknr -= 512;
 	block = check_zone_nr(inode->i_zone + 8, &changed);
-	read_block(block, (char *) dind);
+	read_block(block, (char *)dind);
 	blk_chg = 0;
-	result = check_zone_nr(dind + (blknr/512), &blk_chg);
+	result = check_zone_nr(dind + (blknr / 512), &blk_chg);
 	if (blk_chg)
-		write_block(block, (char *) dind);
+		write_block(block, (char *)dind);
 	block = result;
-	read_block(block, (char *) ind);
+	read_block(block, (char *)ind);
 	blk_chg = 0;
-	result = check_zone_nr(ind + (blknr%512), &blk_chg);
+	result = check_zone_nr(ind + (blknr % 512), &blk_chg);
 	if (blk_chg)
-		write_block(block, (char *) ind);
+		write_block(block, (char *)ind);
 	return result;
 }
 
 static int
-map_block2 (struct minix2_inode *inode, unsigned int blknr) {
-  	unsigned int ind[BLOCK_SIZE >> 2];
-	unsigned int dind[BLOCK_SIZE >> 2];
-	unsigned int tind[BLOCK_SIZE >> 2];
+map_block2(struct minix2_inode *inode, unsigned int blknr) {
+	unsigned int ind[MINIX_BLOCK_SIZE >> 2];
+	unsigned int dind[MINIX_BLOCK_SIZE >> 2];
+	unsigned int tind[MINIX_BLOCK_SIZE >> 2];
 	int blk_chg, block, result;
 
 	if (blknr < 7)
-		return check_zone_nr2 (inode->i_zone + blknr, &changed);
+		return check_zone_nr2(inode->i_zone + blknr, &changed);
 	blknr -= 7;
 	if (blknr < 256) {
-		block = check_zone_nr2 (inode->i_zone + 7, &changed);
-		read_block (block, (char *) ind);
+		block = check_zone_nr2(inode->i_zone + 7, &changed);
+		read_block(block, (char *)ind);
 		blk_chg = 0;
-		result = check_zone_nr2 (blknr + ind, &blk_chg);
+		result = check_zone_nr2(blknr + ind, &blk_chg);
 		if (blk_chg)
-			write_block (block, (char *) ind);
+			write_block(block, (char *)ind);
 		return result;
 	}
 	blknr -= 256;
-	if (blknr >= 256 * 256) {
-		block = check_zone_nr2 (inode->i_zone + 8, &changed);
-		read_block (block, (char *) dind);
+	if (blknr < 256 * 256) {
+		block = check_zone_nr2(inode->i_zone + 8, &changed);
+		read_block(block, (char *)dind);
 		blk_chg = 0;
-		result = check_zone_nr2 (dind + blknr / 256, &blk_chg);
+		result = check_zone_nr2(dind + blknr / 256, &blk_chg);
 		if (blk_chg)
-			write_block (block, (char *) dind);
+			write_block(block, (char *)dind);
 		block = result;
-		read_block (block, (char *) ind);
+		read_block(block, (char *)ind);
 		blk_chg = 0;
-		result = check_zone_nr2 (ind + blknr % 256, &blk_chg);
+		result = check_zone_nr2(ind + blknr % 256, &blk_chg);
 		if (blk_chg)
-			write_block (block, (char *) ind);
+			write_block(block, (char *)ind);
 		return result;
 	}
 	blknr -= 256 * 256;
-	block = check_zone_nr2 (inode->i_zone + 9, &changed);
-	read_block (block, (char *) tind);
+	block = check_zone_nr2(inode->i_zone + 9, &changed);
+	read_block(block, (char *)tind);
 	blk_chg = 0;
-	result = check_zone_nr2 (tind + blknr / (256 * 256), &blk_chg);
+	result = check_zone_nr2(tind + blknr / (256 * 256), &blk_chg);
 	if (blk_chg)
-		write_block (block, (char *) tind);
+		write_block(block, (char *)tind);
 	block = result;
-	read_block (block, (char *) dind);
+	read_block(block, (char *)dind);
 	blk_chg = 0;
-	result = check_zone_nr2 (dind + (blknr / 256) % 256, &blk_chg);
+	result = check_zone_nr2(dind + (blknr / 256) % 256, &blk_chg);
 	if (blk_chg)
-		write_block (block, (char *) dind);
+		write_block(block, (char *)dind);
 	block = result;
-	read_block (block, (char *) ind);
+	read_block(block, (char *)ind);
 	blk_chg = 0;
-	result = check_zone_nr2 (ind + blknr % 256, &blk_chg);
+	result = check_zone_nr2(ind + blknr % 256, &blk_chg);
 	if (blk_chg)
-		write_block (block, (char *) ind);
+		write_block(block, (char *)ind);
 	return result;
 }
 
 static void
 write_super_block(void) {
-	/*
-	 * Set the state of the filesystem based on whether or not there
-	 * are uncorrected errors.  The filesystem valid flag is
-	 * unconditionally set if we get this far.
-	 */
+	/* v3 super block does not track state */
+	if (fs_version == 3)
+		return;
+	/* Set the state of the filesystem based on whether or not there are
+	 * uncorrected errors.  The filesystem valid flag is unconditionally
+	 * set if we get this far.  */
 	Super.s_state |= MINIX_VALID_FS;
-	if ( errors_uncorrected )
+	if (errors_uncorrected)
 		Super.s_state |= MINIX_ERROR_FS;
 	else
 		Super.s_state &= ~MINIX_ERROR_FS;
-	
-	if (BLOCK_SIZE != lseek(IN, BLOCK_SIZE, SEEK_SET))
-		die(_("seek failed in write_super_block"));
-	if (BLOCK_SIZE != write(IN, super_block_buffer, BLOCK_SIZE))
-		die(_("unable to write super-block"));
 
+	if (MINIX_BLOCK_SIZE != lseek(device_fd, MINIX_BLOCK_SIZE, SEEK_SET))
+		die(_("seek failed in write_super_block"));
+	if (MINIX_BLOCK_SIZE != write(device_fd, super_block_buffer, MINIX_BLOCK_SIZE))
+		die(_("unable to write super-block"));
 	return;
 }
 
 static void
 write_tables(void) {
+	unsigned long buffsz = get_inode_buffer_size();
+	unsigned long imaps = get_nimaps();
+	unsigned long zmaps = get_nzmaps();
+
 	write_super_block();
 
-	if (IMAPS*BLOCK_SIZE != write(IN,inode_map,IMAPS*BLOCK_SIZE))
+	if (write_all(device_fd, inode_map, imaps * MINIX_BLOCK_SIZE))
 		die(_("Unable to write inode map"));
-	if (ZMAPS*BLOCK_SIZE != write(IN,zone_map,ZMAPS*BLOCK_SIZE))
+
+	if (write_all(device_fd, zone_map, zmaps * MINIX_BLOCK_SIZE))
 		die(_("Unable to write zone map"));
-	if (INODE_BUFFER_SIZE != write(IN,inode_buffer,INODE_BUFFER_SIZE))
+
+	if (write_all(device_fd, inode_buffer, buffsz))
 		die(_("Unable to write inodes"));
 }
 
 static void
-get_dirsize (void) {
+get_dirsize(void) {
 	int block;
-	char blk[BLOCK_SIZE];
-	int size;
+	char blk[MINIX_BLOCK_SIZE];
+	size_t size;
 
-	if (version2)
+	if (fs_version == 2 || fs_version == 3)
 		block = Inode2[ROOT_INO].i_zone[0];
 	else
 		block = Inode[ROOT_INO].i_zone[0];
-	read_block (block, blk);
-	for (size = 16; size < BLOCK_SIZE; size <<= 1) {
-		if (strcmp (blk + size + 2, "..") == 0) {
+	read_block(block, blk);
+
+	for (size = 16; size < MINIX_BLOCK_SIZE; size <<= 1) {
+		if (strcmp(blk + size + 2, "..") == 0) {
 			dirsize = size;
 			namelen = size - 2;
 			return;
@@ -587,87 +545,106 @@ get_dirsize (void) {
 
 static void
 read_superblock(void) {
-	if (BLOCK_SIZE != lseek(IN, BLOCK_SIZE, SEEK_SET))
+	if (MINIX_BLOCK_SIZE != lseek(device_fd, MINIX_BLOCK_SIZE, SEEK_SET))
 		die(_("seek failed"));
 
-	super_block_buffer = calloc(1, BLOCK_SIZE);
+	super_block_buffer = calloc(1, MINIX_BLOCK_SIZE);
 	if (!super_block_buffer)
 		die(_("unable to alloc buffer for superblock"));
 
-	if (BLOCK_SIZE != read(IN, super_block_buffer, BLOCK_SIZE))
+	if (MINIX_BLOCK_SIZE != read(device_fd, super_block_buffer, MINIX_BLOCK_SIZE))
 		die(_("unable to read super block"));
-	if (MAGIC == MINIX_SUPER_MAGIC) {
+	if (Super.s_magic == MINIX_SUPER_MAGIC) {
 		namelen = 14;
 		dirsize = 16;
-		version2 = 0;
-	} else if (MAGIC == MINIX_SUPER_MAGIC2) {
+		fs_version = 1;
+	} else if (Super.s_magic == MINIX_SUPER_MAGIC2) {
 		namelen = 30;
 		dirsize = 32;
-		version2 = 0;
-	} else if (MAGIC == MINIX2_SUPER_MAGIC) {
+		fs_version = 1;
+	} else if (Super.s_magic == MINIX2_SUPER_MAGIC) {
 		namelen = 14;
 		dirsize = 16;
-		version2 = 1;
-	} else if (MAGIC == MINIX2_SUPER_MAGIC2) {
+		fs_version = 2;
+	} else if (Super.s_magic == MINIX2_SUPER_MAGIC2) {
 		namelen = 30;
 		dirsize = 32;
-		version2 = 1;
+		fs_version = 2;
+	} else if (Super3.s_magic == MINIX3_SUPER_MAGIC) {
+		namelen = 60;
+		dirsize = 64;
+		fs_version = 3;
 	} else
 		die(_("bad magic number in super-block"));
-	if (ZONESIZE != 0 || BLOCK_SIZE != 1024)
+	if (get_zone_size() != 0 || MINIX_BLOCK_SIZE != 1024)
 		die(_("Only 1k blocks/zones supported"));
-	if (IMAPS * BLOCK_SIZE * 8 < INODES + 1)
+	if (get_nimaps() * MINIX_BLOCK_SIZE * 8 < get_ninodes() + 1)
 		die(_("bad s_imap_blocks field in super-block"));
-	if (ZMAPS * BLOCK_SIZE * 8 < ZONES - FIRSTZONE + 1)
+	if (get_nzmaps() * MINIX_BLOCK_SIZE * 8 <
+	    get_nzones() - get_first_zone() + 1)
 		die(_("bad s_zmap_blocks field in super-block"));
 }
 
 static void
 read_tables(void) {
-	inode_map = malloc(IMAPS * BLOCK_SIZE);
+	unsigned long inodes = get_ninodes();
+	size_t buffsz = get_inode_buffer_size();
+	off_t norm_first_zone = first_zone_data();
+	off_t first_zone = get_first_zone();
+	unsigned long zones = get_nzones();
+	unsigned long imaps = get_nimaps();
+	unsigned long zmaps = get_nzmaps();
+	ssize_t rc;
+
+	inode_map = malloc(imaps * MINIX_BLOCK_SIZE);
 	if (!inode_map)
 		die(_("Unable to allocate buffer for inode map"));
-	zone_map = malloc(ZMAPS * BLOCK_SIZE);
-	if (!inode_map)
+	zone_map = malloc(zmaps * MINIX_BLOCK_SIZE);
+	if (!zone_map)
 		die(_("Unable to allocate buffer for zone map"));
-	memset(inode_map,0,sizeof(inode_map));
-	memset(zone_map,0,sizeof(zone_map));
-	inode_buffer = malloc(INODE_BUFFER_SIZE);
+	inode_buffer = malloc(buffsz);
 	if (!inode_buffer)
 		die(_("Unable to allocate buffer for inodes"));
-	inode_count = malloc(INODES + 1);
+	inode_count = calloc(1, inodes + 1);
 	if (!inode_count)
 		die(_("Unable to allocate buffer for inode count"));
-	zone_count = malloc(ZONES);
+	zone_count = calloc(1, zones);
 	if (!zone_count)
 		die(_("Unable to allocate buffer for zone count"));
-	if (IMAPS*BLOCK_SIZE != read(IN,inode_map,IMAPS*BLOCK_SIZE))
+
+	rc = read(device_fd, inode_map, imaps * MINIX_BLOCK_SIZE);
+	if (rc < 0 || imaps * MINIX_BLOCK_SIZE != (size_t) rc)
 		die(_("Unable to read inode map"));
-	if (ZMAPS*BLOCK_SIZE != read(IN,zone_map,ZMAPS*BLOCK_SIZE))
+
+	rc = read(device_fd, zone_map, zmaps * MINIX_BLOCK_SIZE);
+	if (rc < 0 || zmaps * MINIX_BLOCK_SIZE != (size_t) rc)
 		die(_("Unable to read zone map"));
-	if (INODE_BUFFER_SIZE != read(IN,inode_buffer,INODE_BUFFER_SIZE))
+
+	rc = read(device_fd, inode_buffer, buffsz);
+	if (rc < 0 || buffsz != (size_t) rc)
 		die(_("Unable to read inodes"));
-	if (NORM_FIRSTZONE != FIRSTZONE) {
+	if (norm_first_zone != first_zone) {
 		printf(_("Warning: Firstzone != Norm_firstzone\n"));
 		errors_uncorrected = 1;
 	}
-	get_dirsize ();
+	get_dirsize();
 	if (show) {
-		printf(_("%ld inodes\n"),INODES);
-		printf(_("%ld blocks\n"),ZONES);
-		printf(_("Firstdatazone=%ld (%ld)\n"),FIRSTZONE,NORM_FIRSTZONE);
-		printf(_("Zonesize=%d\n"),BLOCK_SIZE<<ZONESIZE);
-		printf(_("Maxsize=%ld\n"),MAXSIZE);
-		printf(_("Filesystem state=%d\n"), Super.s_state);
-		printf(_("namelen=%d\n\n"),namelen);
+		printf(_("%ld inodes\n"), inodes);
+		printf(_("%ld blocks\n"), zones);
+		printf(_("Firstdatazone=%jd (%jd)\n"), first_zone, norm_first_zone);
+		printf(_("Zonesize=%d\n"), MINIX_BLOCK_SIZE << get_zone_size());
+		printf(_("Maxsize=%zu\n"), get_max_size());
+		if (fs_version < 3)
+			printf(_("Filesystem state=%d\n"), Super.s_state);
+		printf(_("namelen=%zd\n\n"), namelen);
 	}
 }
 
 static struct minix_inode *
 get_inode(unsigned int nr) {
-	struct minix_inode * inode;
+	struct minix_inode *inode;
 
-	if (!nr || nr > INODES)
+	if (!nr || nr > get_ninodes())
 		return NULL;
 	total++;
 	inode = Inode + nr;
@@ -675,13 +652,12 @@ get_inode(unsigned int nr) {
 		if (!inode_in_use(nr)) {
 			get_current_name();
 			printf(_("Inode %d marked unused, "
-				 "but used for file '%s'\n"),
-			       nr, current_name);
+				 "but used for file '%s'\n"), nr, current_name);
 			if (repair) {
-				if (ask(_("Mark in use"),1))
+				if (ask(_("Mark in use"), 1))
 					mark_inode(nr);
 			} else {
-			        errors_uncorrected = 1;
+				errors_uncorrected = 1;
 			}
 		}
 		if (S_ISDIR(inode->i_mode))
@@ -699,10 +675,10 @@ get_inode(unsigned int nr) {
 		else if (S_ISFIFO(inode->i_mode))
 			;
 		else {
-                        get_current_name();
-                        printf(_("The file `%s' has mode %05o\n"),
+			get_current_name();
+			printf(_("The file `%s' has mode %05o\n"),
 			       current_name, inode->i_mode);
-                }
+		}
 
 	} else
 		links++;
@@ -715,47 +691,46 @@ get_inode(unsigned int nr) {
 }
 
 static struct minix2_inode *
-get_inode2 (unsigned int nr) {
+get_inode2(unsigned int nr) {
 	struct minix2_inode *inode;
 
-	if (!nr || nr > INODES)
+	if (!nr || nr > get_ninodes())
 		return NULL;
 	total++;
 	inode = Inode2 + nr;
 	if (!inode_count[nr]) {
-		if (!inode_in_use (nr)) {
+		if (!inode_in_use(nr)) {
 			get_current_name();
-			printf (_("Inode %d marked unused, "
-				  "but used for file '%s'\n"),
-				nr, current_name);
+			printf(_("Inode %d marked unused, "
+				 "but used for file '%s'\n"), nr, current_name);
 			if (repair) {
-				if (ask (_("Mark in use"), 1))
-					mark_inode (nr);
+				if (ask(_("Mark in use"), 1))
+					mark_inode(nr);
 				else
 					errors_uncorrected = 1;
 			}
 		}
-		if (S_ISDIR (inode->i_mode))
+		if (S_ISDIR(inode->i_mode))
 			directory++;
-		else if (S_ISREG (inode->i_mode))
+		else if (S_ISREG(inode->i_mode))
 			regular++;
-		else if (S_ISCHR (inode->i_mode))
+		else if (S_ISCHR(inode->i_mode))
 			chardev++;
-		else if (S_ISBLK (inode->i_mode))
+		else if (S_ISBLK(inode->i_mode))
 			blockdev++;
-		else if (S_ISLNK (inode->i_mode))
+		else if (S_ISLNK(inode->i_mode))
 			symlinks++;
-		else if (S_ISSOCK (inode->i_mode));
-		else if (S_ISFIFO (inode->i_mode));
+		else if (S_ISSOCK(inode->i_mode)) ;
+		else if (S_ISFIFO(inode->i_mode)) ;
 		else {
-			get_current_name ();
-			printf (_("The file `%s' has mode %05o\n"),
-				current_name, inode->i_mode);
+			get_current_name();
+			printf(_("The file `%s' has mode %05o\n"),
+			       current_name, inode->i_mode);
 		}
 	} else
 		links++;
 	if (!++inode_count[nr]) {
-		printf (_("Warning: inode count too big.\n"));
+		printf(_("Warning: inode count too big.\n"));
 		inode_count[nr]--;
 		errors_uncorrected = 1;
 	}
@@ -764,26 +739,24 @@ get_inode2 (unsigned int nr) {
 
 static void
 check_root(void) {
-	struct minix_inode * inode = Inode + ROOT_INO;
+	struct minix_inode *inode = Inode + ROOT_INO;
 
 	if (!inode || !S_ISDIR(inode->i_mode))
 		die(_("root inode isn't a directory"));
 }
 
 static void
-check_root2 (void) {
+check_root2(void) {
 	struct minix2_inode *inode = Inode2 + ROOT_INO;
 
-	if (!inode || !S_ISDIR (inode->i_mode))
+	if (!inode || !S_ISDIR(inode->i_mode))
 		die(_("root inode isn't a directory"));
 }
 
 static int
-add_zone(unsigned short * znr, int * corrected) {
-	int result;
+add_zone(unsigned short *znr, int *corrected) {
 	int block;
 
-	result = 0;
 	block = check_zone_nr(znr, corrected);
 	if (!block)
 		return 0;
@@ -791,7 +764,7 @@ add_zone(unsigned short * znr, int * corrected) {
 		get_current_name();
 		printf(_("Block has been used before. Now in file `%s'."),
 		       current_name);
-		if (ask(_("Clear"),1)) {
+		if (ask(_("Clear"), 1)) {
 			*znr = 0;
 			block = 0;
 			*corrected = 1;
@@ -803,7 +776,7 @@ add_zone(unsigned short * znr, int * corrected) {
 		get_current_name();
 		printf(_("Block %d in file `%s' is marked not in use."),
 		       block, current_name);
-		if (ask(_("Correct"),1))
+		if (ask(_("Correct"), 1))
 			mark_zone(block);
 	}
 	if (!++zone_count[block])
@@ -812,19 +785,17 @@ add_zone(unsigned short * znr, int * corrected) {
 }
 
 static int
-add_zone2 (unsigned int *znr, int *corrected) {
-	int result;
+add_zone2(unsigned int *znr, int *corrected) {
 	int block;
 
-	result = 0;
-	block = check_zone_nr2 (znr, corrected);
+	block = check_zone_nr2(znr, corrected);
 	if (!block)
 		return 0;
 	if (zone_count[block]) {
 		get_current_name();
-		printf (_("Block has been used before. Now in file `%s'."),
-			current_name);
-		if (ask (_("Clear"), 1)) {
+		printf(_("Block has been used before. Now in file `%s'."),
+		       current_name);
+		if (ask(_("Clear"), 1)) {
 			*znr = 0;
 			block = 0;
 			*corrected = 1;
@@ -832,12 +803,12 @@ add_zone2 (unsigned int *znr, int *corrected) {
 	}
 	if (!block)
 		return 0;
-	if (!zone_in_use (block)) {
+	if (!zone_in_use(block)) {
 		get_current_name();
-		printf (_("Block %d in file `%s' is marked not in use."),
-			block, current_name);
-		if (ask (_("Correct"), 1))
-			mark_zone (block);
+		printf(_("Block %d in file `%s' is marked not in use."),
+		       block, current_name);
+		if (ask(_("Correct"), 1))
+			mark_zone(block);
 	}
 	if (!++zone_count[block])
 		zone_count[block]--;
@@ -845,90 +816,90 @@ add_zone2 (unsigned int *znr, int *corrected) {
 }
 
 static void
-add_zone_ind(unsigned short * znr, int * corrected) {
-	static char blk[BLOCK_SIZE];
-	int i, chg_blk=0;
-	int block;
-
-	block = add_zone(znr, corrected);
-	if (!block)
-		return;
-	read_block(block, blk);
-	for (i=0 ; i < (BLOCK_SIZE>>1) ; i++)
-		add_zone(i + (unsigned short *) blk, &chg_blk);
-	if (chg_blk)
-		write_block(block, blk);
-}
-
-static void
-add_zone_ind2 (unsigned int *znr, int *corrected) {
-	static char blk[BLOCK_SIZE];
+add_zone_ind(unsigned short *znr, int *corrected) {
+	static char blk[MINIX_BLOCK_SIZE];
 	int i, chg_blk = 0;
 	int block;
 
-	block = add_zone2 (znr, corrected);
+	block = add_zone(znr, corrected);
 	if (!block)
 		return;
-	read_block (block, blk);
-	for (i = 0; i < BLOCK_SIZE >> 2; i++)
-		add_zone2 (i + (unsigned int *) blk, &chg_blk);
+	read_block(block, blk);
+	for (i = 0; i < (MINIX_BLOCK_SIZE >> 1); i++)
+		add_zone(i + (unsigned short *)blk, &chg_blk);
 	if (chg_blk)
-		write_block (block, blk);
+		write_block(block, blk);
 }
 
 static void
-add_zone_dind(unsigned short * znr, int * corrected) {
-	static char blk[BLOCK_SIZE];
-	int i, blk_chg=0;
+add_zone_ind2(unsigned int *znr, int *corrected) {
+	static char blk[MINIX_BLOCK_SIZE];
+	int i, chg_blk = 0;
+	int block;
+
+	block = add_zone2(znr, corrected);
+	if (!block)
+		return;
+	read_block(block, blk);
+	for (i = 0; i < MINIX_BLOCK_SIZE >> 2; i++)
+		add_zone2(i + (unsigned int *)blk, &chg_blk);
+	if (chg_blk)
+		write_block(block, blk);
+}
+
+static void
+add_zone_dind(unsigned short *znr, int *corrected) {
+	static char blk[MINIX_BLOCK_SIZE];
+	int i, blk_chg = 0;
 	int block;
 
 	block = add_zone(znr, corrected);
 	if (!block)
 		return;
 	read_block(block, blk);
-	for (i=0 ; i < (BLOCK_SIZE>>1) ; i++)
-		add_zone_ind(i + (unsigned short *) blk, &blk_chg);
+	for (i = 0; i < (MINIX_BLOCK_SIZE >> 1); i++)
+		add_zone_ind(i + (unsigned short *)blk, &blk_chg);
 	if (blk_chg)
 		write_block(block, blk);
 }
 
 static void
-add_zone_dind2 (unsigned int *znr, int *corrected) {
-	static char blk[BLOCK_SIZE];
+add_zone_dind2(unsigned int *znr, int *corrected) {
+	static char blk[MINIX_BLOCK_SIZE];
 	int i, blk_chg = 0;
 	int block;
 
-	block = add_zone2 (znr, corrected);
+	block = add_zone2(znr, corrected);
 	if (!block)
 		return;
-	read_block (block, blk);
-	for (i = 0; i < BLOCK_SIZE >> 2; i++)
-		add_zone_ind2 (i + (unsigned int *) blk, &blk_chg);
+	read_block(block, blk);
+	for (i = 0; i < MINIX_BLOCK_SIZE >> 2; i++)
+		add_zone_ind2(i + (unsigned int *)blk, &blk_chg);
 	if (blk_chg)
-		write_block (block, blk);
+		write_block(block, blk);
 }
 
 static void
-add_zone_tind2 (unsigned int *znr, int *corrected) {
-	static char blk[BLOCK_SIZE];
+add_zone_tind2(unsigned int *znr, int *corrected) {
+	static char blk[MINIX_BLOCK_SIZE];
 	int i, blk_chg = 0;
 	int block;
 
-	block = add_zone2 (znr, corrected);
+	block = add_zone2(znr, corrected);
 	if (!block)
 		return;
-	read_block (block, blk);
-	for (i = 0; i < BLOCK_SIZE >> 2; i++)
-		add_zone_dind2 (i + (unsigned int *) blk, &blk_chg);
+	read_block(block, blk);
+	for (i = 0; i < MINIX_BLOCK_SIZE >> 2; i++)
+		add_zone_dind2(i + (unsigned int *)blk, &blk_chg);
 	if (blk_chg)
-		write_block (block, blk);
+		write_block(block, blk);
 }
 
 static void
 check_zones(unsigned int i) {
-	struct minix_inode * inode;
+	struct minix_inode *inode;
 
-	if (!i || i > INODES)
+	if (!i || i > get_ninodes())
 		return;
 	if (inode_count[i] > 1)	/* have we counted this file already? */
 		return;
@@ -936,80 +907,85 @@ check_zones(unsigned int i) {
 	if (!S_ISDIR(inode->i_mode) && !S_ISREG(inode->i_mode) &&
 	    !S_ISLNK(inode->i_mode))
 		return;
-	for (i=0 ; i<7 ; i++)
+	for (i = 0; i < 7; i++)
 		add_zone(i + inode->i_zone, &changed);
 	add_zone_ind(7 + inode->i_zone, &changed);
 	add_zone_dind(8 + inode->i_zone, &changed);
 }
 
 static void
-check_zones2 (unsigned int i) {
+check_zones2(unsigned int i) {
 	struct minix2_inode *inode;
 
-	if (!i || i > INODES)
+	if (!i || i > get_ninodes())
 		return;
 	if (inode_count[i] > 1)	/* have we counted this file already? */
 		return;
 	inode = Inode2 + i;
-	if (!S_ISDIR (inode->i_mode) && !S_ISREG (inode->i_mode)
-	    && !S_ISLNK (inode->i_mode))
+	if (!S_ISDIR(inode->i_mode) && !S_ISREG(inode->i_mode)
+	    && !S_ISLNK(inode->i_mode))
 		return;
 	for (i = 0; i < 7; i++)
-		add_zone2 (i + inode->i_zone, &changed);
-	add_zone_ind2 (7 + inode->i_zone, &changed);
-	add_zone_dind2 (8 + inode->i_zone, &changed);
-	add_zone_tind2 (9 + inode->i_zone, &changed);
+		add_zone2(i + inode->i_zone, &changed);
+	add_zone_ind2(7 + inode->i_zone, &changed);
+	add_zone_dind2(8 + inode->i_zone, &changed);
+	add_zone_tind2(9 + inode->i_zone, &changed);
 }
 
 static void
-check_file(struct minix_inode * dir, unsigned int offset) {
-	static char blk[BLOCK_SIZE];
-	struct minix_inode * inode;
-	int ino;
-	char * name;
+check_file(struct minix_inode *dir, unsigned int offset) {
+	static char blk[MINIX_BLOCK_SIZE + 2];
+	struct minix_inode *inode;
+	unsigned int ino;
+	char *name;
 	int block;
 
-	block = map_block(dir,offset/BLOCK_SIZE);
+	block = map_block(dir, offset / MINIX_BLOCK_SIZE);
 	read_block(block, blk);
-	name = blk + (offset % BLOCK_SIZE) + 2;
-	ino = * (unsigned short *) (name-2);
-	if (ino > INODES) {
+	name = blk + (offset % MINIX_BLOCK_SIZE) + 2;
+	ino = *(unsigned short *)(name - 2);
+	if (ino > get_ninodes()) {
 		get_current_name();
 		printf(_("The directory '%s' contains a bad inode number "
-			 "for file '%.*s'."),
-		       current_name, namelen, name);
-		if (ask(_(" Remove"),1)) {
-			*(unsigned short *)(name-2) = 0;
+			 "for file '%.*s'."), current_name, (int)namelen, name);
+		if (ask(_(" Remove"), 1)) {
+			*(unsigned short *)(name - 2) = 0;
 			write_block(block, blk);
 		}
 		ino = 0;
-	}	
+	}
 	if (name_depth < MAX_DEPTH)
-		strncpy (name_list[name_depth], name, namelen);
+		xstrncpy(name_list[name_depth], name, namelen);
+	else
+		return;
 	name_depth++;
 	inode = get_inode(ino);
 	name_depth--;
 	if (!offset) {
-		if (!inode || strcmp(".",name)) {
+		if (!inode || strcmp(".", name)) {
 			get_current_name();
 			printf(_("%s: bad directory: '.' isn't first\n"),
 			       current_name);
 			errors_uncorrected = 1;
-		} else return;
+		} else
+			return;
 	}
 	if (offset == dirsize) {
-		if (!inode || strcmp("..",name)) {
+		if (!inode || strcmp("..", name)) {
 			get_current_name();
 			printf(_("%s: bad directory: '..' isn't second\n"),
 			       current_name);
 			errors_uncorrected = 1;
-		} else return;
+		} else
+			return;
 	}
 	if (!inode)
 		return;
 	if (name_depth < MAX_DEPTH)
-		strncpy(name_list[name_depth], name, namelen);
-	name_depth++;	
+		xstrncpy(name_list[name_depth], name, namelen);
+	else
+		return;
+	name_depth++;
 	if (list) {
 		if (verbose)
 			printf("%6d %07o %3d ", ino,
@@ -1029,47 +1005,49 @@ check_file(struct minix_inode * dir, unsigned int offset) {
 }
 
 static void
-check_file2 (struct minix2_inode *dir, unsigned int offset) {
-	static char blk[BLOCK_SIZE];
+check_file2(struct minix2_inode *dir, unsigned int offset) {
+	static char blk[MINIX_BLOCK_SIZE + 4];
 	struct minix2_inode *inode;
-	int ino;
+	ino_t ino;
 	char *name;
 	int block;
+	const int version_offset = fs_version == 3 ? 4 : 2;
 
-	block = map_block2 (dir, offset / BLOCK_SIZE);
-	read_block (block, blk);
-	name = blk + (offset % BLOCK_SIZE) + 2;
-	ino = *(unsigned short *) (name - 2);
-	if (ino > INODES) {
+	block = map_block2(dir, offset / MINIX_BLOCK_SIZE);
+	read_block(block, blk);
+	name = blk + (offset % MINIX_BLOCK_SIZE) + version_offset;
+	ino = *(unsigned short *)(name - version_offset);
+	if (ino > get_ninodes()) {
 		get_current_name();
 		printf(_("The directory '%s' contains a bad inode number "
-			 "for file '%.*s'."),
-			  current_name, namelen, name);
-		if (ask (_(" Remove"), 1)) {
-			*(unsigned short *) (name - 2) = 0;
-			write_block (block, blk);
+			 "for file '%.*s'."), current_name, (int)namelen, name);
+		if (ask(_(" Remove"), 1)) {
+			*(unsigned short *)(name - version_offset) = 0;
+			write_block(block, blk);
 		}
 		ino = 0;
 	}
 	if (name_depth < MAX_DEPTH)
-		strncpy (name_list[name_depth], name, namelen);
+		xstrncpy(name_list[name_depth], name, namelen);
+	else
+		return;
 	name_depth++;
-	inode = get_inode2 (ino);
+	inode = get_inode2(ino);
 	name_depth--;
 	if (!offset) {
-		if (!inode || strcmp (".", name)) {
-			get_current_name ();
-			printf (_("%s: bad directory: '.' isn't first\n"),
-				current_name);
+		if (!inode || strcmp(".", name)) {
+			get_current_name();
+			printf(_("%s: bad directory: '.' isn't first\n"),
+			       current_name);
 			errors_uncorrected = 1;
 		} else
 			return;
 	}
 	if (offset == dirsize) {
-		if (!inode || strcmp ("..", name)) {
-			get_current_name ();
-			printf (_("%s: bad directory: '..' isn't second\n"),
-				current_name);
+		if (!inode || strcmp("..", name)) {
+			get_current_name();
+			printf(_("%s: bad directory: '..' isn't second\n"),
+			       current_name);
 			errors_uncorrected = 1;
 		} else
 			return;
@@ -1079,75 +1057,73 @@ check_file2 (struct minix2_inode *dir, unsigned int offset) {
 	name_depth++;
 	if (list) {
 		if (verbose)
-			printf ("%6d %07o %3d ", ino, inode->i_mode,
-				inode->i_nlinks);
-		get_current_name ();
+			printf("%6ju %07o %3d ", ino, inode->i_mode,
+			       inode->i_nlinks);
+		get_current_name();
 		printf("%s", current_name);
-		if (S_ISDIR (inode->i_mode))
-			printf (":\n");
+		if (S_ISDIR(inode->i_mode))
+			printf(":\n");
 		else
-			printf ("\n");
+			printf("\n");
 	}
-	check_zones2 (ino);
-	if (inode && S_ISDIR (inode->i_mode))
-		recursive_check2 (ino);
+	check_zones2(ino);
+	if (inode && S_ISDIR(inode->i_mode))
+		recursive_check2(ino);
 	name_depth--;
 	return;
 }
 
 static void
 recursive_check(unsigned int ino) {
-	struct minix_inode * dir;
-	unsigned int offset;
+	struct minix_inode *dir;
+	off_t offset;
 
 	dir = Inode + ino;
 	if (!S_ISDIR(dir->i_mode))
 		die(_("internal error"));
 	if (dir->i_size < 2 * dirsize) {
 		get_current_name();
-		printf(_("%s: bad directory: size < 32"),
-		       current_name);
-		errors_uncorrected = 1;
-	}
-	for (offset = 0 ; offset < dir->i_size ; offset += dirsize)
-		check_file(dir,offset);
-}
-
-static void
-recursive_check2 (unsigned int ino) {
-	struct minix2_inode *dir;
-	unsigned int offset;
-
-	dir = Inode2 + ino;
-	if (!S_ISDIR (dir->i_mode))
-		die(_("internal error"));
-	if (dir->i_size < 2 * dirsize) {
-		get_current_name ();
-		printf (_("%s: bad directory: size < 32"),
-			current_name);
+		printf(_("%s: bad directory: size < 32"), current_name);
 		errors_uncorrected = 1;
 	}
 	for (offset = 0; offset < dir->i_size; offset += dirsize)
-		check_file2 (dir, offset);
+		check_file(dir, offset);
+}
+
+static void
+recursive_check2(unsigned int ino) {
+	struct minix2_inode *dir;
+	off_t offset;
+
+	dir = Inode2 + ino;
+	if (!S_ISDIR(dir->i_mode))
+		die(_("internal error"));
+	if (dir->i_size < 2 * dirsize) {
+		get_current_name();
+		printf(_("%s: bad directory: size < 32"), current_name);
+		errors_uncorrected = 1;
+	}
+	for (offset = 0; offset < dir->i_size; offset += dirsize)
+		check_file2(dir, offset);
 }
 
 static int
 bad_zone(int i) {
 	char buffer[1024];
 
-	if (BLOCK_SIZE*i != lseek(IN, BLOCK_SIZE*i, SEEK_SET))
+	if (MINIX_BLOCK_SIZE * i != lseek(device_fd, MINIX_BLOCK_SIZE * i, SEEK_SET))
 		die(_("seek failed in bad_zone"));
-	return (BLOCK_SIZE != read(IN, buffer, BLOCK_SIZE));
+	return (MINIX_BLOCK_SIZE != read(device_fd, buffer, MINIX_BLOCK_SIZE));
 }
 
 static void
 check_counts(void) {
-	int i;
+	unsigned long i;
 
-	for (i=1 ; i <= INODES ; i++) {
+	for (i = 1; i <= get_ninodes(); i++) {
 		if (!inode_in_use(i) && Inode[i].i_mode && warn_mode) {
-			printf(_("Inode %d mode not cleared."),i);
-			if (ask(_("Clear"),1)) {
+			printf(_("Inode %lu mode not cleared."), i);
+			if (ask(_("Clear"), 1)) {
 				Inode[i].i_mode = 0;
 				changed = 1;
 			}
@@ -1155,262 +1131,283 @@ check_counts(void) {
 		if (!inode_count[i]) {
 			if (!inode_in_use(i))
 				continue;
-			printf(_("Inode %d not used, marked used in the bitmap."),i);
-			if (ask(_("Clear"),1))
+			printf(_("Inode %lu not used, marked used in the bitmap."), i);
+			if (ask(_("Clear"), 1))
 				unmark_inode(i);
 			continue;
 		}
 		if (!inode_in_use(i)) {
-			printf(_("Inode %d used, marked unused in the bitmap."),
-				i);
-			if (ask(_("Set"),1))
+			printf(_("Inode %lu used, marked unused in the bitmap."), i);
+			if (ask(_("Set"), 1))
 				mark_inode(i);
 		}
 		if (Inode[i].i_nlinks != inode_count[i]) {
-			printf(_("Inode %d (mode = %07o), i_nlinks=%d, counted=%d."),
-				i,Inode[i].i_mode,Inode[i].i_nlinks,inode_count[i]);
-			if (ask(_("Set i_nlinks to count"),1)) {
-				Inode[i].i_nlinks=inode_count[i];
-				changed=1;
+			printf(_("Inode %lu (mode = %07o), i_nlinks=%d, counted=%d."),
+			       i, Inode[i].i_mode, Inode[i].i_nlinks,
+			       inode_count[i]);
+			if (ask(_("Set i_nlinks to count"), 1)) {
+				Inode[i].i_nlinks = inode_count[i];
+				changed = 1;
 			}
 		}
 	}
-	for (i=FIRSTZONE ; i < ZONES ; i++) {
+	for (i = get_first_zone(); i < get_nzones(); i++) {
 		if (zone_in_use(i) == zone_count[i])
 			continue;
 		if (!zone_count[i]) {
 			if (bad_zone(i))
 				continue;
-			printf(_("Zone %d: marked in use, no file uses it."),i);
-			if (ask(_("Unmark"),1))
+			printf(_("Zone %lu: marked in use, no file uses it."),
+			       i);
+			if (ask(_("Unmark"), 1))
 				unmark_zone(i);
 			continue;
 		}
 		if (zone_in_use(i))
-			printf(_("Zone %d: in use, counted=%d\n"),
+			printf(_("Zone %lu: in use, counted=%d\n"),
 			       i, zone_count[i]);
 		else
-			printf(_("Zone %d: not in use, counted=%d\n"),
+			printf(_("Zone %lu: not in use, counted=%d\n"),
 			       i, zone_count[i]);
 	}
 }
 
 static void
-check_counts2 (void) {
-	int i;
+check_counts2(void) {
+	unsigned long i;
 
-	for (i = 1; i <= INODES; i++) {
-		if (!inode_in_use (i) && Inode2[i].i_mode && warn_mode) {
-			printf (_("Inode %d mode not cleared."), i);
-			if (ask (_("Clear"), 1)) {
+	for (i = 1; i <= get_ninodes(); i++) {
+		if (!inode_in_use(i) && Inode2[i].i_mode && warn_mode) {
+			printf(_("Inode %lu mode not cleared."), i);
+			if (ask(_("Clear"), 1)) {
 				Inode2[i].i_mode = 0;
 				changed = 1;
 			}
 		}
 		if (!inode_count[i]) {
-			if (!inode_in_use (i))
+			if (!inode_in_use(i))
 				continue;
-			printf (_("Inode %d not used, marked used in the bitmap."), i);
-			if (ask (_("Clear"), 1))
-				unmark_inode (i);
+			printf(_("Inode %lu not used, marked used in the bitmap."), i);
+			if (ask(_("Clear"), 1))
+				unmark_inode(i);
 			continue;
 		}
-		if (!inode_in_use (i)) {
-			printf (_("Inode %d used, marked unused in the bitmap."), i);
-			if (ask (_("Set"), 1))
-				mark_inode (i);
+		if (!inode_in_use(i)) {
+			printf(_("Inode %lu used, marked unused in the bitmap."), i);
+			if (ask(_("Set"), 1))
+				mark_inode(i);
 		}
 		if (Inode2[i].i_nlinks != inode_count[i]) {
-			printf (_("Inode %d (mode = %07o), i_nlinks=%d, counted=%d."),
-				i, Inode2[i].i_mode, Inode2[i].i_nlinks, inode_count[i]);
-			if (ask (_("Set i_nlinks to count"), 1)) {
+			printf(_("Inode %lu (mode = %07o), i_nlinks=%d, counted=%d."),
+			       i, Inode2[i].i_mode, Inode2[i].i_nlinks,
+			       inode_count[i]);
+			if (ask(_("Set i_nlinks to count"), 1)) {
 				Inode2[i].i_nlinks = inode_count[i];
 				changed = 1;
 			}
 		}
 	}
-	for (i = FIRSTZONE; i < ZONES; i++) {
-		if (zone_in_use (i) == zone_count[i])
+	for (i = get_first_zone(); i < get_nzones(); i++) {
+		if (zone_in_use(i) == zone_count[i])
 			continue;
 		if (!zone_count[i]) {
-			if (bad_zone (i))
+			if (bad_zone(i))
 				continue;
-			printf (_("Zone %d: marked in use, no file uses it."),
-				i);
-			if (ask (_("Unmark"), 1))
-				unmark_zone (i);
+			printf(_("Zone %lu: marked in use, no file uses it."),
+			       i);
+			if (ask(_("Unmark"), 1))
+				unmark_zone(i);
 			continue;
 		}
-		if (zone_in_use (i))
-			printf (_("Zone %d: in use, counted=%d\n"),
-				i, zone_count[i]);
+		if (zone_in_use(i))
+			printf(_("Zone %lu: in use, counted=%d\n"),
+			       i, zone_count[i]);
 		else
-			printf (_("Zone %d: not in use, counted=%d\n"),
-				i, zone_count[i]);
+			printf(_("Zone %lu: not in use, counted=%d\n"),
+			       i, zone_count[i]);
 	}
 }
 
 static void
 check(void) {
-	memset(inode_count,0,(INODES + 1) * sizeof(*inode_count));
-	memset(zone_count,0,ZONES*sizeof(*zone_count));
+	memset(inode_count, 0, (get_ninodes() + 1) * sizeof(*inode_count));
+	memset(zone_count, 0, get_nzones() * sizeof(*zone_count));
 	check_zones(ROOT_INO);
 	recursive_check(ROOT_INO);
 	check_counts();
 }
 
 static void
-check2 (void) {
-	memset (inode_count, 0, (INODES + 1) * sizeof (*inode_count));
-	memset (zone_count, 0, ZONES * sizeof (*zone_count));
-	check_zones2 (ROOT_INO);
-	recursive_check2 (ROOT_INO);
-	check_counts2 ();
+check2(void) {
+	memset(inode_count, 0, (get_ninodes() + 1) * sizeof(*inode_count));
+	memset(zone_count, 0, get_nzones() * sizeof(*zone_count));
+	check_zones2(ROOT_INO);
+	recursive_check2(ROOT_INO);
+	check_counts2();
 }
 
 int
-main(int argc, char ** argv) {
+main(int argc, char **argv) {
 	struct termios tmp;
 	int count;
-	int retcode = 0;
-	char *p;
-
-	program_name = (argc && *argv) ? argv[0] : "fsck.minix";
-	if ((p = strrchr(program_name, '/')) != NULL)
-		program_name = p+1;
+	int retcode = FSCK_EX_OK;
+	int i;
+	static const struct option longopts[] = {
+		{"list", no_argument, NULL, 'l'},
+		{"auto", no_argument, NULL, 'a'},
+		{"repair", no_argument, NULL, 'r'},
+		{"verbose", no_argument, NULL, 'v'},
+		{"super", no_argument, NULL, 's'},
+		{"uncleared", no_argument, NULL, 'm'},
+		{"force", no_argument, NULL, 'f'},
+		{"version", no_argument, NULL, 'V'},
+		{"help", no_argument, NULL, 'h'},
+		{NULL, 0, NULL, 0}
+	};
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
+	atexit(close_stdout);
 
-	if (argc == 2 &&
-	    (!strcmp(argv[1], "-V") || !strcmp(argv[1], "--version"))) {
-		printf(_("%s (%s)\n"), program_name, PACKAGE_STRING);
-		exit(0);
-	}
-
-	if (INODE_SIZE * MINIX_INODES_PER_BLOCK != BLOCK_SIZE)
+	if (INODE_SIZE * MINIX_INODES_PER_BLOCK != MINIX_BLOCK_SIZE)
 		die(_("bad inode size"));
-	if (INODE_SIZE2 * MINIX2_INODES_PER_BLOCK != BLOCK_SIZE)
+	if (INODE2_SIZE * MINIX2_INODES_PER_BLOCK != MINIX_BLOCK_SIZE)
 		die(_("bad v2 inode size"));
 
-	while (argc-- > 1) {
-		argv++;
-		if (argv[0][0] != '-') {
-			if (device_name)
-				usage();
-			else
-				device_name = argv[0];
-		} else while (*++argv[0])
-			switch (argv[0][0]) {
-				case 'l': list=1; break;
-				case 'a': automatic=1; repair=1; break;
-				case 'r': automatic=0; repair=1; break;
-				case 'v': verbose=1; break;
-				case 's': show=1; break;
-				case 'm': warn_mode=1; break;
-				case 'f': force=1; break;
-				default: usage();
-			}
-	}
-	if (!device_name)
-		usage();
+	while ((i = getopt_long(argc, argv, "larvsmfVh", longopts, NULL)) != -1)
+		switch (i) {
+		case 'l':
+			list = 1;
+			break;
+		case 'a':
+			automatic = 1;
+			repair = 1;
+			break;
+		case 'r':
+			automatic = 0;
+			repair = 1;
+			break;
+		case 'v':
+			verbose = 1;
+			break;
+		case 's':
+			show = 1;
+			break;
+		case 'm':
+			warn_mode = 1;
+			break;
+		case 'f':
+			force = 1;
+			break;
+		case 'V':
+			printf(UTIL_LINUX_VERSION);
+			return FSCK_EX_OK;
+		case 'h':
+			usage(stdout);
+		default:
+			usage(stderr);
+		}
+	argc -= optind;
+	argv += optind;
+	if (0 < argc) {
+		device_name = argv[0];
+	} else
+		usage(stderr);
+
 	check_mount();		/* trying to check a mounted filesystem? */
 	if (repair && !automatic) {
-		if (!isatty(0) || !isatty(1))
+		if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO))
 			die(_("need terminal for interactive repairs"));
 	}
-	IN = open(device_name,repair?O_RDWR:O_RDONLY);
-	if (IN < 0)
-		die(_("unable to open '%s': %s"), device_name, strerror(errno));
-	for (count=0 ; count<3 ; count++)
+	device_fd = open(device_name, repair ? O_RDWR : O_RDONLY);
+	if (device_fd < 0)
+		die(_("cannot open %s: %s"), device_name, strerror(errno));
+	for (count = 0; count < 3; count++)
 		sync();
 	read_superblock();
 
-	/*
-	 * Determine whether or not we should continue with the checking.
-	 * This is based on the status of the filesystem valid and error
-	 * flags and whether or not the -f switch was specified on the 
-	 * command line.
-	 */
-	if ( !(Super.s_state & MINIX_ERROR_FS) && 
-	      (Super.s_state & MINIX_VALID_FS) && 
-	      !force ) {
+	/* Determine whether or not we should continue with the checking.  This
+	 * is based on the status of the filesystem valid and error flags and
+	 * whether or not the -f switch was specified on the command line.  */
+	if (fs_version < 3 && !(Super.s_state & MINIX_ERROR_FS) &&
+	    (Super.s_state & MINIX_VALID_FS) && !force) {
 		if (repair)
 			printf(_("%s is clean, no check.\n"), device_name);
 		return retcode;
-	}
-	else if (force)
+	} else if (force)
 		printf(_("Forcing filesystem check on %s.\n"), device_name);
 	else if (repair)
-		printf(_("Filesystem on %s is dirty, needs checking.\n"),\
-			device_name);
+		printf(_("Filesystem on %s is dirty, needs checking.\n"),
+		       device_name);
 
 	read_tables();
 
-	/* Restore the terminal state on fatal signals.
-	 * We don't do this for SIGALRM, SIGUSR1 or SIGUSR2.
-	 */
+	/* Restore the terminal state on fatal signals.  We don't do this for
+	 * SIGALRM, SIGUSR1 or SIGUSR2.  */
 	signal(SIGINT, fatalsig);
 	signal(SIGQUIT, fatalsig);
 	signal(SIGTERM, fatalsig);
 
 	if (repair && !automatic) {
-		tcgetattr(0,&termios);
+		tcgetattr(STDIN_FILENO, &termios);
 		tmp = termios;
-		tmp.c_lflag &= ~(ICANON|ECHO);
-		tcsetattr(0,TCSANOW,&tmp);
+		tmp.c_lflag &= ~(ICANON | ECHO);
+		tcsetattr(STDIN_FILENO, TCSANOW, &tmp);
 		termios_set = 1;
 	}
 
-	if (version2) {
-		check_root2 ();
-		check2 ();
+	if (fs_version == 2 || fs_version == 3) {
+		check_root2();
+		check2();
 	} else {
 		check_root();
 		check();
 	}
 	if (verbose) {
-		int i, free;
+		unsigned long inode, free;
 
-		for (i=1,free=0 ; i <= INODES ; i++)
-			if (!inode_in_use(i))
+		for (inode = 1, free = 0; inode <= get_ninodes(); inode++)
+			if (!inode_in_use(inode))
 				free++;
-		printf(_("\n%6ld inodes used (%ld%%)\n"),(INODES-free),
-			100*(INODES-free)/INODES);
-		for (i=FIRSTZONE,free=0 ; i < ZONES ; i++)
-			if (!zone_in_use(i))
+		printf(_("\n%6ld inodes used (%ld%%)\n"),
+		       (get_ninodes() - free),
+		       100 * (get_ninodes() - free) / get_ninodes());
+		for (inode = get_first_zone(), free = 0; inode < get_nzones(); inode++)
+			if (!zone_in_use(inode))
 				free++;
-		printf(_("%6ld zones used (%ld%%)\n"),(ZONES-free),
-			100*(ZONES-free)/ZONES);
+		printf(_("%6ld zones used (%ld%%)\n"), (get_nzones() - free),
+		       100 * (get_nzones() - free) / get_nzones());
 		printf(_("\n%6d regular files\n"
-		"%6d directories\n"
-		"%6d character device files\n"
-		"%6d block device files\n"
-		"%6d links\n"
-		"%6d symbolic links\n"
-		"------\n"
-		"%6d files\n"),
-		regular,directory,chardev,blockdev,
-		links-2*directory+1,symlinks,total-2*directory+1);
+			 "%6d directories\n"
+			 "%6d character device files\n"
+			 "%6d block device files\n"
+			 "%6d links\n"
+			 "%6d symbolic links\n"
+			 "------\n"
+			 "%6d files\n"),
+		       regular, directory, chardev, blockdev,
+		       links - 2 * directory + 1, symlinks,
+		       total - 2 * directory + 1);
 	}
 	if (changed) {
 		write_tables();
-		printf(_(	"----------------------------\n"
-			"FILE SYSTEM HAS BEEN CHANGED\n"
-			"----------------------------\n"));
-		for (count=0 ; count<3 ; count++)
+		printf(_("----------------------------\n"
+			 "FILE SYSTEM HAS BEEN CHANGED\n"
+			 "----------------------------\n"));
+		for (count = 0; count < 3; count++)
 			sync();
-	}
-	else if ( repair )
+	} else if (repair)
 		write_super_block();
-	
-	if (repair && !automatic)
-		tcsetattr(0,TCSANOW,&termios);
 
+	if (repair && !automatic)
+		tcsetattr(STDIN_FILENO, TCSANOW, &termios);
+
+	if (close_fd(device_fd) != 0)
+		err(FSCK_EX_ERROR, _("write failed"));
 	if (changed)
-	      retcode += 3;
+		retcode += 3;
 	if (errors_uncorrected)
-	      retcode += 4;
+		retcode += 4;
 	return retcode;
 }

@@ -18,74 +18,26 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <err.h>
-#include <blkid.h>
 #include <getopt.h>
 
 #ifdef HAVE_LIBUUID
-# ifdef HAVE_UUID_UUID_H
-#  include <uuid/uuid.h>
-# else
-#  include <uuid.h>
-# endif
+# include <uuid.h>
 #endif
 
 #include "c.h"
-#include "writeall.h"
-#include "swapheader.h"
-#include "strutils.h"
 #include "nls.h"
+#include "all-io.h"
+#include "strutils.h"
+#include "closestream.h"
+
+#include "swapheader.h"
+#include "swapprober.h"
 
 #define SWAP_UUID_OFFSET	(offsetof(struct swap_header_v1_2, uuid))
 #define SWAP_LABEL_OFFSET	(offsetof(struct swap_header_v1_2, volume_name))
 
-/*
- * Returns new libblkid prober. This function call exit() on error.
- */
-static blkid_probe get_swap_prober(const char *devname)
-{
-	blkid_probe pr;
-	int rc;
-	const char *version = NULL;
-	char *swap_filter[] = { "swap", NULL };
-
-	pr = blkid_new_probe_from_filename(devname);
-	if (!pr) {
-		warn(_("%s: unable to probe device"), devname);
-		return NULL;
-	}
-
-	blkid_probe_enable_superblocks(pr, TRUE);
-	blkid_probe_set_superblocks_flags(pr,
-			BLKID_SUBLKS_LABEL | BLKID_SUBLKS_UUID |
-			BLKID_SUBLKS_VERSION);
-
-	blkid_probe_filter_superblocks_type(pr, BLKID_FLTR_ONLYIN, swap_filter);
-
-	rc = blkid_do_safeprobe(pr);
-	if (rc == -1)
-		warn(_("%s: unable to probe device"), devname);
-	else if (rc == -2)
-		warnx(_("%s: ambivalent probing result, use wipefs(8)"), devname);
-	else if (rc == 1)
-		warnx(_("%s: not a valid swap partition"), devname);
-
-	if (rc == 0) {
-		/* supported is SWAPSPACE2 only */
-		blkid_probe_lookup_value(pr, "VERSION", &version, NULL);
-		if (strcmp(version, "2"))
-			warnx(_("%s: unsupported swap version '%s'"),
-						devname, version);
-		else
-			return pr;
-	}
-
-	blkid_free_probe(pr);
-	return NULL;
-}
-
 /* Print the swap partition information */
-static int print_info(blkid_probe pr, const char *devname)
+static int print_info(blkid_probe pr)
 {
 	const char *data;
 
@@ -105,7 +57,7 @@ static int change_info(const char *devname, const char *label, const char *uuid)
 
 	fd = open(devname, O_RDWR);
 	if (fd < 0) {
-		warn(_("%s: failed to open"), devname);
+		warn(_("cannot open %s"), devname);
 		goto err;
 	}
 #ifdef HAVE_LIBUUID
@@ -148,7 +100,10 @@ static int change_info(const char *devname, const char *label, const char *uuid)
 		}
 	}
 
-	close(fd);
+	if (close_fd(fd) != 0) {
+		warn(_("write failed: %s"), devname);
+		return -1;
+	}
 	return 0;
 err:
 	if (fd >= 0)
@@ -158,16 +113,20 @@ err:
 
 static void __attribute__((__noreturn__)) usage(FILE *out)
 {
-	fprintf(out, _("Usage: %s [options] <device>\n\nOptions:\n"),
-			program_invocation_short_name);
+	fputs(USAGE_HEADER, out);
+	fprintf(out, _(" %s [options] <device>\n"),
+		program_invocation_short_name);
 
-	fprintf(out, _(
-		" -h, --help          this help\n"
-		" -L, --label <label> specify a new label\n"
-		" -U, --uuid <uuid>   specify a new uuid\n"));
+	fputs(USAGE_SEPARATOR, out);
+	fputs(_("Display or change the label or UUID of a swap area.\n"), out);
 
-	fprintf(out, _("\nFor more information see swaplabel(8).\n"));
-
+	fputs(USAGE_OPTIONS, out);
+	fputs(_(" -L, --label <label> specify a new label\n"
+		" -U, --uuid <uuid>   specify a new uuid\n"), out);
+	fputs(USAGE_SEPARATOR, out);
+	fputs(USAGE_HELP, out);
+	fputs(USAGE_VERSION, out);
+	fprintf(out, USAGE_MAN_TAIL("swaplabel(8)"));
 	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
@@ -177,8 +136,9 @@ int main(int argc, char *argv[])
 	char *uuid = NULL, *label = NULL, *devname;
 	int c, rc = -1;
 
-	struct option longopts[] = {
+	static const struct option longopts[] = {
 	    { "help",      0, 0, 'h' },
+	    { "version",   0, 0, 'V' },
 	    { "label",     1, 0, 'L' },
 	    { "uuid",      1, 0, 'U' },
 	    { NULL,        0, 0, 0 }
@@ -187,12 +147,16 @@ int main(int argc, char *argv[])
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
+	atexit(close_stdout);
 
-	while ((c = getopt_long(argc, argv, "hL:U:", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "hVL:U:", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'h':
 			usage(stdout);
 			break;
+		case 'V':
+			printf(UTIL_LINUX_VERSION);
+			return EXIT_SUCCESS;
 		case 'L':
 			label = optarg;
 			break;
@@ -218,7 +182,7 @@ int main(int argc, char *argv[])
 		if (uuid || label)
 			rc = change_info(devname, label, uuid);
 		else
-			rc  = print_info(pr, devname);
+			rc  = print_info(pr);
 		blkid_free_probe(pr);
 	}
 	return rc ? EXIT_FAILURE : EXIT_SUCCESS;

@@ -1,7 +1,7 @@
 .\" Karel Zak <kzak@redhat.com>
-.TH SWITCH_ROOT 8 "June 2009" "Linux"
+.TH SWITCH_ROOT 8 "June 2009" "util-linux" "System Administration"
 .SH NAME
-switch_root \- switch to another filesystem as the root of the mount tree.
+switch_root \- switch to another filesystem as the root of the mount tree
 .SH SYNOPSIS
 .B switch_root
 .RB [ \-hV ]
@@ -12,7 +12,7 @@ switch_root \- switch to another filesystem as the root of the mount tree.
 .RI [ arg ...]
 .SH DESCRIPTION
 .B switch_root
-moves already mounted /proc, /dev and /sys to
+moves already mounted /proc, /dev, /sys and /run to
 .I newroot
 and makes
 .I newroot
@@ -24,9 +24,9 @@ process.
 
 .SH OPTIONS
 .IP "\fB\-h, \-\-help\fP"
-show help and exit
+Display help text and exit.
 .IP "\fB\-V, \-\-version\fP"
-show version number and exit
+Display version information and exit.
 
 .SH RETURN VALUE
 .B switch_root
@@ -46,9 +46,9 @@ mount --bind $DIR $DIR
 .fi
 
 .SH "SEE ALSO"
-.BR mount (8)
-.BR chroot (2)
-.BR init (8)
+.BR mount (8),
+.BR chroot (2),
+.BR init (8),
 .BR mkinitrd (8)
 .SH AUTHORS
 .nf

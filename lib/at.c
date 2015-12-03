@@ -1,7 +1,10 @@
 /*
  * Portable xxxat() functions.
  *
- * Copyright (C) 2010 Karel Zak <kzak@redhat.com>
+ * No copyright is claimed.  This code is in the public domain; do with
+ * it what you wish.
+ *
+ * Written by Karel Zak <kzak@redhat.com>
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,40 +12,57 @@
 #include <sys/stat.h>
 
 #include "at.h"
+#include "c.h"
 
+#ifdef HAVE_FSTATAT
+int fstat_at(int dir, const char *dirname __attribute__ ((__unused__)),
+	     const char *filename, struct stat *st, int nofollow)
+{
+	return fstatat(dir, filename, st,
+			nofollow ? AT_SYMLINK_NOFOLLOW : 0);
+}
+#else
 int fstat_at(int dir, const char *dirname, const char *filename,
 				struct stat *st, int nofollow)
 {
-#ifdef HAVE_FSTATAT
-	return fstatat(dir, filename, st,
-			nofollow ? AT_SYMLINK_NOFOLLOW : 0);
-#else
-	char path[PATH_MAX];
-	int len;
 
-	len = snprintf(path, sizeof(path), "%s/%s", dirname, filename);
-	if (len < 0 || len + 1 > sizeof(path))
-		return -1;
+	if (*filename != '/') {
+		char path[PATH_MAX];
+		int len;
 
-	return nofollow ? lstat(path, st) : stat(path, st);
-#endif
+		len = snprintf(path, sizeof(path), "%s/%s", dirname, filename);
+		if (len < 0 || len + 1 > sizeof(path))
+			return -1;
+
+		return nofollow ? lstat(path, st) : stat(path, st);
+	}
+
+	return nofollow ? lstat(filename, st) : stat(filename, st);
 }
+#endif
 
+#ifdef HAVE_FSTATAT
+int open_at(int dir, const char *dirname __attribute__ ((__unused__)),
+	    const char *filename, int flags)
+{
+	return openat(dir, filename, flags);
+}
+#else
 int open_at(int dir, const char *dirname, const char *filename, int flags)
 {
-#ifdef HAVE_FSTATAT
-	return openat(dir, filename, flags);
-#else
-	char path[PATH_MAX];
-	int len;
+	if (*filename != '/') {
+		char path[PATH_MAX];
+		int len;
 
-	len = snprintf(path, sizeof(path), "%s/%s", dirname, filename);
-	if (len < 0 || len + 1 > sizeof(path))
-		return -1;
+		len = snprintf(path, sizeof(path), "%s/%s", dirname, filename);
+		if (len < 0 || len + 1 > sizeof(path))
+			return -1;
 
-	return open(path, flags);
-#endif
+		return open(path, flags);
+	}
+	return open(filename, flags);
 }
+#endif
 
 FILE *fopen_at(int dir, const char *dirname, const char *filename, int flags,
 			const char *mode)
@@ -55,8 +75,31 @@ FILE *fopen_at(int dir, const char *dirname, const char *filename, int flags,
 	return fdopen(fd, mode);
 }
 
-#ifdef TEST_PROGRAM
-#include <err.h>
+#ifdef HAVE_FSTATAT
+ssize_t readlink_at(int dir, const char *dirname __attribute__ ((__unused__)),
+		    const char *pathname, char *buf, size_t bufsiz)
+{
+	return readlinkat(dir, pathname, buf, bufsiz);
+}
+#else
+ssize_t readlink_at(int dir, const char *dirname, const char *pathname,
+		    char *buf, size_t bufsiz)
+{
+	if (*pathname != '/') {
+		char path[PATH_MAX];
+		int len;
+
+		len = snprintf(path, sizeof(path), "%s/%s", dirname, pathname);
+		if (len < 0 || len + 1 > sizeof(path))
+			return -1;
+
+		return readlink(path, buf, bufsiz);
+	}
+	return readlink(pathname, buf, bufsiz);
+}
+#endif
+
+#ifdef TEST_PROGRAM_AT
 #include <errno.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -76,7 +119,7 @@ int main(int argc, char *argv[])
 
 	dir = opendir(dirname);
 	if (!dir)
-		err(EXIT_FAILURE, "%s: open failed", dirname);
+		err(EXIT_FAILURE, "cannot open %s", dirname);
 
 	while ((d = readdir(dir))) {
 		struct stat st;

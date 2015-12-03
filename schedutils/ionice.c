@@ -11,14 +11,13 @@
 #include <errno.h>
 #include <getopt.h>
 #include <unistd.h>
-#include <sys/ptrace.h>
 #include <sys/syscall.h>
-#include <asm/unistd.h>
-#include <err.h>
+#include <ctype.h>
 
 #include "nls.h"
-
 #include "strutils.h"
+#include "c.h"
+#include "closestream.h"
 
 static int tolerant;
 
@@ -45,128 +44,223 @@ enum {
 	IOPRIO_WHO_USER,
 };
 
-#define IOPRIO_CLASS_SHIFT	13
+#define IOPRIO_CLASS_SHIFT	(13)
+#define IOPRIO_PRIO_MASK	((1UL << IOPRIO_CLASS_SHIFT) - 1)
 
-const char *to_prio[] = { "none", "realtime", "best-effort", "idle", };
+#define IOPRIO_PRIO_CLASS(mask)	((mask) >> IOPRIO_CLASS_SHIFT)
+#define IOPRIO_PRIO_DATA(mask)	((mask) & IOPRIO_PRIO_MASK)
+#define IOPRIO_PRIO_VALUE(class, data)	(((class) << IOPRIO_CLASS_SHIFT) | data)
 
-static void ioprio_print(int pid)
+const char *to_prio[] = {
+	[IOPRIO_CLASS_NONE] = "none",
+	[IOPRIO_CLASS_RT]   = "realtime",
+	[IOPRIO_CLASS_BE]   = "best-effort",
+	[IOPRIO_CLASS_IDLE] = "idle"
+};
+
+static int parse_ioclass(const char *str)
 {
-	int ioprio, ioclass;
+	size_t i;
 
-	ioprio = ioprio_get(IOPRIO_WHO_PROCESS, pid);
+	for (i = 0; i < ARRAY_SIZE(to_prio); i++)
+		if (!strcasecmp(str, to_prio[i]))
+			return i;
+	return -1;
+}
+
+static void ioprio_print(int pid, int who)
+{
+	int ioprio = ioprio_get(who, pid);
 
 	if (ioprio == -1)
 		err(EXIT_FAILURE, _("ioprio_get failed"));
 	else {
-		ioclass = ioprio >> IOPRIO_CLASS_SHIFT;
-		if (ioclass != IOPRIO_CLASS_IDLE) {
-			ioprio = ioprio & 0xff;
-			printf("%s: prio %d\n", to_prio[ioclass], ioprio);
-		} else
-			printf("%s\n", to_prio[ioclass]);
+		int ioclass = IOPRIO_PRIO_CLASS(ioprio);
+		const char *name = _("unknown");
+
+		if (ioclass >= 0 && (size_t) ioclass < ARRAY_SIZE(to_prio))
+			name = to_prio[ioclass];
+
+		if (ioclass != IOPRIO_CLASS_IDLE)
+			printf(_("%s: prio %lu\n"), name,
+			       IOPRIO_PRIO_DATA(ioprio));
+		else
+			printf("%s\n", name);
 	}
 }
 
-
-static void ioprio_setpid(pid_t pid, int ioprio, int ioclass)
+static void ioprio_setid(int which, int ioclass, int data, int who)
 {
-	int rc = ioprio_set(IOPRIO_WHO_PROCESS, pid,
-			ioprio | ioclass << IOPRIO_CLASS_SHIFT);
+	int rc = ioprio_set(who, which,
+			    IOPRIO_PRIO_VALUE(ioclass, data));
 
 	if (rc == -1 && !tolerant)
 		err(EXIT_FAILURE, _("ioprio_set failed"));
 }
 
-static void usage(int rc)
+static void __attribute__ ((__noreturn__)) usage(FILE * out)
 {
-	fprintf(stdout, _(
-	"\nionice - sets or gets process io scheduling class and priority.\n"
-	"\nUsage:\n"
-	"  ionice [ options ] -p <pid> [<pid> ...]\n"
-	"  ionice [ options ] <command> [<arg> ...]\n"
-	"\nOptions:\n"
-	"  -n <classdata>      class data (0-7, lower being higher prio)\n"
-	"  -c <class>          scheduling class\n"
-	"                      0: none, 1: realtime, 2: best-effort, 3: idle\n"
-	"  -t                  ignore failures\n"
-	"  -h                  this help\n\n"));
-	exit(rc);
+	fputs(USAGE_HEADER, out);
+	fprintf(out,  _(" %1$s [options] -p <pid>...\n"
+			" %1$s [options] -P <pgid>...\n"
+			" %1$s [options] -u <uid>...\n"
+			" %1$s [options] <command>\n"), program_invocation_short_name);
+
+	fputs(USAGE_SEPARATOR, out);
+	fputs(_("Show or change the I/O-scheduling class and priority of a process.\n"), out);
+
+	fputs(USAGE_OPTIONS, out);
+	fputs(_(" -c, --class <class>    name or number of scheduling class,\n"
+		"                          0: none, 1: realtime, 2: best-effort, 3: idle\n"), out);
+	fputs(_(" -n, --classdata <num>  priority (0..7) in the specified scheduling class,\n"
+		"                          only for the realtime and best-effort classes\n"), out);
+	fputs(_(" -p, --pid <pid>...     act on these already running processes\n"), out);
+	fputs(_(" -P, --pgid <pgrp>...   act on already running processes in these groups\n"), out);
+	fputs(_(" -t, --ignore           ignore failures\n"), out);
+	fputs(_(" -u, --uid <uid>...     act on already running processes owned by these users\n"), out);
+
+	fputs(USAGE_SEPARATOR, out);
+	fputs(USAGE_HELP, out);
+	fputs(USAGE_VERSION, out);
+
+	fprintf(out, USAGE_MAN_TAIL("ionice(1)"));
+
+	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
-	int ioprio = 4, set = 0, ioclass = IOPRIO_CLASS_BE, c;
-	pid_t pid = 0;
+	int data = 4, set = 0, ioclass = IOPRIO_CLASS_BE, c;
+	int which = 0, who = 0;
+	const char *invalid_msg = NULL;
+
+	static const struct option longopts[] = {
+		{ "classdata", required_argument, NULL, 'n' },
+		{ "class",     required_argument, NULL, 'c' },
+		{ "help",      no_argument,       NULL, 'h' },
+		{ "ignore",    no_argument,       NULL, 't' },
+		{ "pid",       required_argument, NULL, 'p' },
+		{ "pgid",      required_argument, NULL, 'P' },
+		{ "uid",       required_argument, NULL, 'u' },
+		{ "version",   no_argument,       NULL, 'V' },
+		{ NULL, 0, NULL, 0 }
+	};
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
+	atexit(close_stdout);
 
-	while ((c = getopt(argc, argv, "+n:c:p:th")) != EOF) {
+	while ((c = getopt_long(argc, argv, "+n:c:p:P:u:tVh", longopts, NULL)) != EOF)
 		switch (c) {
 		case 'n':
-			ioprio = strtol_or_err(optarg, _("failed to parse class data"));
+			data = strtos32_or_err(optarg, _("invalid class data argument"));
 			set |= 1;
 			break;
 		case 'c':
-			ioclass = strtol_or_err(optarg, _("failed to parse class"));
+			if (isdigit(*optarg))
+				ioclass = strtos32_or_err(optarg,
+						_("invalid class argument"));
+			else {
+				ioclass = parse_ioclass(optarg);
+				if (ioclass < 0)
+					errx(EXIT_FAILURE,
+						_("unknown scheduling class: '%s'"),
+						optarg);
+			}
 			set |= 2;
 			break;
 		case 'p':
-			pid = strtol_or_err(optarg, _("failed to parse pid"));
+			if (who)
+				errx(EXIT_FAILURE,
+				     _("can handle only one of pid, pgid or uid at once"));
+			invalid_msg = _("invalid PID argument");
+			which = strtos32_or_err(optarg, invalid_msg);
+			who = IOPRIO_WHO_PROCESS;
+			break;
+		case 'P':
+			if (who)
+				errx(EXIT_FAILURE,
+				     _("can handle only one of pid, pgid or uid at once"));
+			invalid_msg = _("invalid PGID argument");
+			which = strtos32_or_err(optarg, invalid_msg);
+			who = IOPRIO_WHO_PGRP;
+			break;
+		case 'u':
+			if (who)
+				errx(EXIT_FAILURE,
+				     _("can handle only one of pid, pgid or uid at once"));
+			invalid_msg = _("invalid UID argument");
+			which = strtos32_or_err(optarg, invalid_msg);
+			who = IOPRIO_WHO_USER;
 			break;
 		case 't':
 			tolerant = 1;
 			break;
+		case 'V':
+			printf(UTIL_LINUX_VERSION);
+			return EXIT_SUCCESS;
 		case 'h':
-			usage(EXIT_SUCCESS);
+			usage(stdout);
 		default:
-			usage(EXIT_FAILURE);
+			usage(stderr);
 		}
-	}
 
 	switch (ioclass) {
 		case IOPRIO_CLASS_NONE:
-			if (set & 1)
+			if ((set & 1) && !tolerant)
 				warnx(_("ignoring given class data for none class"));
-			ioprio = 0;
+			data = 0;
 			break;
 		case IOPRIO_CLASS_RT:
 		case IOPRIO_CLASS_BE:
 			break;
 		case IOPRIO_CLASS_IDLE:
-			if (set & 1)
+			if ((set & 1) && !tolerant)
 				warnx(_("ignoring given class data for idle class"));
-			ioprio = 7;
+			data = 7;
 			break;
 		default:
-			errx(EXIT_FAILURE, _("bad prio class %d"), ioclass);
+			if (!tolerant)
+				warnx(_("unknown prio class %d"), ioclass);
+			break;
 	}
 
-	if (!set) {
-		ioprio_print(pid);
+	if (!set && !which && optind == argc)
+		/*
+		 * ionice without options, print the current ioprio
+		 */
+		ioprio_print(0, IOPRIO_WHO_PROCESS);
+	else if (!set && who) {
+		/*
+		 * ionice -p|-P|-u ID [ID ...]
+		 */
+		ioprio_print(which, who);
 
 		for(; argv[optind]; ++optind) {
-			pid = strtol_or_err(argv[optind], _("failed to parse pid"));
-			ioprio_print(pid);
+			which = strtos32_or_err(argv[optind], invalid_msg);
+			ioprio_print(which, who);
 		}
-	} else {
-		if (pid) {
-			ioprio_setpid(pid, ioprio, ioclass);
+	} else if (set && who) {
+		/*
+		 * ionice -c CLASS -p|-P|-u ID [ID ...]
+		 */
+		ioprio_setid(which, ioclass, data, who);
 
-			for(; argv[optind]; ++optind)
-			{
-				pid = strtol_or_err(argv[optind], _("failed to parse pid"));
-				ioprio_setpid(pid, ioprio, ioclass);
-			}
+		for(; argv[optind]; ++optind) {
+			which = strtos32_or_err(argv[optind], invalid_msg);
+			ioprio_setid(which, ioclass, data, who);
 		}
-		else if (argv[optind]) {
-			ioprio_setpid(0, ioprio, ioclass);
-			execvp(argv[optind], &argv[optind]);
-			/* execvp should never return */
-			err(EXIT_FAILURE, _("executing %s failed"), argv[optind]);
-		}
-	}
+	} else if (argv[optind]) {
+		/*
+		 * ionice [-c CLASS] COMMAND
+		 */
+		ioprio_setid(0, ioclass, data, IOPRIO_WHO_PROCESS);
+		execvp(argv[optind], &argv[optind]);
+		err(EXIT_FAILURE, _("failed to execute %s"), argv[optind]);
+	} else
+		usage(stderr);
 
-	exit(EXIT_SUCCESS);
+
+	return EXIT_SUCCESS;
 }

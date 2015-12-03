@@ -13,10 +13,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * The original namei(1) was writtent by:
+ * The original namei(1) was written by:
  *	Roger S. Southwick (May 2, 1990)
  *	Steve Tell (March 28, 1991)
- *	Arkadiusz Mikiewicz (1999-02-22)
+ *	Arkadiusz Miśkiewicz (1999-02-22)
  *	Li Zefan (2007-09-10).
  */
 
@@ -24,13 +24,11 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <string.h>
-#include <strings.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
-#include <err.h>
 #include <pwd.h>
 #include <grp.h>
 
@@ -39,6 +37,8 @@
 #include "nls.h"
 #include "widechar.h"
 #include "strutils.h"
+#include "closestream.h"
+#include "idcache.h"
 
 #ifndef MAXSYMLINKS
 #define MAXSYMLINKS 256
@@ -66,108 +66,9 @@ struct namei {
 	int		noent;		/* is this item not existing */
 };
 
-struct idcache {
-	unsigned long int	id;
-	char			*name;
-	struct idcache		*next;
-};
-
 static int flags;
-static int uwidth;		/* maximal width of username */
-static int gwidth;		/* maximal width of groupname */
 static struct idcache *gcache;	/* groupnames */
 static struct idcache *ucache;	/* usernames */
-
-static struct idcache *
-get_id(struct idcache *ic, unsigned long int id)
-{
-	while(ic) {
-		if (ic->id == id)
-			return ic;
-		ic = ic->next;
-	}
-	return NULL;
-}
-
-static void
-free_idcache(struct idcache *ic)
-{
-	while(ic) {
-		struct idcache *next = ic->next;
-		free(ic->name);
-		free(ic);
-		ic = next;
-	}
-}
-
-static void
-add_id(struct idcache **ic, char *name, unsigned long int id, int *width)
-{
-	struct idcache *nc, *x;
-	int w = 0;
-
-	nc = calloc(1, sizeof(*nc));
-	if (!nc)
-		goto alloc_err;
-	nc->id = id;
-
-	if (name) {
-#ifdef HAVE_WIDECHAR
-		wchar_t wc[LOGIN_NAME_MAX + 1];
-
-		if (mbstowcs(wc, name, LOGIN_NAME_MAX) > 0) {
-			wc[LOGIN_NAME_MAX] = '\0';
-			w = wcswidth(wc, LOGIN_NAME_MAX);
-		}
-		else
-#endif
-			w = strlen(name);
-	}
-	/* note, we ignore names with non-printable widechars */
-	if (w > 0)
-		nc->name = strdup(name);
-	else if (asprintf(&nc->name, "%lu", id) == -1)
-		nc->name = NULL;
-	if (!nc->name)
-		goto alloc_err;
-
-	for (x = *ic; x && x->next; x = x->next);
-
-	/* add 'nc' at end of the 'ic' list */
-	if (x)
-		x->next = nc;
-	else
-		*ic = nc;
-	if (w <= 0)
-		w = strlen(nc->name);
-	*width = *width < w ? w : *width;
-
-	return;
-alloc_err:
-	err(EXIT_FAILURE, _("out of memory?"));
-}
-
-static void
-add_uid(unsigned long int id)
-{
-	struct idcache *ic = get_id(ucache, id);
-
-	if (!ic) {
-		struct passwd *pw = getpwuid((uid_t) id);
-		add_id(&ucache, pw ? pw->pw_name : NULL, id, &uwidth);
-	}
-}
-
-static void
-add_gid(unsigned long int id)
-{
-	struct idcache *ic = get_id(gcache, id);
-
-	if (!ic) {
-		struct group *gr = getgrgid((gid_t) id);
-		add_id(&gcache, gr ? gr->gr_name : NULL, id, &gwidth);
-	}
-}
 
 static void
 free_namei(struct namei *nm)
@@ -185,7 +86,8 @@ static void
 readlink_to_namei(struct namei *nm, const char *path)
 {
 	char sym[PATH_MAX];
-	size_t sz;
+	ssize_t sz;
+	int isrel = 0;
 
 	sz = readlink(path, sym, sizeof(sym));
 	if (sz < 1)
@@ -193,20 +95,26 @@ readlink_to_namei(struct namei *nm, const char *path)
 	if (*sym != '/') {
 		char *p = strrchr(path, '/');
 
-		nm->relstart = p ? p - path : 0;
-		if (nm->relstart)
+		if (p) {
+			isrel = 1;
+			nm->relstart = p - path;
 			sz += nm->relstart + 1;
+		}
 	}
 	nm->abslink = xmalloc(sz + 1);
 
-	if (*sym != '/' && nm->relstart) {
+	if (*sym != '/' && isrel) {
 		/* create the absolute path from the relative symlink */
 		memcpy(nm->abslink, path, nm->relstart);
 		*(nm->abslink + nm->relstart) = '/';
 		nm->relstart++;
 		memcpy(nm->abslink + nm->relstart, sym, sz - nm->relstart);
 	} else
+		/* - absolute link (foo -> /path/bar)
+		 * - or link without any subdir (foo -> bar)
+		 */
 		memcpy(nm->abslink, sym, sz);
+
 	nm->abslink[sz] = '\0';
 }
 
@@ -222,15 +130,13 @@ dotdot_stat(const char *dirname, struct stat *st)
 		return NULL;
 
 	len = strlen(dirname);
-	path = malloc(len + sizeof(DOTDOTDIR));
-	if (!path)
-		err(EXIT_FAILURE, _("out of memory?"));
+	path = xmalloc(len + sizeof(DOTDOTDIR));
 
 	memcpy(path, dirname, len);
 	memcpy(path + len, DOTDOTDIR, sizeof(DOTDOTDIR));
 
 	if (stat(path, st))
-		err(EXIT_FAILURE, _("could not stat '%s'"), path);
+		err(EXIT_FAILURE, _("stat of %s failed"), path);
 	free(path);
 	return st;
 }
@@ -242,16 +148,12 @@ new_namei(struct namei *parent, const char *path, const char *fname, int lev)
 
 	if (!fname)
 		return NULL;
-	nm = calloc(1, sizeof(*nm));
-	if (!nm)
-		err(EXIT_FAILURE, _("out of memory?"));
+	nm = xcalloc(1, sizeof(*nm));
 	if (parent)
 		parent->next = nm;
 
 	nm->level = lev;
-	nm->name = strdup(fname);
-	if (!nm->name)
-		err(EXIT_FAILURE, _("out of memory?"));
+	nm->name = xstrdup(fname);
 
 	nm->noent = (lstat(path, &nm->st) == -1);
 	if (nm->noent)
@@ -260,8 +162,8 @@ new_namei(struct namei *parent, const char *path, const char *fname, int lev)
 	if (S_ISLNK(nm->st.st_mode))
 		readlink_to_namei(nm, path);
 	if (flags & NAMEI_OWNERS) {
-		add_uid(nm->st.st_uid);
-		add_gid(nm->st.st_gid);
+		add_uid(ucache, nm->st.st_uid);
+		add_gid(gcache, nm->st.st_gid);
 	}
 
 	if ((flags & NAMEI_MNTS) && S_ISDIR(nm->st.st_mode)) {
@@ -293,9 +195,7 @@ add_namei(struct namei *parent, const char *orgpath, int start, struct namei **l
 		nm = parent;
 		level = parent->level + 1;
 	}
-	path = strdup(orgpath);
-	if (!path)
-		err(EXIT_FAILURE, _("out of memory?"));
+	path = xstrdup(orgpath);
 	fname = path + start;
 
 	/* root directory */
@@ -366,16 +266,24 @@ follow_symlinks(struct namei *nm)
 static int
 print_namei(struct namei *nm, char *path)
 {
-	struct namei *prev = NULL;
 	int i;
 
 	if (path)
 		printf("f: %s\n", path);
 
-	for (; nm; prev = nm, nm = nm->next) {
+	for (; nm; nm = nm->next) {
 		char md[11];
 
 		if (nm->noent) {
+			int blanks = 1;
+			if (flags & NAMEI_MODES)
+				blanks += 9;
+			if (flags & NAMEI_OWNERS)
+				blanks += ucache->width + gcache->width + 2;
+			if (!(flags & NAMEI_VERTICAL))
+				blanks += 1;
+			blanks += nm->level * 2;
+			printf("%*s ", blanks, "");
 			printf(_("%s - No such file or directory\n"), nm->name);
 			return -1;
 		}
@@ -397,9 +305,9 @@ print_namei(struct namei *nm, char *path)
 			printf("%c", md[0]);
 
 		if (flags & NAMEI_OWNERS) {
-			printf(" %-*s", uwidth,
+			printf(" %-*s", ucache->width,
 				get_id(ucache, nm->st.st_uid)->name);
-			printf(" %-*s", gwidth,
+			printf(" %-*s", gcache->width,
 				get_id(gcache, nm->st.st_gid)->name);
 		}
 
@@ -416,33 +324,39 @@ print_namei(struct namei *nm, char *path)
 	return 0;
 }
 
-static void
-usage(int rc)
+static void usage(int rc)
 {
 	const char *p = program_invocation_short_name;
+	FILE *out = rc == EXIT_FAILURE ? stderr : stdout;
 
 	if (!*p)
 		p = "namei";
 
-	printf(_("\nUsage: %s [options] pathname [pathname ...]\n"), p);
-	printf(_("\nOptions:\n"));
+	fputs(USAGE_HEADER, out);
+	fprintf(out,
+	      _(" %s [options] <pathname>...\n"), p);
 
-	printf(_(
-	" -h, --help          displays this help text\n"
-	" -x, --mountpoints   show mount point directories with a 'D'\n"
-	" -m, --modes         show the mode bits of each file\n"
-	" -o, --owners        show owner and group name of each file\n"
-	" -l, --long          use a long listing format (-m -o -v) \n"
-	" -n, --nosymlinks    don't follow symlinks\n"
-	" -v, --vertical      vertical align of modes and owners\n"));
+	fputs(USAGE_SEPARATOR, out);
+	fputs(_("Follow a pathname until a terminal point is found.\n"), out);
 
-	printf(_("\nFor more information see namei(1).\n"));
+	fputs(USAGE_OPTIONS, out);
+	fputs(_(" -h, --help          displays this help text\n"
+		" -V, --version       output version information and exit\n"
+		" -x, --mountpoints   show mount point directories with a 'D'\n"
+		" -m, --modes         show the mode bits of each file\n"
+		" -o, --owners        show owner and group name of each file\n"
+		" -l, --long          use a long listing format (-m -o -v) \n"
+		" -n, --nosymlinks    don't follow symlinks\n"
+		" -v, --vertical      vertical align of modes and owners\n"), out);
+
+	fprintf(out, USAGE_MAN_TAIL("namei(1)"));
 	exit(rc);
 }
 
-struct option longopts[] =
+static const struct option longopts[] =
 {
 	{ "help",	0, 0, 'h' },
+	{ "version",    0, 0, 'V' },
 	{ "mountpoints",0, 0, 'x' },
 	{ "modes",	0, 0, 'm' },
 	{ "owners",	0, 0, 'o' },
@@ -455,23 +369,22 @@ struct option longopts[] =
 int
 main(int argc, char **argv)
 {
-	extern int optind;
 	int c;
 	int rc = EXIT_SUCCESS;
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
+	atexit(close_stdout);
 
-	if (argc < 2)
-		usage(EXIT_FAILURE);
-
-	while ((c = getopt_long(argc, argv, "+h?lmnovx", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "hVlmnovx", longopts, NULL)) != -1) {
 		switch(c) {
 		case 'h':
-		case '?':
 			usage(EXIT_SUCCESS);
 			break;
+		case 'V':
+			printf(UTIL_LINUX_VERSION);
+			return EXIT_SUCCESS;
 		case 'l':
 			flags |= (NAMEI_OWNERS | NAMEI_MODES | NAMEI_VERTICAL);
 			break;
@@ -489,8 +402,23 @@ main(int argc, char **argv)
 			break;
 		case 'v':
 			flags |= NAMEI_VERTICAL;
+			break;
+		default:
+			usage(EXIT_FAILURE);
 		}
 	}
+
+	if (optind == argc) {
+		warnx(_("pathname argument is missing"));
+		usage(EXIT_FAILURE);
+	}
+
+	ucache = new_idcache();
+	if (!ucache)
+		err(EXIT_FAILURE, _("failed to allocate UID cache"));
+	gcache = new_idcache();
+	if (!gcache)
+		err(EXIT_FAILURE, _("failed to allocate GID cache"));
 
 	for(; optind < argc; optind++) {
 		char *path = argv[optind];

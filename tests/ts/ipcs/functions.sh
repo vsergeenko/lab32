@@ -64,14 +64,17 @@ IPCS_IDX=$(seq 0 $(( ${#IPCS_PROCFILES[*]} - 1 )))
 # checker
 function ipcs_limits_check {
 	for i in $IPCS_IDX; do
+
 		echo -n ${IPCS_PROCFILES[$i]}
 
 		a=$(eval ${IPCS_KERNEL_CMD[$i]})
 		b=$(eval ${IPCS_CMD[$i]})
 
-		#echo -n " RAW: "
-		#cat ${IPCS_PROCFILES[$i]}
-		#echo "CMD: ${ICPS_KERNEL_CMD[$i]}"
+		#echo
+		#echo "KERNEL-CMD: ${IPCS_KERNEL_CMD[$i]}"
+		#echo "KERNEL-RAW: $(cat ${IPCS_PROCFILES[$i]})"
+		#echo "IPCS-CMD:   ${IPCS_CMD[$i]}"
+		#echo
 
 		if [ x"$a" == x"$b" ]; then
 			echo " OK"
@@ -81,3 +84,20 @@ function ipcs_limits_check {
 	done
 }
 
+# Read 'ipcmk' output, such as 'Shared memory id: 22839299' and
+# write the message to two files: (1) something what one can
+# compare as test output, and (2) id which ipcrm later will use
+# for deletion.
+ipcmk_output_handler() {
+	awk -v text=$1 -v num=$2 '
+	function isnum(x) {
+		return(x == x + 0)
+	}
+	{
+		if (isnum($NF)) {
+			print $NF >> num
+			$NF="<was_number>"
+		}
+		print $0 >> text
+	}'
+}

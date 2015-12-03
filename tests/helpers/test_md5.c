@@ -4,12 +4,11 @@
 
 #include "md5.h"
 
-int
-main(int argc, char *argv[])
+int main(void)
 {
 	int i, ret;
 	struct MD5Context ctx;
-	unsigned char digest[16];
+	unsigned char digest[MD5LENGTH];
 	unsigned char buf[BUFSIZ];
 
 	MD5Init( &ctx );
@@ -23,7 +22,7 @@ main(int argc, char *argv[])
 	fclose(stdin);
 	MD5Final( digest, &ctx );
 
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < MD5LENGTH; i++)
 		printf( "%02x", digest[i] );
 	printf("  -\n");
 	return 0;

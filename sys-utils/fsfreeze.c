@@ -20,11 +20,18 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <getopt.h>
-#include <err.h>
 
+#include "c.h"
 #include "blkdev.h"
 #include "nls.h"
-#include "c.h"
+#include "closestream.h"
+#include "optutils.h"
+
+enum fs_operation {
+	NOOP,
+	FREEZE,
+	UNFREEZE
+};
 
 static int freeze_f(int fd)
 {
@@ -38,15 +45,20 @@ static int unfreeze_f(int fd)
 
 static void __attribute__((__noreturn__)) usage(FILE *out)
 {
-	fprintf(out, _("Usage: %s [options] <mount point>\n\nOptions:\n"),
-			program_invocation_short_name);
+	fprintf(out, USAGE_HEADER);
+	fprintf(out,
+	      _(" %s [options] <mountpoint>\n"), program_invocation_short_name);
 
-	fprintf(out, _(
-		" -h, --help          this help\n"
-		" -f, --freeze        freeze the filesystem\n"
-		" -u, --unfreeze      unfreeze the filesystem\n"));
+	fputs(USAGE_SEPARATOR, out);
+	fputs(_("Suspend access to a filesystem (ext3/4, ReiserFS, JFS, XFS).\n"), out);
 
-	fprintf(out, _("\nFor more information see fsfreeze(8).\n"));
+	fputs(USAGE_OPTIONS, out);
+	fputs(_(" -f, --freeze      freeze the filesystem\n"), out);
+	fputs(_(" -u, --unfreeze    unfreeze the filesystem\n"), out);
+	fprintf(out, USAGE_SEPARATOR);
+	fprintf(out, USAGE_HELP);
+	fprintf(out, USAGE_VERSION);
+	fprintf(out, USAGE_MAN_TAIL("fsfreeze(8)"));
 
 	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
 }
@@ -54,40 +66,54 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
 int main(int argc, char **argv)
 {
 	int fd = -1, c;
-	int freeze = -1, rc = EXIT_FAILURE;
+	int action = NOOP, rc = EXIT_FAILURE;
 	char *path;
 	struct stat sb;
 
-	struct option longopts[] = {
+	static const struct option longopts[] = {
 	    { "help",      0, 0, 'h' },
 	    { "freeze",    0, 0, 'f' },
 	    { "unfreeze",  0, 0, 'u' },
+	    { "version",   0, 0, 'V' },
 	    { NULL,        0, 0, 0 }
 	};
+
+	static const ul_excl_t excl[] = {       /* rows and cols in in ASCII order */
+		{ 'f','u' },			/* freeze, unfreeze */
+		{ 0 }
+	};
+	int excl_st[ARRAY_SIZE(excl)] = UL_EXCL_STATUS_INIT;
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
+	atexit(close_stdout);
 
-	while ((c = getopt_long(argc, argv, "hfu", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "hfuV", longopts, NULL)) != -1) {
+
+		err_exclusive_options(c, longopts, excl, excl_st);
+
 		switch(c) {
 		case 'h':
 			usage(stdout);
 			break;
 		case 'f':
-			freeze = TRUE;
+			action = FREEZE;
 			break;
 		case 'u':
-			freeze = FALSE;
+			action = UNFREEZE;
 			break;
+		case 'V':
+			printf(UTIL_LINUX_VERSION);
+			exit(EXIT_SUCCESS);
 		default:
 			usage(stderr);
 			break;
 		}
 	}
 
-	if (freeze == -1)
-		errx(EXIT_FAILURE, _("no action specified"));
+	if (action == NOOP)
+		errx(EXIT_FAILURE, _("neither --freeze or --unfreeze specified"));
 	if (optind == argc)
 		errx(EXIT_FAILURE, _("no filename specified"));
 	path = argv[optind++];
@@ -99,10 +125,10 @@ int main(int argc, char **argv)
 
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
-		err(EXIT_FAILURE, _("%s: open failed"), path);
+		err(EXIT_FAILURE, _("cannot open %s"), path);
 
 	if (fstat(fd, &sb) == -1) {
-		warn(_("%s: fstat failed"), path);
+		warn(_("stat of %s failed"), path);
 		goto done;
 	}
 
@@ -111,16 +137,21 @@ int main(int argc, char **argv)
 		goto done;
 	}
 
-	if (freeze) {
+	switch (action) {
+	case FREEZE:
 		if (freeze_f(fd)) {
 			warn(_("%s: freeze failed"), path);
 			goto done;
 		}
-	} else {
+		break;
+	case UNFREEZE:
 		if (unfreeze_f(fd)) {
 			warn(_("%s: unfreeze failed"), path);
 			goto done;
 		}
+		break;
+	default:
+		abort();
 	}
 
 	rc = EXIT_SUCCESS;

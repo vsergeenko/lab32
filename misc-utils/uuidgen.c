@@ -10,27 +10,31 @@
  */
 
 #include <stdio.h>
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-#ifdef HAVE_GETOPT_H
 #include <getopt.h>
-#else
-extern int getopt(int argc, char * const argv[], const char *optstring);
-extern char *optarg;
-extern int optind;
-#endif
 
 #include "uuid.h"
 #include "nls.h"
+#include "c.h"
+#include "closestream.h"
 
-#define DO_TYPE_TIME	1
-#define DO_TYPE_RANDOM	2
-
-static void usage(const char *progname)
+static void __attribute__ ((__noreturn__)) usage(FILE * out)
 {
-	fprintf(stderr, _("Usage: %s [-r] [-t]\n"), progname);
-	exit(1);
+	fputs(USAGE_HEADER, out);
+	fprintf(out,
+	      _(" %s [options]\n"), program_invocation_short_name);
+
+	fputs(USAGE_SEPARATOR, out);
+	fputs(_("Create a new UUID value.\n"), out);
+
+	fputs(USAGE_OPTIONS, out);
+	fputs(_(" -r, --random     generate random-based uuid\n"
+		" -t, --time       generate time-based uuid\n"
+		" -V, --version    output version information and exit\n"
+		" -h, --help       display this help and exit\n\n"), out);
+
+	fprintf(out, USAGE_MAN_TAIL("uuidgen(1)"));
+	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
 int
@@ -41,27 +45,41 @@ main (int argc, char *argv[])
 	char   str[37];
 	uuid_t uu;
 
+	static const struct option longopts[] = {
+		{"random", no_argument, NULL, 'r'},
+		{"time", no_argument, NULL, 't'},
+		{"version", no_argument, NULL, 'V'},
+		{"help", no_argument, NULL, 'h'},
+		{NULL, 0, NULL, 0}
+	};
+
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
+	atexit(close_stdout);
 
-	while ((c = getopt (argc, argv, "tr")) != EOF)
+	while ((c = getopt_long(argc, argv, "rtVh", longopts, NULL)) != -1)
 		switch (c) {
 		case 't':
-			do_type = DO_TYPE_TIME;
+			do_type = UUID_TYPE_DCE_TIME;
 			break;
 		case 'r':
-			do_type = DO_TYPE_RANDOM;
+			do_type = UUID_TYPE_DCE_RANDOM;
 			break;
+		case 'V':
+			printf(UTIL_LINUX_VERSION);
+			return EXIT_SUCCESS;
+		case 'h':
+			usage(stdout);
 		default:
-			usage(argv[0]);
+			usage(stderr);
 		}
 
 	switch (do_type) {
-	case DO_TYPE_TIME:
+	case UUID_TYPE_DCE_TIME:
 		uuid_generate_time(uu);
 		break;
-	case DO_TYPE_RANDOM:
+	case UUID_TYPE_DCE_RANDOM:
 		uuid_generate_random(uu);
 		break;
 	default:
@@ -73,5 +91,5 @@ main (int argc, char *argv[])
 
 	printf("%s\n", str);
 
-	return 0;
+	return EXIT_SUCCESS;
 }

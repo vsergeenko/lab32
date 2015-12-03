@@ -1,152 +1,254 @@
-/* fdformat.c  -  Low-level formats a floppy disk - Werner Almesberger */
-
-/* 1999-02-22 Arkadiusz Mi¶kiewicz <misiek@pld.ORG.PL>
- * - added Native Language Support
- * 1999-03-20 Arnaldo Carvalho de Melo <acme@conectiva.com.br>
- & - more i18n/nls translatable strings marked
+/*
+ * fdformat.c  -  Low-level formats a floppy disk - Werner Almesberger
  */
-
-#include <stdio.h>
-#include <string.h>
-#include <fcntl.h>
 #include <errno.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <getopt.h>
 #include <linux/fd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
+#include "c.h"
+#include "blkdev.h"
+#include "strutils.h"
+#include "closestream.h"
 #include "nls.h"
+#include "xalloc.h"
+
+#define SECTOR_SIZE 512
 
 struct floppy_struct param;
 
-#define SECTOR_SIZE 512
-#define PERROR(msg) { perror(msg); exit(1); }
 
-static void format_disk(int ctrl, char *name)
+static void format_begin(int ctrl)
 {
-    struct format_descr descr;
-    int track;
+	if (ioctl(ctrl, FDFMTBEG, NULL) < 0)
+		err(EXIT_FAILURE, "ioctl: FDFMTBEG");
+}
 
-    printf(_("Formatting ... "));
-    fflush(stdout);
-    if (ioctl(ctrl,FDFMTBEG,NULL) < 0) PERROR("\nioctl(FDFMTBEG)");
-    for (track = 0; track < param.track; track++) {
-	descr.track = track;
-	descr.head = 0;
-	if (ioctl(ctrl,FDFMTTRK,(long) &descr) < 0)
-	  PERROR("\nioctl(FDFMTTRK)");
+static void format_end(int ctrl)
+{
+	if (ioctl(ctrl, FDFMTEND, NULL) < 0)
+		err(EXIT_FAILURE, "ioctl: FDFMTEND");
+}
 
-	printf("%3d\b\b\b",track);
+static void format_track_head(int ctrl, struct format_descr *descr)
+{
+	if (ioctl(ctrl, FDFMTTRK, (long) descr) < 0)
+		err(EXIT_FAILURE, "ioctl: FDFMTTRK");
+}
+
+static void seek_track_head(int ctrl, struct format_descr *descr)
+{
+	lseek(ctrl, (descr->track * param.head + descr->head) * param.sect * SECTOR_SIZE, SEEK_SET);
+}
+
+static void format_disk(int ctrl, unsigned int track_from, unsigned int track_to)
+{
+	struct format_descr current;
+
+	printf(_("Formatting ... "));
 	fflush(stdout);
-	if (param.head == 2) {
-	    descr.head = 1;
-	    if (ioctl(ctrl,FDFMTTRK,(long) &descr) < 0)
-	      PERROR("\nioctl(FDFMTTRK)");
+
+	format_begin(ctrl);
+
+	for (current.track = track_from; current.track <= track_to; current.track++) {
+		for (current.head = 0; current.head < param.head; current.head++) {
+			printf("%3u/%u\b\b\b\b\b", current.track, current.head);
+			fflush(stdout);
+			format_track_head(ctrl, &current);
+		}
 	}
-    }
-    if (ioctl(ctrl,FDFMTEND,NULL) < 0) PERROR("\nioctl(FDFMTEND)");
-    printf(_("done\n"));
+
+	format_end(ctrl);
+
+	printf(_("done\n"));
 }
 
-
-static void verify_disk(char *name)
+static void verify_disk(int ctrl, unsigned int track_from, unsigned int track_to, unsigned int repair)
 {
-    unsigned char *data;
-    int fd,cyl_size,cyl,count;
+	unsigned char *data;
+	struct format_descr current;
+	int track_size, count;
+	unsigned int retries_left;
 
-    cyl_size = param.sect*param.head*512;
-    if ((data = (unsigned char *) malloc(cyl_size)) == NULL) PERROR("malloc");
-    printf(_("Verifying ... "));
-    fflush(stdout);
-    if ((fd = open(name,O_RDONLY)) < 0) PERROR(name);
-    for (cyl = 0; cyl < param.track; cyl++) {
-	int read_bytes;
-
-	printf("%3d\b\b\b",cyl);
+	track_size = param.sect * SECTOR_SIZE;
+	data = xmalloc(track_size);
+	printf(_("Verifying ... "));
 	fflush(stdout);
-	read_bytes = read(fd,data,cyl_size);
-	if(read_bytes != cyl_size) {
-	    if(read_bytes < 0)
-		    perror(_("Read: "));
-	    fprintf(stderr,
-		    _("Problem reading cylinder %d, expected %d, read %d\n"),
-		    cyl, cyl_size, read_bytes);
-	    free(data);
-	    exit(1);
+
+	current.track = track_from;
+	current.head = 0;
+	seek_track_head (ctrl, &current);
+
+	for (current.track = track_from; current.track <= track_to; current.track++) {
+		for (current.head = 0; current.head < param.head; current.head++) {
+			int read_bytes;
+
+			printf("%3u\b\b\b", current.track);
+			fflush(stdout);
+
+			retries_left = repair;
+			do {
+				read_bytes = read(ctrl, data, track_size);
+				if (read_bytes != track_size) {
+					if (retries_left) {
+						format_begin(ctrl);
+						format_track_head(ctrl, &current);
+						format_end(ctrl);
+						seek_track_head (ctrl, &current);
+						retries_left--;
+						if (retries_left)
+							continue;
+					}
+					if (read_bytes < 0)
+						perror(_("Read: "));
+					fprintf(stderr,
+						_("Problem reading track/head %u/%u,"
+						  " expected %d, read %d\n"),
+						current.track, current.head, track_size, read_bytes);
+					free(data);
+					exit(EXIT_FAILURE);
+				}
+				for (count = 0; count < track_size; count++)
+					if (data[count] != FD_FILL_BYTE) {
+						if (retries_left) {
+							format_begin(ctrl);
+							format_track_head(ctrl, &current);
+							format_end(ctrl);
+							seek_track_head (ctrl, &current);
+							retries_left--;
+							if (retries_left)
+								continue;
+						}
+						printf(_("bad data in track/head %u/%u\n"
+							 "Continuing ... "), current.track, current.head);
+						fflush(stdout);
+						break;
+					}
+				break;
+			} while (retries_left);
+		}
 	}
-	for (count = 0; count < cyl_size; count++)
-	    if (data[count] != FD_FILL_BYTE) {
-		printf(_("bad data in cyl %d\nContinuing ... "),cyl);
-		fflush(stdout);
-		break;
-	    }
-    }
-    free(data);
-    printf(_("done\n"));
-    if (close(fd) < 0) PERROR("close");
+
+	free(data);
+	printf(_("done\n"));
 }
 
-
-static void usage(char *name)
+static void __attribute__ ((__noreturn__)) usage(FILE * out)
 {
-    char *this;
+	fputs(USAGE_HEADER, out);
+	fprintf(out, _(" %s [options] <device>\n"),
+		program_invocation_short_name);
 
-    if ((this = strrchr(name,'/')) != NULL) name = this+1;
-    fprintf(stderr,_("usage: %s [ -n ] device\n"),name);
-    exit(1);
+	fputs(USAGE_SEPARATOR, out);
+	fputs(_("Do a low-level formatting of a floppy disk.\n"), out);
+
+	fputs(USAGE_OPTIONS, out);
+	fputs(_(" -f, --from <N>    start at the track N (default 0)\n"), out);
+	fputs(_(" -t, --to <N>      stop at the track N\n"), out);
+	fputs(_(" -r, --repair <N>  try to repair tracks failed during\n"
+                "                     the verification (max N retries)\n"), out);
+	fputs(_(" -n, --no-verify   disable the verification after the format\n"), out);
+
+	fputs(USAGE_SEPARATOR, out);
+	fputs(USAGE_HELP, out);
+	fputs(USAGE_VERSION, out);
+	fprintf(out, USAGE_MAN_TAIL("fdformat(8)"));
+
+	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
-
-int main(int argc,char **argv)
+int main(int argc, char **argv)
 {
-    int ctrl;
-    int verify;
-    struct stat st;
-    char *progname, *p;
+	int ch;
+	int ctrl;
+	int verify = 1;
+	unsigned int repair = 0;
+	unsigned int track_from = 0;
+	unsigned int track_to = 0;
+	int has_user_defined_track_to = 0;
+	struct stat st;
 
-    progname = argv[0];
-    if ((p = strrchr(progname, '/')) != NULL)
-	    progname = p+1;
+	static const struct option longopts[] = {
+		{"from", required_argument, NULL, 'f'},
+		{"to", required_argument, NULL, 't'},
+		{"repair", required_argument, NULL, 'r'},
+		{"no-verify", no_argument, NULL, 'n'},
+		{"version", no_argument, NULL, 'V'},
+		{"help", no_argument, NULL, 'h'},
+		{NULL, 0, NULL, 0}
+	};
 
-    setlocale(LC_ALL, "");
-    bindtextdomain(PACKAGE, LOCALEDIR);
-    textdomain(PACKAGE);
+	setlocale(LC_ALL, "");
+	bindtextdomain(PACKAGE, LOCALEDIR);
+	textdomain(PACKAGE);
+	atexit(close_stdout);
 
-    if (argc == 2 &&
-	(!strcmp(argv[1], "-V") || !strcmp(argv[1], "--version"))) {
-	    printf(_("%s (%s)\n"), progname, PACKAGE_STRING);
-	    exit(0);
-    }
+	while ((ch = getopt_long(argc, argv, "f:t:r:nVh", longopts, NULL)) != -1)
+		switch (ch) {
+		case 'f':
+			track_from = strtou32_or_err(optarg, _("invalid argument - from"));
+			break;
+		case 't':
+			has_user_defined_track_to = 1;
+			track_to = strtou32_or_err(optarg, _("invalid argument - to"));
+			break;
+		case 'r':
+			repair = strtou32_or_err(optarg, _("invalid argument - repair"));
+			break;
+		case 'n':
+			verify = 0;
+			break;
+		case 'V':
+			printf(UTIL_LINUX_VERSION);
+			exit(EXIT_SUCCESS);
+		case 'h':
+			usage(stdout);
+		default:
+			usage(stderr);
+		}
 
-    verify = 1;
-    if (argc > 1 && argv[1][0] == '-') {
-	if (argv[1][1] != 'n') usage(progname);
-	verify = 0;
-	argc--;
-	argv++;
-    }
-    if (argc != 2) usage(progname);
-    if (stat(argv[1],&st) < 0) PERROR(argv[1]);
-    if (!S_ISBLK(st.st_mode)) {
-	fprintf(stderr,_("%s: not a block device\n"),argv[1]);
-	exit(1);
-	/* do not test major - perhaps this was an USB floppy */
-    }
-    if (access(argv[1],W_OK) < 0) PERROR(argv[1]);
+	argc -= optind;
+	argv += optind;
 
-    ctrl = open(argv[1],O_WRONLY);
-    if (ctrl < 0)
-	    PERROR(argv[1]);
-    if (ioctl(ctrl,FDGETPRM,(long) &param) < 0) 
-	    PERROR(_("Could not determine current format type"));
-    printf(_("%s-sided, %d tracks, %d sec/track. Total capacity %d kB.\n"),
-	   (param.head == 2) ? _("Double") : _("Single"),
-	   param.track, param.sect,param.size >> 1);
-    format_disk(ctrl, argv[1]);
-    close(ctrl);
+	if (argc < 1)
+		usage(stderr);
+	if (stat(argv[0], &st) < 0)
+		err(EXIT_FAILURE, _("stat of %s failed"), argv[0]);
+	if (!S_ISBLK(st.st_mode))
+		/* do not test major - perhaps this was an USB floppy */
+		errx(EXIT_FAILURE, _("%s: not a block device"), argv[0]);
+	ctrl = open_blkdev_or_file(&st, argv[0], O_RDWR);
+	if (ctrl < 0)
+		err(EXIT_FAILURE, _("cannot open %s"), argv[0]);
+	if (ioctl(ctrl, FDGETPRM, (long) &param) < 0)
+		err(EXIT_FAILURE, _("could not determine current format type"));
 
-    if (verify)
-	    verify_disk(argv[1]);
-    return 0;
+	printf(_("%s-sided, %d tracks, %d sec/track. Total capacity %d kB.\n"),
+		(param.head == 2) ? _("Double") : _("Single"),
+		param.track, param.sect, param.size >> 1);
+
+	if (!has_user_defined_track_to)
+		track_to = param.track - 1;
+
+	if (track_from >= param.track)
+		err(EXIT_FAILURE, _("user defined start track exceeds the medium specific maximum"));
+	if (track_to >= param.track)
+		err(EXIT_FAILURE, _("user defined end track exceeds the medium specific maximum"));
+	if (track_from > track_to)
+		err(EXIT_FAILURE, _("user defined start track exceeds the user defined end track"));
+
+	format_disk(ctrl, track_from, track_to);
+
+	if (verify)
+		verify_disk(ctrl, track_from, track_to, repair);
+
+	if (close_fd(ctrl) != 0)
+		err(EXIT_FAILURE, _("close failed"));
+
+	return EXIT_SUCCESS;
 }

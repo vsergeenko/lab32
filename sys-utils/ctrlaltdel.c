@@ -1,37 +1,111 @@
 /*
  * ctrlaltdel.c - Set the function of the Ctrl-Alt-Del combination
  * Created 4-Jul-92 by Peter Orbaek <poe@daimi.aau.dk>
- * 1999-02-22 Arkadiusz Mi∂kiewicz <misiek@pld.ORG.PL>
+ * 1999-02-22 Arkadiusz Mi≈õkiewicz <misiek@pld.ORG.PL>
  * - added Native Language Support
  */
 
-#include <err.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "linux_reboot.h"
+#include <unistd.h>
+#include <sys/reboot.h>
 #include "nls.h"
+#include "c.h"
+#include "closestream.h"
+#include "pathnames.h"
+#include "path.h"
 
-int main(int argc, char *argv[])
+#define LINUX_REBOOT_CMD_CAD_ON 0x89ABCDEF
+#define LINUX_REBOOT_CMD_CAD_OFF 0x00000000
+
+static void __attribute__ ((__noreturn__)) usage(FILE * out)
 {
+	fprintf(out, USAGE_HEADER);
+	fprintf(out, _(" %s hard|soft\n"), program_invocation_short_name);
+
+	fprintf(out, USAGE_SEPARATOR);
+	fprintf(out, _("Set the function of the Ctrl-Alt-Del combination.\n"));
+
+	fprintf(out, USAGE_OPTIONS);
+	fprintf(out, USAGE_HELP);
+	fprintf(out, USAGE_VERSION);
+	fprintf(out, USAGE_MAN_TAIL("ctrlaltdel(8)"));
+	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+}
+
+static int get_cad(void)
+{
+	uint64_t val = path_read_u64(_PATH_PROC_CTRL_ALT_DEL);
+
+	switch (val) {
+	case 0:
+		fputs("soft\n", stdout);
+		break;
+	case 1:
+		fputs("hard\n", stdout);
+		break;
+	default:
+		printf("%s hard\n", _("implicit"));
+		warnx(_("unexpected value in %s: %ju"), _PATH_PROC_CTRL_ALT_DEL, val);
+		return EXIT_FAILURE;
+	}
+	return EXIT_SUCCESS;
+}
+
+static int set_cad(const char *arg)
+{
+	unsigned int cmd;
+
+	if (geteuid()) {
+		warnx(_("You must be root to set the Ctrl-Alt-Del behavior"));
+		return EXIT_FAILURE;
+	}
+	if (!strcmp("hard", arg))
+		cmd = LINUX_REBOOT_CMD_CAD_ON;
+	else if (!strcmp("soft", arg))
+		cmd = LINUX_REBOOT_CMD_CAD_OFF;
+	else {
+		warnx(_("unknown argument: %s"), arg);
+		return EXIT_FAILURE;
+	}
+	if (reboot(cmd) < 0) {
+		warnx("reboot");
+		return EXIT_FAILURE;
+	}
+	return EXIT_SUCCESS;
+}
+
+int main(int argc, char **argv)
+{
+	int ch, ret;
+	static const struct option longopts[] = {
+		{"version", no_argument, NULL, 'V'},
+		{"help", no_argument, NULL, 'h'},
+		{NULL, 0, NULL, 0}
+	};
+
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
+	atexit(close_stdout);
 
-	if (geteuid())
-		errx(EXIT_FAILURE,
-		     _("You must be root to set the Ctrl-Alt-Del behaviour"));
+	while ((ch = getopt_long(argc, argv, "Vh", longopts, NULL)) != -1)
+		switch (ch) {
+		case 'V':
+			printf(UTIL_LINUX_VERSION);
+			return EXIT_SUCCESS;
+		case 'h':
+			usage(stdout);
+		default:
+			usage(stderr);
+		}
 
-	if (argc == 2 && !strcmp("hard", argv[1])) {
-		if (my_reboot(LINUX_REBOOT_CMD_CAD_ON) < 0)
-			err(EXIT_FAILURE, "reboot");
-	} else if (argc == 2 && !strcmp("soft", argv[1])) {
-		if (my_reboot(LINUX_REBOOT_CMD_CAD_OFF) < 0)
-			err(EXIT_FAILURE, "reboot");
-	} else
-		errx(EXIT_FAILURE, _("Usage: %s hard|soft"),
-				program_invocation_short_name);
-
-	return EXIT_SUCCESS;
+	if (argc < 2)
+		ret = get_cad();
+	else
+		ret = set_cad(argv[1]);
+	return ret;
 }

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 #
 # This script checks for HAVE_ and ENABLE_ macros which are
@@ -11,11 +11,22 @@
 #
 
 
-function die() {
+die() {
 	echo "error: $1"
 	exit 1
 }
 
+usage() {
+	echo "Usage:"
+	echo " $0 <top_srcdir> <srcfile> [<srcfile> ...]"
+	echo "Example:"
+	echo " find . -name '*.c' | xargs $0 \$(git rev-parse --show-toplevel)"
+}
+
+if [ $# -eq 0 ]; then
+	usage
+	exit 1
+fi
 srcdir=$1
 config="$srcdir/config.h.in"
 
@@ -24,7 +35,7 @@ config="$srcdir/config.h.in"
 
 shift
 
-while (( "$#" )); do
+while [ "$#" -ne 0 ]; do
 	srcfile=$1
 	shift
 
